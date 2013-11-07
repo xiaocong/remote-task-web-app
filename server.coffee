@@ -7,12 +7,12 @@ redis = require("redis")
 
 api = require("./lib/api")
 module = require("./lib/module")
+param = require("./lib/param")
 
 app = express()
 
 # all environments
 require("./lib/config") app  # set configurations
-app.set "port", process.env.PORT or 3000
 app.use express.logger("dev")
 app.use express.bodyParser()
 app.use express.methodOverride()
@@ -32,8 +32,12 @@ else
   app.use express.favicon(path.join(__dirname, "public/favicon.ico"))
   app.use express.static(path.join(__dirname, "public"))
 
+app.param "workstation", param.workstation
+
 app.get "/api/awesomeThings", api.awesomeThings
 app.get "/api/devices", api.devices
+app.get "/api/workstations", api.workstations
+app.all ///^/api/workstations/([\d\w:]+)/api/(.+)$///, api.workstation_api
 
 http.createServer(app).listen app.get("port"), ->
   console.log "Express server listening on port %d in %s mode", app.get("port"), app.get("env")
