@@ -55,7 +55,7 @@ exports = module.exports = (zookeeper_url, path) ->
     jobs.set all_jobs
 
     ws_devices = @filter (ws) ->
-      ws.get("api").status is "up"
+      ws.has("api") and ws.get("api").status is "up"
     .map (ws) ->
       _.map ws.get("api").devices.android, (device) ->
         "id": "#{ws.get('mac')}-#{device.adb.serial}"
