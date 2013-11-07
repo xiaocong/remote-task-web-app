@@ -10,7 +10,8 @@
     "orm-transaction": "0.0.2",
     "orm": "~2.1.3",
     "mysql": "~2.0.0-alpha9",
-    "redis": "~0.9.0"
+    "redis": "~0.9.0",
+    "coffee-script": "~1.6.3"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
