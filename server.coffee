@@ -3,6 +3,8 @@
 express = require("express")
 http = require("http")
 path = require("path")
+redis = require("redis")
+
 api = require("./lib/api")
 module = require("./lib/module")
 
@@ -14,6 +16,9 @@ app.use express.logger("dev")
 app.use express.bodyParser()
 app.use express.methodOverride()
 app.use module.database("mysql://test:12345@localhost/remote_task?debug=true")
+app.use (req, res, next) ->
+  req.redis = redis.createClient()
+  next()
 app.use module.zk("localhost:2181", "/remote/alive/workstation")
 app.use app.router
 

@@ -1,9 +1,9 @@
 "use strict"
 
-exports = module.exports = (zk_url, path, db_models, redis) ->
+exports = module.exports = (zk_url, path, db, redis) ->
   zk = require("./zk_node")(zk_url, path)
 
-  db_collection = require("./db_collection")(db_models)
+  db_collection = require("./db_collection")(db.models)
   device_tags = new db_collection.DeviceTags
   device_tags.fetch()
 
