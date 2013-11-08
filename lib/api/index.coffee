@@ -20,19 +20,23 @@ exports.devices = (req, res) ->
 
 exports.tag_device = (req, res) ->
   req.db.models.device_tag.find {name: req.params.tag_name, value: req.params.tag_value}, (err, tags) ->
-    return res.json 500, {error: "Error due to #{err}!"} if err? or tags.length is 0
+    return res.json 500, {error: "Error due to #{err}!"} if err?
+    return res.json 500, {error: "No such tag!"} if tags.length is 0
     data = {workstation_mac: req.device.get("workstation").mac, serial: req.device.get("serial")}
     req.db.models.device.find data, (err, devices) ->
       return res.json 500, {error: "Error due to #{err}!"} if err?
 
       device = devices[0]
       addTags = ->
-        device.addTags tags, (err) ->
-          if err?
-            res.json 500, error: "Error due to #{err}!"
-          else
-            res.send 200
-            req.redis.publish "db.device_tag", JSON.stringify(device: device.id, tags: tags)
+        if _.some(device.tags, (t) -> t.id is tags[0].id)
+          res.json 500, error: "The device already has the tag!"
+        else
+          device.addTags tags, (err) ->
+            if err?
+              res.json 500, error: "Error due to #{err}!"
+            else
+              res.send 200
+              req.redis.publish "db.device_tag", JSON.stringify(method: "add", device: device.id, tags: tags)
 
       if device
         addTags()
@@ -57,7 +61,7 @@ exports.untag_device = (req, res) ->
             res.json 500, error: "Error due to #{err}."
           else
             res.send 200
-            req.redis.publish "db.device_tag", JSON.stringify(device: device.id, tags: tags)
+            req.redis.publish "db.device_tag", JSON.stringify(method: "delete", device: device.id, tags: tags)
       else
         res.send 200
 
