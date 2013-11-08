@@ -3,39 +3,46 @@
 orm = require "orm"
 redis = require("redis")
 
-exports.database = (db_url) ->
-  db = null
-  return (req, res, next) ->
+db = zk = redis_client = null
+nexts = []
+
+exports.setup = (app) ->
+  return if db?
+
+  mysql_url = app.get "mysql_url"
+  zk_url = app.get "zk_url"
+  zk_path = app.get "zk_path"
+  redis_url = require("url").parse app.get("redis_url")
+  redis_hostname = redis_url.hostname
+  redis_port = redis_url.port or 6379
+  redis_db = Number((redis_url.pathname or "/0")[1..])
+
+  require("./db") mysql_url, (err, conn) ->
+    throw new Error("DB connection exception due to #{err}") if err?
+    db = conn
+
+    redis_client = redis.createClient(redis_port, redis_hostname)
+    if redis_db isnt 0
+      redis_client.select redis_db, ->
+
+    zk = require("./zk") zk_url, zk_path, db, redis_client
+
+    next() for next in nexts  # release waiting request
+
+exports.database = ->
+  (req, res, next) ->
     if db is null
-      db = require("./db") db_url, (err, db) ->
-        req.db = db
-        next()
+      nexts.push next
     else
       req.db = db
       next()
 
-exports.zk = (zk_url, path) ->
-  zk = null
-
-  return (req, res, next) ->
-    if zk is null
-      zk = require("./zk") zk_url, path, req.db, req.redis
+exports.zk = ->
+  (req, res, next) ->
     req.zk = zk
     next()
 
-exports.redis = (redis_url, options) ->
-  url = require("url").parse redis_url
-  hostname = url.hostname
-  port = url.port or 6379
-  db = Number((url.pathname or "/0")[1..])
-
-  redis_client = null
+exports.redis = ->
   (req, res, next) ->
-    if redis_client is null
-      redis_client = redis.createClient(port, hostname, options)
-      if db isnt 0
-        return redis_client.select db, ->
-          req.redis = redis_client
-          next()
     req.redis = redis_client
     next()

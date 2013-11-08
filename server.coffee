@@ -13,12 +13,14 @@ app = express()
 
 # all environments
 require("./lib/config") app  # set configurations
+module.setup app  # setup global db/zk/redis instance
+
 app.use express.logger("dev")
 app.use express.bodyParser()
 app.use express.methodOverride()
-app.use module.database(app.get "mysql_url")
-app.use module.redis(app.get "redis_url")
-app.use module.zk(app.get("zk_url"), app.get("zk_path"))
+app.use module.database()
+app.use module.redis()
+app.use module.zk()
 app.use app.router
 
 # development only

@@ -29,4 +29,4 @@ exports.workstation_api = (req, res) ->
     )
     req.pipe(request(url_str)).pipe(res)
   else
-    res.json(500, { error: "Likely the workstation is down!" })
+    res.json 500, error: "The workstation is invalid or down!"
