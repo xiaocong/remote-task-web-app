@@ -6,14 +6,14 @@ exports.workstation = (req, res, next, id) ->
     req.workstation = ws
     next()
   else
-    next new Error("No specified workstation.")
+    res.json 500, error: "No specified workstation."
 
 exports.device = (req, res, next, id) ->
-  device = req.zk.models.deivces.get(id)
+  device = req.zk.models.devices.get(id)
   if device
     req.device = device
     next()
   else
-    next new Error("No specified device.")
+    res.json 500, error: "No specified device."
 
 module.exports = exports

@@ -15,17 +15,12 @@ exports.setup = (app) ->
   redis_url = require("url").parse app.get("redis_url")
   redis_hostname = redis_url.hostname
   redis_port = redis_url.port or 6379
-  redis_db = Number((redis_url.pathname or "/0")[1..])
 
   require("./db") mysql_url, (err, conn) ->
     throw new Error("DB connection exception due to #{err}") if err?
     db = conn
-
     redis_client = redis.createClient(redis_port, redis_hostname)
-    if redis_db isnt 0
-      redis_client.select redis_db, ->
-
-    zk = require("./zk") zk_url, zk_path, db, redis_client
+    zk = require("./zk") zk_url, zk_path, db.models, redis_client, redis.createClient(redis_port, redis_hostname)
 
     next() for next in nexts  # release waiting request
 

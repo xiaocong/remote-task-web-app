@@ -1,4 +1,4 @@
-database = require './database'
+database = require './db'
 _ = require "underscore"
 
 database 'mysql://test:12345@localhost/remote_task?debug=true', (err, db) ->
@@ -35,29 +35,28 @@ database 'mysql://test:12345@localhost/remote_task?debug=true', (err, db) ->
                 console.log err if err
                 device.getTags (err, tags) -> console.log "#{tags}" if tags
 
-  zk = require('./remote')('localhost:2181', '/remote/alive/workstation')
-  devices = zk.devices
-  jobs = zk.jobs
-  workstations = zk.workstations
+  zk = require('./zk_node')('localhost:2181', '/remote/alive/workstation')
+  devices = zk.models.devices
+  jobs = zk.models.jobs
+  workstations = zk.models.workstations
 
-  models = require("./models")(db)
+  models = require("./db_collection")(db.models)
   device_tags = new models.DeviceTags
   device_tags.fetch()
 
   updateDeviceTag = (event) ->
     device_tags.forEach (tag) ->
-      device = zk.devices.get tag.id
-      device?.set("tags", tag.get("tags"))
+      zk.models.devices.get(tag.id)?.set("tags", tag.get("tags"))
 
-  zk.devices.on 'add', updateDeviceTag
+  zk.models.devices.on 'add', updateDeviceTag
 
   device_tags.on "change add remove", updateDeviceTag
 
-  zk.devices.on 'remove', (event) ->
+  zk.models.devices.on 'remove', (event) ->
     console.log "#{event.id} got removed!"
 
-  zk.devices.on 'change:idle', (event) ->
-    zk.devices.forEach (d) -> console.log "#{d.id}: #{if d.get("idle") then 'idle' else 'busy'}"
+  zk.models.devices.on 'change:idle', (event) ->
+    zk.models.devices.forEach (d) -> console.log "#{d.id}: #{if d.get("idle") then 'idle' else 'busy'}"
 
 
   new_jobs = new models.NewJobs

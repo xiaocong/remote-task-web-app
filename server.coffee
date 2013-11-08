@@ -16,11 +16,11 @@ require("./lib/config") app  # set configurations
 module.setup app  # setup global db/zk/redis instance
 
 app.use express.logger("dev")
-app.use express.bodyParser()
-app.use express.methodOverride()
 app.use module.database()
 app.use module.redis()
 app.use module.zk()
+app.use express.bodyParser()
+app.use express.methodOverride()
 app.use app.router
 
 # development only
@@ -35,12 +35,20 @@ else
   app.use express.static(path.join(__dirname, "public"))
 
 app.param "workstation", param.workstation
+app.param "device", param.device
 
 app.get "/api/awesomeThings", api.awesomeThings
 app.get "/api/devices", api.devices
+app.get "/api/devices/:device", api.devices
+app.post "/api/devices/:device/tag/:tag_name/:tag_value", api.tag_device
+app.delete "/api/devices/:device/tag/:tag_name/:tag_value", api.untag_device
 app.get "/api/workstations", api.workstations
+app.get "/api/workstations/:workstation", api.workstations
 app.all ///^/api/workstations/([\d\w:]+)/api/(.+)$///, api.workstation_api
 
-http.createServer(app).listen app.get("port"), ->
-  console.log "Express server listening on port %d in %s mode", app.get("port"), app.get("env")
+app.get "/api/tags", api.tags
+app.get "/api/tags/:tag_name", api.tags
+app.post "/api/tags/:tag_name/:tag_value", api.tags_create
 
+http.createServer(app).listen app.get("port"), ->
+  console.log "Express server listening on port #{app.get('port')} in #{app.get('env')} mode."

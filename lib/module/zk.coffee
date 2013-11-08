@@ -1,19 +1,22 @@
 "use strict"
 
-exports = module.exports = (zk_url, path, db, redis) ->
+exports = module.exports = (zk_url, path, db_models, redis, subscriber) ->
   zk = require("./zk_node")(zk_url, path)
 
-  db_collection = require("./db_collection")(db.models)
+  db_collection = require("./db_collection")(db_models)
   device_tags = new db_collection.DeviceTags
   device_tags.fetch()
 
   updateDeviceTag = (event) ->
-    device_tags.forEach (tag) ->
-      device = zk.models.devices.get tag.id
-      device?.set("tags", tag.get("tags"))
+    zk.models.devices.forEach (device) ->
+      device.set("tags", device_tags.get(device.id)?.get("tags") or []) 
 
   zk.models.devices.on 'add', updateDeviceTag
   device_tags.on "change add remove", updateDeviceTag
+
+  subscriber.subscribe "db.device_tag"
+  subscriber.on "message", (channel, message) ->
+    device_tags.fetch()
 
   "client": zk.client
   "models":

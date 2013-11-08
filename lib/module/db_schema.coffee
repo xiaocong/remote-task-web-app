@@ -35,6 +35,7 @@ exports = module.exports = (db, cb) ->
     validations:
       serial: orm.enforce.unique scope: ["workstation_mac"], "Sorry, serial already taken for this workstation!"
     autoFetch: true
+    cache: false
     methods:
       getNamedTags: (name="job_type") ->
         _.map(_.filter(@.tags, (tag) -> tag.name is name), (tag) -> tag.value)
@@ -46,7 +47,8 @@ exports = module.exports = (db, cb) ->
   Task = db.define "task",
     name: {type: "text", required: true}
     description: String
-  , timestamp: true
+  ,
+    timestamp: true
 
   Repo = db.define "repo",
     url: {type: "text", required: true}
@@ -59,8 +61,8 @@ exports = module.exports = (db, cb) ->
     email: {type: "text", required: true}
   ,
     validations:
-      name: orm.enforce.unique "name already taken!"
-      email: orm.enforce.unique "email already taken!"
+      name: orm.enforce.unique("name already taken!")
+      email: orm.enforce.unique("email already taken!")
 
   Task.hasOne "creator", User  # required=true
   Repo.hasOne "creator", User  # required=true
