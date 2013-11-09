@@ -12,7 +12,8 @@
     "mysql": "~2.0.0-alpha9",
     "redis": "~0.9.0",
     "coffee-script": "~1.6.3",
-    "request": "~2.27.0"
+    "request": "~2.27.0",
+    "winston": "~0.7.2"
   },
   "devDependencies": {
     "grunt": "~0.4.1",

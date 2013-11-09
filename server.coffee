@@ -3,7 +3,6 @@
 express = require("express")
 http = require("http")
 path = require("path")
-redis = require("redis")
 
 api = require("./lib/api")
 module = require("./lib/module")
@@ -12,13 +11,11 @@ param = require("./lib/param")
 app = express()
 
 # all environments
-require("./lib/config") app  # set configurations
-module.setup app  # setup global db/zk/redis instance
+app.set "port", process.env.PORT or 3000
+app.enable('trust proxy')
 
 app.use express.logger("dev")
-app.use module.database()
-app.use module.redis()
-app.use module.zk()
+app.use module.setup()
 app.use express.bodyParser()
 app.use express.methodOverride()
 app.use app.router

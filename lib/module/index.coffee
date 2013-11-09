@@ -1,43 +1,31 @@
 "use strict"
 
-orm = require "orm"
+orm = require("orm")
 redis = require("redis")
+config = require("../config")
 
-db = zk = redis_client = null
-nexts = []
+db = zk = redis_client = redis_publish = null
 
-exports.setup = (app) ->
-  return if db?
+redis_url = require("url").parse config.redis_url
+redis_hostname = redis_url.hostname
+redis_port = redis_url.port or 6379
 
-  mysql_url = app.get "mysql_url"
-  zk_url = app.get "zk_url"
-  zk_path = app.get "zk_path"
-  redis_url = require("url").parse app.get("redis_url")
-  redis_hostname = redis_url.hostname
-  redis_port = redis_url.port or 6379
+require("./db") config.mysql_url, (err, conn) ->
+  throw new Error("DB connection exception due to #{err}") if err?
 
-  require("./db") mysql_url, (err, conn) ->
-    throw new Error("DB connection exception due to #{err}") if err?
-    db = conn
-    redis_client = redis.createClient(redis_port, redis_hostname)
-    zk = require("./zk") zk_url, zk_path, db.models, redis_client, redis.createClient(redis_port, redis_hostname)
+  db = conn
+  redis_client = redis.createClient(redis_port, redis_hostname)
+  redis_subscribe = redis.createClient(redis_port, redis_hostname)
+  zk = require("./zk") config.zk_url, config.zk_path, db.models, redis_client, redis_subscribe
 
-    next() for next in nexts  # release waiting request
-
-exports.database = ->
-  (req, res, next) ->
-    if db is null
-      nexts.push next
-    else
+exports = module.exports =
+  setup: ->
+    (req, res, next) ->
       req.db = db
+      req.redis = redis_client
+      req.zk = zk
       next()
 
-exports.zk = ->
-  (req, res, next) ->
-    req.zk = zk
-    next()
-
-exports.redis = ->
-  (req, res, next) ->
-    req.redis = redis_client
-    next()
+  db: -> db
+  zk: -> zk
+  redis: -> redis.createClient(redis_port, redis_hostname)
