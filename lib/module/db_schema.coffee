@@ -18,8 +18,8 @@ exports = module.exports = (db, cb) ->
     propertyToValue: (value, prop) -> value.join(',')
 
   DeviceTag = db.define "device_tag",
-      name: ["job_type"]
-      value: String
+      name: {type: "enum", values: ["job_type"], required: true}
+      value: {type: "text", required: true}
     , validations:
         value: orm.enforce.unique scope: ["name"], "Sorry, value already taken for this name!"
 
