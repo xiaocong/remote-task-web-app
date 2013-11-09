@@ -35,17 +35,18 @@ app.param "workstation", param.workstation
 app.param "device", param.device
 
 app.get "/api/awesomeThings", api.awesomeThings
-app.get "/api/devices", api.devices
-app.get "/api/devices/:device", api.devices
-app.post "/api/devices/:device/tag/:tag_name/:tag_value", api.tag_device
-app.delete "/api/devices/:device/tag/:tag_name/:tag_value", api.untag_device
-app.get "/api/workstations", api.workstations
-app.get "/api/workstations/:workstation", api.workstations
-app.all ///^/api/workstations/([\d\w:]+)/api/(.+)$///, api.workstation_api
+app.get "/api/devices", api.devices.get
+app.get "/api/devices/:device", api.devices.get
+app.post "/api/devices/:device/tag/:tag_name/:tag_value", api.devices.tag_device
+app.post "/api/devices/:device/untag/:tag_name/:tag_value", api.devices.untag_device
+app.delete "/api/devices/:device/tag/:tag_name/:tag_value", api.devices.untag_device
+app.get "/api/workstations", api.workstations.get
+app.get "/api/workstations/:workstation", api.workstations.get
+app.all ///^/api/workstations/([\d\w:]+)/api/(.+)$///, api.workstations.api
 
-app.get "/api/tags", api.tags
-app.get "/api/tags/:tag_name", api.tags
-app.post "/api/tags/:tag_name/:tag_value", api.tags_create
+app.get "/api/tags", api.tags.get
+app.get "/api/tags/:tag_name", api.tags.get
+app.post "/api/tags/:tag_name/:tag_value", api.tags.add
 
 http.createServer(app).listen app.get("port"), ->
   console.log "Express server listening on port #{app.get('port')} in #{app.get('env')} mode."
