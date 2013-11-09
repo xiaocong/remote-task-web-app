@@ -10,7 +10,7 @@ module.exports =
       else
         res.json result
 
-  add: (req, res) ->
+  add: (req, res, next) ->
     req.db.models.device_tag.create [{name: req.params.tag_name, value: req.params.tag_value}], (err, tags) ->
-      throw err if err?
+      return next(err) if err?
       res.send 200

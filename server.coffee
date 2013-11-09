@@ -4,6 +4,7 @@ express = require("express")
 http = require("http")
 path = require("path")
 
+logger = require("./lib/logger")
 api = require("./lib/api")
 module = require("./lib/module")
 param = require("./lib/param")
@@ -31,6 +32,16 @@ else
   app.use express.favicon(path.join(__dirname, "public/favicon.ico"))
   app.use express.static(path.join(__dirname, "public"))
 
+app.use (err, req, res, next) ->
+  if err?
+    logger.error "#{err}"
+    if req.path[..4] is "/api/"
+      res.json 500, error: "#{err}"
+    else
+      res.send 500, "Server Error"  #TODO error page
+  else
+    next()
+
 app.param "workstation", param.workstation
 app.param "device", param.device
 
@@ -46,7 +57,7 @@ app.all ///^/api/workstations/([\d\w:]+)/api/(.+)$///, api.workstations.api
 
 app.get "/api/tags", api.tags.get
 app.get "/api/tags/:tag_name", api.tags.get
-app.post "/api/tags/:tag_name/:tag_value", api.tags.add
+app.post "/api/tags/:tag_name/:tag_value", api.admin_auth, api.tags.add
 
 http.createServer(app).listen app.get("port"), ->
   console.log "Express server listening on port #{app.get('port')} in #{app.get('env')} mode."
