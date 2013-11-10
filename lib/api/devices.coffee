@@ -1,3 +1,5 @@
+"use strict"
+
 logger = require("../logger")
 _ = require("underscore")
 

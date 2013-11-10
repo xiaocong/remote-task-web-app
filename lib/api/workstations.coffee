@@ -1,3 +1,5 @@
+"use strict"
+
 logger = require("../logger")
 request = require("request")
 url = require("url")

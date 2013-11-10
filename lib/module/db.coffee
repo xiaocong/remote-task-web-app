@@ -1,3 +1,5 @@
+"use strict"
+
 orm = require 'orm'
 
 exports = module.exports = (url, cb) ->

@@ -1,3 +1,5 @@
+"use strict"
+
 Backbone = require "backbone"
 zookeeper = require "node-zookeeper-client"
 _ = require "underscore"

@@ -1,3 +1,5 @@
+"use strict"
+
 database = require './db'
 _ = require "underscore"
 

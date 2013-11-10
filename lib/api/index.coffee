@@ -10,10 +10,7 @@ exports.awesomeThings = (req, res) ->
     "Express"
   ]
 
-exports.admin_auth = (req, res, next) ->
-  logger.info "only admin can access the api"
-  next()  # TODO
-
 exports.devices = require("./devices")
 exports.workstations = require("./workstations")
 exports.tags = require("./tags")
+exports.auth = require("./auth")

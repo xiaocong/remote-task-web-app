@@ -1,7 +1,10 @@
+"use strict"
+
 orm = require "orm"
 modts = require 'orm-timestamps'
 transaction = require 'orm-transaction'
 _ = require "underscore"
+bcrypt = require 'bcrypt'
 
 exports = module.exports = (db, cb) ->
   db.use transaction
@@ -33,6 +36,8 @@ exports = module.exports = (db, cb) ->
     serial: {type: "text", required: true}
   ,
     validations:
+
+      
       serial: orm.enforce.unique scope: ["workstation_mac"], "Sorry, serial already taken for this workstation!"
     autoFetch: true
     cache: false
@@ -57,15 +62,24 @@ exports = module.exports = (db, cb) ->
     password: {type: "text"}
 
   User = db.define "user",
-    name: {type: "text", required: true}
     email: {type: "text", required: true}
+    password: {type: "text", required: true}
+    name: String
   ,
+    timestamp: true
     validations:
-      name: orm.enforce.unique("name already taken!")
       email: orm.enforce.unique("email already taken!")
+    methods:
+      compare: (password)->
+        bcrypt.compareSync password, @password
 
   Task.hasOne "creator", User  # required=true
   Repo.hasOne "creator", User  # required=true
+
+  Token = User.extendsTo "token",
+    access_token: String
+  ,
+    timestamp: true
 
   Job = db.define "job",
     no: {type: "number", required: true}

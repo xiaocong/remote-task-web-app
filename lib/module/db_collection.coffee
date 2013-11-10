@@ -1,3 +1,5 @@
+"use strict"
+
 Backbone = require "backbone"
 _ = require "underscore"
 
