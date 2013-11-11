@@ -11,7 +11,7 @@ module.exports =
       res.json req.zk.models.devices.toJSON()
 
   tag_device: (req, res, next) ->
-    req.db.models.device_tag.find {name: req.param("tag_name"), value: req.param("tag_value")}, (err, tags) ->
+    req.db.models.tag.find {name: req.param("tag_name"), value: req.param("tag_value")}, (err, tags) ->
       return next(err) if err?
       return res.json 500, {error: "No such tag!"} if tags.length is 0
       data = {workstation_mac: req.device.get("workstation").mac, serial: req.device.get("serial")}
@@ -27,7 +27,7 @@ module.exports =
             device.addTags tags, (err) ->
               return next(err) if err?
               res.send 200
-              req.redis.publish "db.device_tag", JSON.stringify(method: "add", device: device.id, tags: tags)
+              req.redis.publish "db.device.tag", JSON.stringify(method: "add", device: device.id, tags: tags)
 
         if device?
           addTags()
@@ -38,7 +38,7 @@ module.exports =
             addTags()
 
   untag_device: (req, res, next) ->
-    req.db.models.device_tag.find {name: req.param("tag_name"), value: req.param("tag_value")}, (err, tags) ->
+    req.db.models.tag.find {name: req.param("tag_name"), value: req.param("tag_value")}, (err, tags) ->
       return next(err) if err?
 
       data = {workstation_mac: req.device.get("workstation").mac, serial: req.device.get("serial")}
@@ -50,6 +50,6 @@ module.exports =
           device.removeTags tags, (err) ->
             return next(err) if err?
             res.send 200
-            req.redis.publish "db.device_tag", JSON.stringify(method: "delete", device: device.id, tags: tags)
+            req.redis.publish "db.device.tag", JSON.stringify(method: "delete", device: device.id, tags: tags)
         else
           res.send 200

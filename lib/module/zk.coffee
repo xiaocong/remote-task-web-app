@@ -14,7 +14,7 @@ exports = module.exports = (zk_url, path, db_models, redis, subscriber) ->
   zk.models.devices.on 'add', updateDeviceTag
   device_tags.on "change add remove", updateDeviceTag
 
-  subscriber.subscribe "db.device_tag"
+  subscriber.subscribe "db.device.tag"
   subscriber.on "message", (channel, message) ->
     device_tags.fetch()
 

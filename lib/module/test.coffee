@@ -6,7 +6,7 @@ _ = require "underscore"
 database 'mysql://test:12345@localhost/remote_task?debug=true', (err, db) ->
   throw err if err
 
-  DeviceTag = db.models.device_tag
+  DeviceTag = db.models.tag
   Workstation = db.models.workstation
   Device = db.models.device
   Task = db.models.task
@@ -19,9 +19,9 @@ database 'mysql://test:12345@localhost/remote_task?debug=true', (err, db) ->
     console.log "Name: #{item.name}, Email: #{item.email}" for item in items
   db.models.user.find name: 'test', (err, users) ->
     console.log "#{user.email}" for user in users
-  db.models.device_tag.find (err, tags) ->
+  db.models.tag.find (err, tags) ->
     if tags.length is 0
-      db.models.device_tag.create [{name: 'job_type', value: 'device_test'}, {name: 'job_type', value: 'app_test'}], (err, tags) ->
+      db.models.tag.create [{name: 'job_type', value: 'device_test'}, {name: 'job_type', value: 'app_test'}], (err, tags) ->
         if err
           console.log err
           return err
@@ -32,7 +32,7 @@ database 'mysql://test:12345@localhost/remote_task?debug=true', (err, db) ->
         console.log "#{device}" for device in devices
         for device in devices
           do (device=device) ->
-            db.models.device_tag.find value: 'device_test', (err, tags) ->
+            db.models.tag.find value: 'device_test', (err, tags) ->
               device.setTags tags, (err) ->
                 console.log err if err
                 device.getTags (err, tags) -> console.log "#{tags}" if tags

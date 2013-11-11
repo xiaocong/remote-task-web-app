@@ -20,8 +20,8 @@ exports = module.exports = (db, cb) ->
       if Array.isArray(value) then value else value.split(',').map((v) -> Number(v))
     propertyToValue: (value, prop) -> value.join(',')
 
-  DeviceTag = db.define "device_tag",
-      name: {type: "enum", values: ["job_type"], required: true}
+  Tag = db.define "tag",
+      name: {type: "enum", values: ["job_type", "user_group"], required: true}
       value: {type: "text", required: true}
     , validations:
         value: orm.enforce.unique scope: ["name"], "Sorry, value already taken for this name!"
@@ -36,18 +36,20 @@ exports = module.exports = (db, cb) ->
     serial: {type: "text", required: true}
   ,
     validations:
-
-      
       serial: orm.enforce.unique scope: ["workstation_mac"], "Sorry, serial already taken for this workstation!"
     autoFetch: true
     cache: false
     methods:
       getNamedTags: (name="job_type") ->
-        _.map(_.filter(@.tags, (tag) -> tag.name is name), (tag) -> tag.value)
+        _.map(_.filter(@tags, (tag) -> tag.name is name), (tag) -> tag.value)
       getTagNames: ->
         name for name of _.groupBy(@tags, (tag) -> tag.name)
+      getGroupedTags: ->
+        result = {}
+        result[name] = _.map(tags, (tag) -> tag.value) for name, tags of _.groupBy(@tags, (tag) -> tag.name)
+        result
 
-  Device.hasMany "tags", DeviceTag, {comments: String}, {reverse: "devices"}
+  Device.hasMany "tags", Tag
 
   Task = db.define "task",
     name: {type: "text", required: true}
@@ -67,29 +69,39 @@ exports = module.exports = (db, cb) ->
     name: String
   ,
     timestamp: true
+    cache: false
     validations:
       email: orm.enforce.unique("email already taken!")
     methods:
       compare: (password)->
         bcrypt.compareSync password, @password
-
-  Task.hasOne "creator", User  # required=true
-  Repo.hasOne "creator", User  # required=true
+      getNamedTags: (name="user_group") ->
+        _.map(_.filter(@tags, (tag) -> tag.name is name), (tag) -> tag.value)
+      getTagNames: ->
+        name for name of _.groupBy(@tags, (tag) -> tag.name)
+      getGroupedTags: ->
+        result = {}
+        result[name] = _.map(tags, (tag) -> tag.value) for name, tags of _.groupBy(@tags, (tag) -> tag.name)
+        result
 
   Token = User.extendsTo "token",
     access_token: String
   ,
     timestamp: true
 
+  User.hasMany "tags", Tag
+
+  Task.hasOne "creator", User  # required=true
+  Repo.hasOne "creator", User  # required=true
+
   Job = db.define "job",
     no: {type: "number", required: true}
-    environ: {type: "object", defaultValue: {}}
+    environ: {type: "object", required: true}
     device_filter: {type: "object", required: true}  # mac, platform, serial, product, build, locale, tags: {"job_type": '......'}
-    status:
-      type: "enum"
-      values: ["new", "started", "finished"]
-      defaultValue: "new"
-      required: true
+    repo_url: {type: "text", required: true}
+    repo_branch: String
+    repo_username: String
+    repo_passowrd: String
     r_type:
       type: "enum"
       values: ["none", "exclusive", "dependency"]
@@ -97,11 +109,15 @@ exports = module.exports = (db, cb) ->
       required: true
     r_job_nos:
       type: "numberArray"
+    status:
+      type: "enum"
+      values: ["new", "started", "finished"]
+      defaultValue: "new"
+      required: true
     exit_code: Number
   ,
     timestamp: true
     autoFetch: true
-    autoSave: true
     validations:
       no: orm.enforce.unique scope: ["task_id"], "Sorry, serial already taken for this workstation!"
 
@@ -111,8 +127,5 @@ exports = module.exports = (db, cb) ->
   Job.hasOne "task", Task,
     required: true
     reverse: "jobs"
-
-  Job.hasOne "repo", Repo,
-    required: true
 
   cb()

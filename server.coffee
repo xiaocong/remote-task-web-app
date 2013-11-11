@@ -57,9 +57,17 @@ app.get "/api/workstations/:workstation", api.auth.authenticate, api.workstation
 app.all ///^/api/workstations/([\d\w:]+)/api/(.+)$///, api.auth.authenticate, api.workstations.api
 
 app.post "/api/auth/get_access_token", api.auth.get_access_token
-app.get "/api/tags", api.tags.get
-app.get "/api/tags/:tag_name", api.tags.get
-app.post "/api/tags/:tag_name/:tag_value", api.auth.authenticate, api.auth.admin_auth, api.tags.add
+app.get "/api/account", api.auth.authenticate, api.account.get
+app.post "/api/account", api.auth.authenticate, api.account.update
+
+app.get "/api/tags", api.auth.authenticate, api.tags.get
+app.get "/api/tags/:tag_name", api.auth.authenticate, api.tags.get
+app.post "/api/tags/:tag_name/:tag_value", api.auth.admin_auth, api.tags.add
+app.post "/api/tags", api.auth.admin_auth, api.tags.add
+
+app.post "/api/users", api.auth.admin_auth, api.users.add
+app.get "/api/users", api.auth.admin_auth, api.users.list
+app.get "/api/users/:id", api.auth.admin_auth, api.users.get
 
 http.createServer(app).listen app.get("port"), ->
   console.log "Express server listening on port #{app.get('port')} in #{app.get('env')} mode."

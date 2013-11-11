@@ -23,8 +23,8 @@ exports = module.exports =
     console.log "TODO Admin auth."
     next()
 
-  get_access_token: (req, res) ->
-    username = req.body.username
+  get_access_token: (req, res, next) ->
+    username = req.body.username or req.body.email
     password = req.body.password
     if username? and password?
       req.db.models.user.find {email: username}, (err, users) ->
