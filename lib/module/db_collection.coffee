@@ -15,9 +15,8 @@ exports = module.exports = (models) ->
               device.tags.length > 0
 
             tags = _.map(devices_with_tag, (device) ->
-              data = id: "#{device.workstation_mac}-#{device.serial}", tags: {}
-              data.tags[name] = _.map(n_tags, (tag) -> tag.value) for name, n_tags of _.groupBy(device.tags, (tag) -> tag.name)
-              data
+              id: "#{device.workstation_mac}-#{device.serial}"
+              tags: device.tagList()
             )
             options.success tags
   )

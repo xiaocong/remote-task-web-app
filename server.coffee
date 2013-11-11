@@ -49,9 +49,9 @@ app.get "/api/awesomeThings", api.awesomeThings
 
 app.get "/api/devices", api.auth.authenticate, api.devices.get
 app.get "/api/devices/:device", api.auth.authenticate, api.devices.get
-app.post "/api/devices/:device/tag/:tag_name/:tag_value", api.auth.authenticate, api.devices.tag_device
-app.post "/api/devices/:device/untag/:tag_name/:tag_value", api.auth.authenticate, api.devices.untag_device
-app.delete "/api/devices/:device/tag/:tag_name/:tag_value", api.auth.authenticate, api.devices.untag_device
+app.post "/api/devices/:device/tag/:tag", api.auth.authenticate, api.devices.tag_device
+app.post "/api/devices/:device/untag/:tag", api.auth.authenticate, api.devices.untag_device
+app.delete "/api/devices/:device/tag/:tag", api.auth.authenticate, api.devices.untag_device
 app.get "/api/workstations", api.auth.authenticate, api.workstations.get
 app.get "/api/workstations/:workstation", api.auth.authenticate, api.workstations.get
 app.all ///^/api/workstations/([\d\w:]+)/api/(.+)$///, api.auth.authenticate, api.workstations.api
@@ -61,8 +61,7 @@ app.get "/api/account", api.auth.authenticate, api.account.get
 app.post "/api/account", api.auth.authenticate, api.account.update
 
 app.get "/api/tags", api.auth.authenticate, api.tags.get
-app.get "/api/tags/:tag_name", api.auth.authenticate, api.tags.get
-app.post "/api/tags/:tag_name/:tag_value", api.auth.admin_auth, api.tags.add
+app.post "/api/tags/:tag", api.auth.admin_auth, api.tags.add
 app.post "/api/tags", api.auth.admin_auth, api.tags.add
 
 app.post "/api/users", api.auth.admin_auth, api.users.add

@@ -11,7 +11,7 @@ module.exports =
       res.json req.zk.models.devices.toJSON()
 
   tag_device: (req, res, next) ->
-    req.db.models.tag.find {name: req.param("tag_name"), value: req.param("tag_value")}, (err, tags) ->
+    req.db.models.tag.find tag: req.param("tag"), (err, tags) ->
       return next(err) if err?
       return res.json 500, {error: "No such tag!"} if tags.length is 0
       data = {workstation_mac: req.device.get("workstation").mac, serial: req.device.get("serial")}
@@ -21,7 +21,7 @@ module.exports =
 
         device = devices[0]
         addTags = ->
-          if _.some(device.tags, (t) -> t.id is tags[0].id)
+          if _.some(device.tags, (t) -> t.tag is tags[0].tag)
             res.json 500, error: "The device already has the tag!"
           else
             device.addTags tags, (err) ->
@@ -38,7 +38,7 @@ module.exports =
             addTags()
 
   untag_device: (req, res, next) ->
-    req.db.models.tag.find {name: req.param("tag_name"), value: req.param("tag_value")}, (err, tags) ->
+    req.db.models.tag.find tag: req.param("tag"), (err, tags) ->
       return next(err) if err?
 
       data = {workstation_mac: req.device.get("workstation").mac, serial: req.device.get("serial")}

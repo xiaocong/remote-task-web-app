@@ -21,10 +21,10 @@ exports = module.exports = (db, cb) ->
     propertyToValue: (value, prop) -> value.join(',')
 
   Tag = db.define "tag",
-      name: {type: "enum", values: ["job_type", "user_group"], required: true}
-      value: {type: "text", required: true}
-    , validations:
-        value: orm.enforce.unique scope: ["name"], "Sorry, value already taken for this name!"
+      tag: {type: "text", required: true}
+    ,
+      validations:
+        tag: orm.enforce.unique "Sorry, tag already taken!"
 
   Workstation = db.define "workstation",
     mac: String
@@ -37,17 +37,11 @@ exports = module.exports = (db, cb) ->
   ,
     validations:
       serial: orm.enforce.unique scope: ["workstation_mac"], "Sorry, serial already taken for this workstation!"
+    methods:
+      tagList: ->
+        _.map(@tags, (tag) -> tag.tag)
     autoFetch: true
     cache: false
-    methods:
-      getNamedTags: (name="job_type") ->
-        _.map(_.filter(@tags, (tag) -> tag.name is name), (tag) -> tag.value)
-      getTagNames: ->
-        name for name of _.groupBy(@tags, (tag) -> tag.name)
-      getGroupedTags: ->
-        result = {}
-        result[name] = _.map(tags, (tag) -> tag.value) for name, tags of _.groupBy(@tags, (tag) -> tag.name)
-        result
 
   Device.hasMany "tags", Tag
 
@@ -75,21 +69,11 @@ exports = module.exports = (db, cb) ->
     methods:
       compare: (password)->
         bcrypt.compareSync password, @password
-      getNamedTags: (name="user_group") ->
-        _.map(_.filter(@tags, (tag) -> tag.name is name), (tag) -> tag.value)
-      getTagNames: ->
-        name for name of _.groupBy(@tags, (tag) -> tag.name)
-      getGroupedTags: ->
-        result = {}
-        result[name] = _.map(tags, (tag) -> tag.value) for name, tags of _.groupBy(@tags, (tag) -> tag.name)
-        result
 
   Token = User.extendsTo "token",
     access_token: String
   ,
     timestamp: true
-
-  User.hasMany "tags", Tag
 
   Task.hasOne "creator", User  # required=true
   Repo.hasOne "creator", User  # required=true
@@ -97,7 +81,7 @@ exports = module.exports = (db, cb) ->
   Job = db.define "job",
     no: {type: "number", required: true}
     environ: {type: "object", required: true}
-    device_filter: {type: "object", required: true}  # mac, platform, serial, product, build, locale, tags: {"job_type": '......'}
+    device_filter: {type: "object", required: true}  # mac, platform, serial, product, build, locale, tags: [...]
     repo_url: {type: "text", required: true}
     repo_branch: String
     repo_username: String
