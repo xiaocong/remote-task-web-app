@@ -15,8 +15,8 @@ dbmodule.initialize ->
   waiting_jobs = zk.models.waiting_jobs
 
   schedule = ->
-    waiting_jobs.forEach (job) -> logger.info "Job #{job.id}: status=#{job.get('status')}, lockde=#{job.get('locked')}"
-    devices.forEach (device) -> logger.info "Device #{device.id}: idle=#{device.get('idle')}, lockde=#{device.get('locked')}"
+    waiting_jobs.forEach (job) -> logger.info "Job #{job.id}: status=#{job.get('status')}, locked=#{job.get('locked')}"
+    devices.forEach (device) -> logger.info "Device #{device.id}: idle=#{device.get('idle')}, locked=#{device.get('locked')}"
     waiting_jobs.filter((job) -> not job.get("locked")).forEach (job) ->
       filter = job.get("device_filter") or {}
       devices.filter((dev) -> dev.get("idle") and not dev.get("locked")).forEach (device) ->
