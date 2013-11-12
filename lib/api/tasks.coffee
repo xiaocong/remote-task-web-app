@@ -2,6 +2,7 @@
 
 request = require("request")
 url = require("url")
+logger = require("../logger")
 
 exports = module.exports =
 
@@ -81,5 +82,23 @@ exports = module.exports =
         request.get(url_str, (e, r, body)->)
     ).save (err) ->
       req.redis.publish "db.task", JSON.stringify(method: "cancel", task: id)
-      console.log "cencelled task #{id}."
-    res.send 200
+      logger.info "cencelled task #{id}."
+      res.send 200
+
+  restart: (req, res, next) ->
+    id = Number(req.params.id)
+    req.db.models.job.find({task_id: id}).each((job) ->
+      job.status = "new"
+      if req.zk.models.jobs.get(job.id)?  # stop the running job
+        running_job = req.zk.models.jobs.get(job.id)
+        url_str = url.format(
+          protocol: "http"
+          hostname: running_job.get("ip")
+          port: running_job.get("api").port
+          pathname: "/api/0/#{job.id}/stop"
+        )
+        request.get(url_str, (e, r, body)->)
+    ).save (err) ->
+      req.redis.publish "db.task", JSON.stringify(method: "restart", task: id)
+      logger.info "restart task #{id}."
+      res.send 200

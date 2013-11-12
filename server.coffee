@@ -65,6 +65,7 @@ app.get "/api/tasks", api.auth.authenticate, api.tasks.list
 app.get "/api/tasks/:id", api.auth.authenticate, api.tasks.get
 app.delete "/api/tasks/:id", api.auth.authenticate, api.tasks.remove
 app.post "/api/tasks/:id/cancel", api.auth.authenticate, api.tasks.cancel
+app.post "/api/tasks/:id/restart", api.auth.authenticate, api.tasks.restart
 
 app.get "/api/tags", api.auth.authenticate, api.tags.get
 app.post "/api/tags/:tag", api.auth.admin_auth, api.tags.add
