@@ -1,5 +1,7 @@
 "use strict"
 
+logger = require "../logger"
+
 exports = module.exports = (zk_url, path, db_models, redis, subscriber) ->
   zk = require("./zk_node")(zk_url, path)
 
@@ -16,20 +18,17 @@ exports = module.exports = (zk_url, path, db_models, redis, subscriber) ->
   zk.models.devices.on 'add', updateDeviceTag
   device_tags.on "change add remove", updateDeviceTag
 
-  new_jobs.on "change add remove", (event) ->
-    console.log new_jobs.map (job) -> job.id
-
   subscriber.subscribe "db.device.tag"
   subscriber.subscribe "db.task"
   subscriber.on "message", (channel, message) ->
+    logger.info "Received pub-message: #{channel} - #{message}"
     switch channel
       when "db.device.tag" then device_tags.fetch()
-      when "db.task"
-        console.log "#{channel} - #{message}"
-        new_jobs.fetch()
+      when "db.task", "db.job" then new_jobs.fetch()
 
   "client": zk.client
   "models":
     "workstations": zk.models.workstations
     "jobs": zk.models.jobs
     "devices": zk.models.devices
+    "waiting_jobs": new_jobs
