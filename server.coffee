@@ -60,6 +60,12 @@ app.post "/api/auth/get_access_token", api.auth.get_access_token
 app.get "/api/account", api.auth.authenticate, api.account.get
 app.post "/api/account", api.auth.authenticate, api.account.update
 
+app.post "/api/tasks", api.auth.authenticate, api.tasks.add
+app.get "/api/tasks", api.auth.authenticate, api.tasks.list
+app.get "/api/tasks/:id", api.auth.authenticate, api.tasks.get
+app.delete "/api/tasks/:id", api.auth.authenticate, api.tasks.remove
+app.post "/api/tasks/:id/cancel", api.auth.authenticate, api.tasks.cancel
+
 app.get "/api/tags", api.auth.authenticate, api.tags.get
 app.post "/api/tags/:tag", api.auth.admin_auth, api.tags.add
 app.post "/api/tags", api.auth.admin_auth, api.tags.add

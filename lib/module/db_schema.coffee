@@ -50,6 +50,8 @@ exports = module.exports = (db, cb) ->
     description: String
   ,
     timestamp: true
+    autoFetch: true
+    cache: false
 
   Repo = db.define "repo",
     url: {type: "text", required: true}
@@ -95,13 +97,14 @@ exports = module.exports = (db, cb) ->
       type: "numberArray"
     status:
       type: "enum"
-      values: ["new", "started", "finished"]
+      values: ["new", "started", "finished", "cancelled"]
       defaultValue: "new"
       required: true
     exit_code: Number
   ,
     timestamp: true
     autoFetch: true
+    cache: false
     validations:
       no: orm.enforce.unique scope: ["task_id"], "Sorry, serial already taken for this workstation!"
 
