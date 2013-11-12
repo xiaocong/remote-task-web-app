@@ -15,7 +15,7 @@ app = express()
 app.set "port", process.env.PORT or 3000
 app.enable('trust proxy')
 
-app.use express.logger("dev")
+app.use express.logger(stream: {write: (msg, encode) -> logger.info(msg)})
 app.use dbmodule.setup()
 app.use express.bodyParser()
 app.use express.methodOverride()
