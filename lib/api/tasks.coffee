@@ -5,14 +5,15 @@ url = require("url")
 logger = require("../logger")
 
 stop_job = (running_job)->
+  logger.info running_job.toJSON()
   url_str = url.format(
     protocol: "http"
     hostname: running_job.get("ip")
-    port: running_job.get("api").port
-    pathname: "/api/0/jobs/#{job.id}/stop"
+    port: running_job.get("port")
+    pathname: "/api/0/jobs/#{running_job.id}/stop"
   )
   request.get(url_str, (e, r, body)->)
-  logger.info "Stop running job:#{job.id}."
+  logger.info "Stop running job:#{running_job.id}."
 
 
 exports = module.exports =

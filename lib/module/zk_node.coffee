@@ -3,6 +3,7 @@
 Backbone = require "backbone"
 zookeeper = require "node-zookeeper-client"
 _ = require "underscore"
+logger = require "../logger"
 
 
 exports = module.exports = (zookeeper_url, path) ->
@@ -16,7 +17,7 @@ exports = module.exports = (zookeeper_url, path) ->
     client.getChildren path, (event) ->
       listChildren client, path
     , (error, children, stat) ->
-      return console.log("Failed to list children of #{path} due to: #{error}.") if error
+      return logger.error("Failed to list children of #{path} due to: #{error}.") if error
       getChild(client, path, child) for child in children when not workstations.get child
 
   getChild = (client, path, child) ->
@@ -24,15 +25,15 @@ exports = module.exports = (zookeeper_url, path) ->
       switch event.getType()
         when zookeeper.Event.NODE_DELETED
           workstations.remove id: child
-          console.log "Workstation #{child} removed!"
+          logger.info "Workstation #{child} removed!"
         when zookeeper.Event.NODE_DATA_CHANGED
           getChild client, path, child
-          console.log "Workstation #{child} changed!"
+          logger.info "Workstation #{child} changed!"
     , (error, data, stat) ->
-      return console.log("Failed to get data of #{path} due to: #{error}.") if error
+      return logger.info("Failed to get data of #{path} due to: #{error}.") if error
       ws = JSON.parse data.toString()
       ws.id = child
-      console.log("Add workstation #{ws.id}.") if not workstations.get(child)
+      logger.info("Workstation #{ws.id} added.") if not workstations.get(child)
       workstations.add [ws], merge: true
 
   workstations.on "change add remove", (event) ->
@@ -76,7 +77,7 @@ exports = module.exports = (zookeeper_url, path) ->
     devices.set all_devices
 
   client.once "connected", ->
-    console.log "Connected to ZooKeeper."
+    logger.info "Connected to ZooKeeper."
     listChildren client, path
 
   client.connect()

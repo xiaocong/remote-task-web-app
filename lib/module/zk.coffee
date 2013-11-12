@@ -18,13 +18,13 @@ exports = module.exports = (zk_url, path, db_models, redis, subscriber) ->
   zk.models.devices.on 'add', updateDeviceTag
   device_tags.on "change add remove", updateDeviceTag
 
-  subscriber.subscribe "db.device.tag"
-  subscriber.subscribe "db.task"
+  subscriber.subscribe c for c in ["db.device.tag", "db.task", "db.job"]
   subscriber.on "message", (channel, message) ->
     logger.info "Received pub-message: #{channel} - #{message}"
     switch channel
       when "db.device.tag" then device_tags.fetch()
-      when "db.task", "db.job" then new_jobs.fetch()
+      when "db.task", "db.job"
+        new_jobs.fetch()
 
   "client": zk.client
   "models":
