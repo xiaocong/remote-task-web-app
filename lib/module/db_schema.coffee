@@ -17,7 +17,12 @@ exports = module.exports = (db, cb) ->
   db.defineType "numberArray",
     datastoreType: (prop) -> "TEXT"
     valueToProperty: (value, prop) ->
-      if Array.isArray(value) then value else value.split(',').map((v) -> Number(v))
+      if Array.isArray(value)
+        value
+      else if value.length is 0
+        []
+      else
+        value.split(',').map((v) -> Number(v))
     propertyToValue: (value, prop) -> value.join(',')
 
   Tag = db.define "tag",

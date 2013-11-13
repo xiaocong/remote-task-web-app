@@ -30,7 +30,6 @@ exports = module.exports =
       req.db.models.user.find {email: username}, (err, users) ->
         return next(err) if err?
         user = users[0]
-        console.log user, username
         if user? and user.compare(password)
           user.getToken (err, token) ->
             if err?
