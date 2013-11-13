@@ -12,16 +12,43 @@ dbmodule.initialize ->
   redis = dbmodule.redis()
 
   devices = zk.models.devices
-  waiting_jobs = zk.models.waiting_jobs
+  live_jobs = zk.models.live_jobs
+  zk_jobs = zk.models.jobs
 
   schedule = ->
-    waiting_jobs.forEach (job) -> logger.info "Job #{job.id}: status=#{job.get('status')}, locked=#{job.get('locked')}"
+    live_jobs.forEach (job) -> logger.info "Job #{job.id}: status=#{job.get('status')}, locked=#{job.get('locked')}"
     devices.forEach (device) -> logger.info "Device #{device.id}: idle=#{device.get('idle')}, locked=#{device.get('locked')}"
-    waiting_jobs.filter((job) -> not job.get("locked")).forEach (job) ->
-      filter = job.get("device_filter") or {}
-      devices.filter((dev) -> dev.get("idle") and not dev.get("locked")).forEach (device) ->
-        logger.info "Job #{job.id} matched device #{device.id}!"
-        assign_task(device, job) if match(filter, device)
+    live_jobs.filter((job) -> job.get("status") is "new" and not job.get("locked")).forEach (job) ->
+      if has_exclusive(job) or has_dependency(job)
+        logger.info "Job #{job.id} has #{job.get('r_type')} on #{JSON.stringify(job.get("r_job_nos"))}."
+      else
+        filter = job.get("device_filter") or {}
+        devices.filter((dev) -> dev.get("idle") and not dev.get("locked")).some (device) ->
+          if match(filter, device)
+            logger.info "Assigning Job #{job.id} to device #{device.id}."
+            assign_task(device, job) 
+            return true
+          false
+
+  has_exclusive = (job) ->
+    # return true if any exclusive job is in running or locked status
+    if job.get("r_type") isnt "exclusive" or job.get("r_job_nos").length is 0
+      false
+    else
+      live_jobs.filter((j) ->
+        j.get("task_id") is job.get("task_id") and j.get("no") in job.get("r_job_nos")
+      ).some((j) ->
+        j.get("status") is "new" and j.get("locked") or j.get("status") is "started"
+      )
+
+  has_dependency = (job) ->
+    # return true if any dependent job is in running or waiting status
+    if job.get("r_type") isnt "dependency" or job.get("r_job_nos").length is 0
+      false
+    else
+      live_jobs.some((j) ->
+        j.get("task_id") is job.get("task_id") and j.get("no") in job.get("r_job_nos")
+      )
 
   match = (filter, device) ->
     # filter: mac, platform, serial, product, build, locale, tags: [...]
@@ -67,9 +94,12 @@ dbmodule.initialize ->
     body.repo.username = job.get("repo_username") if job.has("repo_username")
     body.repo.password = job.get("repo_passowrd") if job.has("repo_passowrd")
     body.env["ANDROID_SERIAL"] = device.get("serial")
+    body.env["TASK_ID"] = job.get("task_id")
+    body.env["JOB_NO"] = job.get("no")
     request.post {url: url_str, json: body}, (err, res, body) ->
       if err? or res.statusCode isnt 200
         logger.error "Error response: #{body}"
+        logger.error "Error when assigning job #{job.id} to device #{device.id}"
         job.set {locked: false}, {silent: true}
         device.set {locked: false}
       else
@@ -79,12 +109,27 @@ dbmodule.initialize ->
             job.status = "started"
             job.save (err) ->
               logger.info "Job #{job.id} was saved as started."
-              redis.publish "db.job", JSON.stringify({method: "start", job: job.id})
+              redis.publish "db.job", JSON.stringify({method: "started", job: job.id})
+
+  finish_job = (job) ->
+    logger.info "Job #{job.id} finished."
+    db.models.job.get job.id, (err, job) ->
+      if err
+        logger.error "Error during getting job from DB: #{err}"
+      else
+        job.status = "finished"
+        job.save (err) ->
+          if err
+            logger.error "Error during saving job as finished: #{err}"
+          else
+            redis.publish "db.job", JSON.stringify({method: "finished", job: job.id})
 
   devices.on "change:idle", (event) ->
     devices.filter((device) -> not device.get("idle") and device.get("locked")).forEach (device) ->
       device.set {locked: false}
       logger.info "Device #{device.id} unlocked due to busy."
   devices.on "change add", schedule
-  waiting_jobs.on "change add", schedule
+  live_jobs.on "change add remove", schedule
+  zk_jobs.on "remove", finish_job
+
   schedule()

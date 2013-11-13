@@ -49,6 +49,7 @@ exports = module.exports = (zookeeper_url, path) ->
         "timestamp": job.timestamp
         "platform": "android" if job.env.ANDROID_SERIAL?
         "serial": job.env.ANDROID_SERIAL
+        "env": job.env
     
     all_jobs = _.flatten(ws_jobs, true)
     jobs.set all_jobs

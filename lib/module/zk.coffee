@@ -8,8 +8,8 @@ exports = module.exports = (zk_url, path, db_models, redis, subscriber) ->
   db_collection = require("./db_collection")(db_models)
   device_tags = new db_collection.DeviceTags
   device_tags.fetch()
-  new_jobs = new db_collection.NewJobs
-  new_jobs.fetch()
+  live_jobs = new db_collection.LiveJobs
+  live_jobs.fetch()
 
   updateDeviceTag = (event) ->
     zk.models.devices.forEach (device) ->
@@ -24,11 +24,11 @@ exports = module.exports = (zk_url, path, db_models, redis, subscriber) ->
     switch channel
       when "db.device.tag" then device_tags.fetch()
       when "db.task", "db.job"
-        new_jobs.fetch()
+        live_jobs.fetch()
 
   "client": zk.client
   "models":
     "workstations": zk.models.workstations
     "jobs": zk.models.jobs
     "devices": zk.models.devices
-    "waiting_jobs": new_jobs
+    "live_jobs": live_jobs

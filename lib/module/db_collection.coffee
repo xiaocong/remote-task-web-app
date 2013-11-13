@@ -21,13 +21,13 @@ exports = module.exports = (models) ->
             options.success tags
   )
 
-  NewJobs = Backbone.Collection.extend(
+  LiveJobs = Backbone.Collection.extend(
     sync: (method, model, options) ->
       switch method
         when "read"
-          models.job.find {status: "new"}, (err, jobs) ->
+          models.job.find {status: ["new", "started"]}, (err, jobs) ->
             return options.error(err) if err
             options.success(jobs)
   )
 
-  DeviceTags: DeviceTags, NewJobs: NewJobs
+  DeviceTags: DeviceTags, LiveJobs: LiveJobs
