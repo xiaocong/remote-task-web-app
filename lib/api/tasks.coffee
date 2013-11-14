@@ -2,6 +2,7 @@
 
 request = require("request")
 url = require("url")
+_ = require("underscore")
 logger = require("../logger")
 
 stop_job = (running_job)->
@@ -33,6 +34,9 @@ exports = module.exports =
       job["r_job_nos"] ?= []
       job["status"] = "new"
       job["no"] ?= index
+
+    if not name or not _.every(jobs, (j) -> j.repo_url?) or _.size(_.countBy(jobs, (job) -> job.no)) isnt jobs.length
+      return res.json 500, error: "Invalid parameters."
 
     req.db.models.task.create [{name: name, description: description, creator_id: req.user.id}], (err, tasks) ->
       return next(err) if err?

@@ -72,9 +72,7 @@ dbmodule.initialize ->
       return false if "version" of filter.build and _.some((p for p of filter.build.version), (p) -> filter.build.version[p] isnt device.get("build").version[p])
     if "tags" of filter  # tags is mandatory for filter, if it's empty, then the match result is always false.
       tags = if filter.tags instanceof Array then filter.tags else [filter.tags]
-      return false if _.some(tags, (tag)-> tag not in (device.get("tags") or [])) or tags.length is 0
-    else
-      return false
+      return false if _.some(tags, (tag)-> tag not in (device.get("tags") or []))
     return true    
 
   assign_task = (device, job) ->

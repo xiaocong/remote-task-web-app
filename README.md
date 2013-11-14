@@ -360,7 +360,7 @@
         }
 
     Notes:
-    - `name`, `jobs`, `jobs[].repo_url`, `jobs[].device_filter.tags` are mandatory.
+    - `name`, `jobs`, `jobs[].repo_url` are mandatory.
     - `name` is a human readable string for the task.
     - 'jobs' is a job array of the task.
     - `jobs[].no` is internal job identifier in the task, it should be bwtween 0 and `jobs.length-1`, used in `r_job_nos`. If not assigned, it will be set as the index in the jobs array.
@@ -371,7 +371,7 @@
     - `jobs[].r_job_nos` is an array of `jobs[].no`.
     - `jobs[].repo_url` is the repo url of the job.
     - `jobs[].device_filter` is the filter condition for the job. When its all fields have the same value as a device, it means the device can run the job.
-    - `jobs[].device_filter.tags` is a special filter condition. Matched device must has all tags in it. It MUST not be empty.
+    - `jobs[].device_filter.tags` contains all required tags. Matched device must has all tags in it.
     - `jobs[].environ` contains all variables that will be passed to job shell environment.
     - `environ`, `device_filter`, `repo_url`, `repo_branch` can be set once at the same level of `jobs`, if you want not to set it at all jobs.
 
