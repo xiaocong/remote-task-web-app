@@ -72,7 +72,7 @@ dbmodule.initialize ->
       return false if "version" of filter.build and _.some((p for p of filter.build.version), (p) -> filter.build.version[p] isnt device.get("build").version[p])
     if "tags" of filter  # tags is mandatory for filter, if it's empty, then the match result is always false.
       tags = if filter.tags instanceof Array then filter.tags else [filter.tags]
-      return false if _.some(tags, (tag)-> tag not in device.get("tags")) or tags.length is 0
+      return false if _.some(tags, (tag)-> tag not in (device.get("tags") or [])) or tags.length is 0
     else
       return false
     return true    
@@ -117,30 +117,22 @@ dbmodule.initialize ->
     port = event.get("port")
     logger.info "Job #{id} finished."
 
-    db.models.job.get id, (err, job) ->
-      if err
-        logger.error "Error during getting job from DB: #{err}"
-      else
-        job.status = "finished"
-        job.save (err) ->
-          if err
-            logger.error "Error during saving job as finished: #{err}"
-          else
-            redis.publish "db.job", JSON.stringify({method: "finished", job: job.id})
-        url_str = url.format(
-          protocol: "http"
-          hostname: hostname
-          port: port
-          pathname: "/api/0/jobs/#{id}"
-        )
-        request.get url_str, (err, r, b) ->
-          if err
-            logger.error "Error when retrieving job result from workstation: #{err}"
-          else
-            db.models.job.get id, (err, job) ->
-              job.exit_code = JSON.parse(b).exit_code
-              job.save (err) ->
-                logger.error "DB error: #{err}" if err
+    db.models.job.find({id: id, status: "started"}).each((job) -> # to avoid user cancels or restarts job.
+      job.status = "finished"
+    ).save (err) ->
+      return logger.error("Error during saving job as finished: #{err}") if err?
+      redis.publish "db.job", JSON.stringify({method: "finished", job: id})
+      url_str = url.format(
+        protocol: "http"
+        hostname: hostname
+        port: port
+        pathname: "/api/0/jobs/#{id}"
+      )
+      request.get url_str, (err, r, b) ->
+        return logger.error("Error when retrieving job result from workstation: #{err}") if err?
+        db.models.job.get id, (err, job) ->
+          job.exit_code = JSON.parse(b).exit_code
+          job.save((err) -> logger.error "DB error: #{err}" if err)
 
   devices.on "change:idle", (event) ->
     devices.filter((device) -> not device.get("idle") and device.get("locked")).forEach (device) ->
