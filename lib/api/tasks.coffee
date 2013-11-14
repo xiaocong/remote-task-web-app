@@ -44,10 +44,7 @@ exports = module.exports =
         req.redis.publish "db.task", JSON.stringify(method: "add", task: tasks[0].id)
 
   get: (req, res, next) ->
-    id = req.params.id
-    req.db.models.task.get id, (err, task) ->
-      return next(err) if err?
-      res.json task
+    res.json req.task
 
   list: (req, res, next) ->
     page = Number(req.param("page")) or 0
@@ -57,22 +54,20 @@ exports = module.exports =
       res.json tasks
 
   remove: (req, res, next) ->
-    id = Number(req.params.id)
-    req.db.models.task.get id, (err, task) ->
+    # calcel running jobs of the task
+    id = req.task.id
+    req.task.jobs.forEach (job) ->
+      stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?  # stop the running job
+    req.task.remove (err) ->
       return next(err) if err?
-      # calcel running jobs of the task
-      task.jobs.forEach (job) ->
-        stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?  # stop the running job
-      task.remove (err) ->
+      req.db.models.job.find(task_id: id).remove (err) ->
         return next(err) if err?
-        req.db.models.job.find(task_id: id).remove (err) ->
-          return next(err) if err?
-          res.send 200
-          req.redis.publish "db.task", JSON.stringify(method: "delete", task: id)
-          logger.info "Task:#{id} removed."
+        res.send 200
+        req.redis.publish "db.task", JSON.stringify(method: "delete", task: id)
+        logger.info "Task:#{id} removed."
 
   cancel: (req, res, next) ->
-    id = Number(req.params.id)
+    id = req.task.id
     req.db.models.job.find({task_id: id, status: ["new", "started"]}).each((job) ->
       job.status = "cancelled"
       stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?  # stop the running job
@@ -82,7 +77,7 @@ exports = module.exports =
       logger.info "Task:#{id} cancelled."
 
   restart: (req, res, next) ->
-    id = Number(req.params.id)
+    id = req.task.id
     req.db.models.job.find({task_id: id}).each((job) ->
       job.status = "new"
       stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?  # stop the running job

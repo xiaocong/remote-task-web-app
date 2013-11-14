@@ -16,4 +16,10 @@ exports.device = (req, res, next, id) ->
   else
     res.json 500, error: "No specified device."
 
+exports.task = (req, res, next, id) ->
+  req.db.models.task.get id, (err, task) ->
+    return res.json(500, error: err) if err?
+    req.task = task
+    next()
+
 module.exports = exports

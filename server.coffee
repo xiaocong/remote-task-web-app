@@ -44,6 +44,7 @@ app.use (err, req, res, next) ->
 
 app.param "workstation", param.workstation
 app.param "device", param.device
+app.param "task", param.task
 
 app.get "/api/awesomeThings", api.awesomeThings
 
@@ -62,10 +63,10 @@ app.post "/api/account", api.auth.authenticate, api.account.update
 
 app.post "/api/tasks", api.auth.authenticate, api.tasks.add
 app.get "/api/tasks", api.auth.authenticate, api.tasks.list
-app.get "/api/tasks/:id", api.auth.authenticate, api.tasks.get
-app.delete "/api/tasks/:id", api.auth.authenticate, api.tasks.remove
-app.post "/api/tasks/:id/cancel", api.auth.authenticate, api.tasks.cancel
-app.post "/api/tasks/:id/restart", api.auth.authenticate, api.tasks.restart
+app.get "/api/tasks/:task", api.auth.authenticate, api.tasks.get
+app.delete "/api/tasks/:task", api.auth.authenticate, api.tasks.remove
+app.post "/api/tasks/:task/cancel", api.auth.authenticate, api.tasks.cancel
+app.post "/api/tasks/:task/restart", api.auth.authenticate, api.tasks.restart
 
 app.get "/api/tags", api.auth.authenticate, api.tags.get
 app.post "/api/tags/:tag", api.auth.admin_auth, api.tags.add
