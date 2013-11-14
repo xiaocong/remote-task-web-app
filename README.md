@@ -31,12 +31,15 @@
 ## Users
 
 - Create
+
         POST /api/users
         
         {"email":"xxxx@example.com", "password":"xxxx"}
 
     Both json and form are supported.
+    
     Example:
+
         $ http http://localhost:9000/api/users email=my@test.com password=xxxx
         HTTP/1.1 200 OK
         Connection: keep-alive
@@ -54,8 +57,11 @@
         }
 
 - Get all
+
         GET /api/users
+
     Examples:
+
         $ http http://localhost:9000/api/users
         HTTP/1.1 200 OK
         Connection: keep-alive
@@ -82,8 +88,11 @@
         ]
 
 - Get one
+
         GET /api/users/:id
+
     Examples:
+
         $ http http://localhost:9000/api/users/5
         HTTP/1.1 200 OK
         Connection: keep-alive
@@ -103,8 +112,11 @@
 ## Tags
 
 - Add
+
         POST /api/tags/:tag
+
     Example:
+
         $ http POST http://localhost:9000/api/tags/new_tag
         HTTP/1.1 200 OK
         Connection: keep-alive
@@ -116,8 +128,11 @@
         OK
 
 - Get
+
         GET /api/tags?access_token=:access_token
+
     Examples:
+
         $ http http://localhost:9000/api/tags access_token==162ac900-4cd3-11e3-ba42-1fb848ccf3b3
         HTTP/1.1 200 OK
         Connection: keep-alive
@@ -138,10 +153,13 @@
 ## Auth
 
 - Get access token
+
         POST /api/auth/get_access_token
 
         {"email": "my@test.com", "password": "xxxx"}
+
     Examples:
+
         $ http http://localhost:9000/api/auth/get_access_token email=my@test.com password=xxxx
         HTTP/1.1 200 OK
         Connection: keep-alive
@@ -159,8 +177,11 @@
 ## Devices
 
 - Get attached devices
+
         GET /api/devices?access_token=:access_token
+
     Examples:
+
         $ http http://localhost:9000/api/devices access_token==162ac900-4cd3-11e3-ba42-1fb848ccf3b3
         HTTP/1.1 200 OK
         Connection: keep-alive
@@ -252,8 +273,11 @@
         ]
 
 - Add a tag to device
+
         POST /api/devices/:device/tag/:tag?access_token=:access_token
+
     Examples:
+
         $ http POST http://localhost:9000/api/devices/00:26:b9:e7:a2:3b-CLV6ECA4D58/tag/new_tag access_token==162ac900-4cd3-11e3-ba42-1fb848ccf3b3
         HTTP/1.1 200 OK
         Connection: keep-alive
@@ -265,8 +289,11 @@
         OK
 
 - Remove a tag from device
+
         POST /api/devices/:device/untag/:tag?access_token=:access_token
+
     Examples:
+
         $ http POST http://localhost:9000/api/devices/00:26:b9:e7:a2:3b-CLV6ECA4D58/untag/new_tag access_token==162ac900-4cd3-11e3-ba42-1fb848ccf3b3
         HTTP/1.1 200 OK
         Connection: keep-alive
@@ -280,6 +307,7 @@
 ## Tasks
 
 - Add a task
+
         POST /api/tasks?access_token=:access_token
 
         {
@@ -330,6 +358,7 @@
                 ...
             ], 
         }
+
     Notes:
     - `name`, `jobs`, `jobs[].repo_url`, `jobs[].device_filter.tags` are mandatory.
     - `name` is a human readable string for the task.
@@ -347,6 +376,7 @@
     - `environ`, `device_filter`, `repo_url`, `repo_branch` can be set once at the same level of `jobs`, if you want not to set it at all jobs.
 
     Examples:
+
         $ http POST http://localhost:9000/api/tasks access_token==4e223fd0-4aaa-11e3-9d0d-396a84243921 jobs:='[{},{},{}]' repo_url=https://github.com/xiaocong/demo_test.git environ:='{"W":1}' name=t device_filter:='{"tags":["device"]}'
         HTTP/1.1 200 OK
         Connection: keep-alive
