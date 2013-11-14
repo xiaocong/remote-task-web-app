@@ -346,4 +346,96 @@
     - `jobs[].environ` contains all variables that will be passed to job shell environment.
     - `environ`, `device_filter`, `repo_url`, `repo_branch` can be set once at the same level of `jobs`, if you want not to set it at all jobs.
 
+    Examples:
+        $ http POST http://localhost:9000/api/tasks access_token==4e223fd0-4aaa-11e3-9d0d-396a84243921 jobs:='[{},{},{}]' repo_url=https://github.com/xiaocong/demo_test.git environ:='{"W":1}' name=t device_filter:='{"tags":["device"]}'
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 1833
+        Content-Type: application/json; charset=utf-8
+        Date: Thu, 14 Nov 2013 03:11:59 GMT
+        X-Powered-By: Express
+
+        {
+            "created_at": "2013-11-14T03:11:59.560Z", 
+            "creator_id": 1, 
+            "description": "", 
+            "id": 12, 
+            "jobs": [
+                {
+                    "created_at": "2013-11-14T03:11:59.613Z", 
+                    "device_filter": {
+                        "tags": [
+                            "device"
+                        ]
+                    }, 
+                    "device_id": null, 
+                    "environ": {
+                        "W": 1
+                    }, 
+                    "exit_code": null, 
+                    "id": 34, 
+                    "modified_at": "2013-11-14T03:11:59.613Z", 
+                    "no": 0, 
+                    "r_job_nos": [], 
+                    "r_type": "none", 
+                    "repo_branch": null, 
+                    "repo_passowrd": null, 
+                    "repo_url": "https://github.com/xiaocong/demo_test.git", 
+                    "repo_username": null, 
+                    "status": "new", 
+                    "task_id": 12
+                }, 
+                {
+                    "created_at": "2013-11-14T03:11:59.655Z", 
+                    "device_filter": {
+                        "tags": [
+                            "device"
+                        ]
+                    }, 
+                    "device_id": null, 
+                    "environ": {
+                        "W": 1
+                    }, 
+                    "exit_code": null, 
+                    "id": 35, 
+                    "modified_at": "2013-11-14T03:11:59.655Z", 
+                    "no": 1, 
+                    "r_job_nos": [], 
+                    "r_type": "none", 
+                    "repo_branch": null, 
+                    "repo_passowrd": null, 
+                    "repo_url": "https://github.com/xiaocong/demo_test.git", 
+                    "repo_username": null, 
+                    "status": "new", 
+                    "task_id": 12
+                }, 
+                {
+                    "created_at": "2013-11-14T03:11:59.704Z", 
+                    "device_filter": {
+                        "tags": [
+                            "device"
+                        ]
+                    }, 
+                    "device_id": null, 
+                    "environ": {
+                        "W": 1
+                    }, 
+                    "exit_code": null, 
+                    "id": 36, 
+                    "modified_at": "2013-11-14T03:11:59.704Z", 
+                    "no": 2, 
+                    "r_job_nos": [], 
+                    "r_type": "none", 
+                    "repo_branch": null, 
+                    "repo_passowrd": null, 
+                    "repo_url": "https://github.com/xiaocong/demo_test.git", 
+                    "repo_username": null, 
+                    "status": "new", 
+                    "task_id": 12
+                }
+            ], 
+            "modified_at": "2013-11-14T03:11:59.560Z", 
+            "name": "t"
+        }
+
 [httpie]: https://github.com/jkbr/httpie
