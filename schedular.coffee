@@ -5,6 +5,7 @@ request = require("request")
 url = require("url")
 logger = require("./lib/logger")
 _ = require("underscore")
+Backbone = require ("backbone")
 
 dbmodule.initialize ->
   zk = dbmodule.zk()
@@ -14,13 +15,14 @@ dbmodule.initialize ->
   devices = zk.models.devices
   live_jobs = zk.models.live_jobs
   zk_jobs = zk.models.jobs
+  events = _.extend {}, Backbone.Events
 
   schedule = ->
-    live_jobs.forEach (job) -> logger.info "Job #{job.id}: status=#{job.get('status')}, locked=#{job.get('locked')}"
-    devices.forEach (device) -> logger.info "Device #{device.id}: idle=#{device.get('idle')}, locked=#{device.get('locked')}"
+    live_jobs.forEach (job) -> logger.debug "Job #{job.id}: status=#{job.get('status')}, locked=#{job.get('locked')}"
+    devices.forEach (device) -> logger.debug "Device #{device.id}: idle=#{device.get('idle')}, locked=#{device.get('locked')}"
     live_jobs.filter((job) -> job.get("status") is "new" and not job.get("locked")).forEach (job) ->
       if has_exclusive(job) or has_dependency(job)
-        logger.info "Job #{job.id} has #{job.get('r_type')} on #{JSON.stringify(job.get("r_job_nos"))}."
+        logger.debug "Job #{job.id} has #{job.get('r_type')} on #{JSON.stringify(job.get("r_job_nos"))}."
       else
         filter = job.get("device_filter") or {}
         devices.filter((dev) -> dev.get("idle") and not dev.get("locked")).some (device) ->
@@ -96,18 +98,12 @@ dbmodule.initialize ->
     body.env["JOB_NO"] = job.get("no")
     request.post {url: url_str, json: body}, (err, res, body) ->
       if err? or res.statusCode isnt 200
-        logger.error "Error response: #{body}"
-        logger.error "Error when assigning job #{job.id} to device #{device.id}"
-        job.set {locked: false}, {silent: true}
+        logger.error "Error when assigning job #{job.id} to device #{device.id}, response is #{body}"
+        job.set {locked: false}, {silent: true} # triggered by device change next step, so silent for job change.
         device.set {locked: false}
       else
         db.models.device.find {workstation_mac: device.get("workstation").mac, serial: device.get("serial")}, (err, devices) ->
-          db.models.job.get job.id, (err, job) ->
-            job.device_id = devices[0].id
-            job.status = "started"
-            job.save (err) ->
-              logger.info "Job #{job.id} was saved as started."
-              redis.publish "db.job", JSON.stringify({method: "started", job: job.id})
+          events.trigger("update:job", {find:{id: job.id}, update: {device_id: devices[0].id, status: "started"}}) if devices?.length > 0
 
   finish_job = (event) ->
     id = event.id
@@ -115,29 +111,40 @@ dbmodule.initialize ->
     port = event.get("port")
     logger.info "Job #{id} finished."
 
-    db.models.job.find({id: id, status: "started"}).each((job) -> # to avoid user cancels or restarts job.
-      job.status = "finished"
-    ).save (err) ->
-      return logger.error("Error during saving job as finished: #{err}") if err?
-      redis.publish "db.job", JSON.stringify({method: "finished", job: id})
-      url_str = url.format(
-        protocol: "http"
-        hostname: hostname
-        port: port
-        pathname: "/api/0/jobs/#{id}"
-      )
-      request.get url_str, (err, r, b) ->
-        return logger.error("Error when retrieving job result from workstation: #{err}") if err?
-        db.models.job.get id, (err, job) ->
-          job.exit_code = JSON.parse(b).exit_code
-          job.save((err) -> logger.error "DB error: #{err}" if err)
+    events.trigger("update:job",
+      find:{id: id, status: "started"}
+      update: {status: "finished"}
+      callback: (err) ->
+        return logger.error("Error during saving job as finished: #{err}") if err?
+        url_str = url.format(
+          protocol: "http"
+          hostname: hostname
+          port: port
+          pathname: "/api/0/jobs/#{id}"
+        )
+        request.get url_str, (err, r, b) ->
+          return logger.error("Error when retrieving job result from workstation: #{err}") if err?
+          events.trigger "update:job", {find:{id: id}, update: {exit_code: JSON.parse(b).exit_code}}
+    )
 
-  devices.on "change:idle", (event) ->
-    devices.filter((device) -> not device.get("idle") and device.get("locked")).forEach (device) ->
-      device.set {locked: false}
-      logger.info "Device #{device.id} unlocked due to busy."
-  devices.on "change add", schedule
-  live_jobs.on "change add remove", schedule
+  devices.on "change add", (device) -> # when there is an unlocked and idle device, we should schedule.
+    schedule() if device.get("idle") and not device.get("locked")
+  live_jobs.on "change add", (job) -> # when there is an unlocked and new job, we should schedule.
+    schedule() if job.get("status") is "new" and not job.get("locked")
+  live_jobs.on "remove", schedule # when a running removed, some dependent/exclusive jobs need to be scheduled.
+  devices.on "change:idle", (device) -> # unset locked in case of device status change
+    device.set({locked: false}, {silent: not device.get("idle")}) if device.get("locked")
+  live_jobs.on "change:status", (job) -> # unset locked in case of job status change due to started or restart
+    job.set({locked: false}, {silent: job.get("status") isnt "new"}) if job.get("locked")
   zk_jobs.on "remove", finish_job
+
+  events.on "update:job", (msg) ->
+    logger.debug "Find jobs #{JSON.stringify(msg.find)} and update to #{JSON.stringify(msg.update)}"
+    db.models.job.find(msg.find).each((job) ->
+      _.each msg.update, (v, p)-> job[p] = v
+    ).save (err) ->
+      return msg.callback?(err) if err?
+      redis.publish "db.job", JSON.stringify({find: msg.find, update: msg.update})
+      msg.callback?()
 
   schedule()
