@@ -65,11 +65,11 @@ dbmodule.initialize ->
     return false if "mac" of filter and device.get("workstation").mac isnt filter.mac
     return false if "serial" of filter and device.get("serial") isnt filter.serial
     return false if "platform" of filter and device.get("platform") isnt filter.platform
-    return false if "product" of filter and _.some((p for p of filter.product), (p) -> filter.product[p] isnt device.get("product")[p])
-    return false if "locale" of filter and _.some((p for p of filter.locale), (p) -> filter.locale[p] isnt device.get("locale")[p])
+    return false if "product" of filter and _.some(filter.product, (v, p) -> v isnt device.get("product")[p])
+    return false if "locale" of filter and _.some(filter.locale, (v, p) -> v isnt device.get("locale")[p])
     if "build" of filter
-      return false if _.some((p for p of filter.build when p isnt "version"), (p) -> filter.build[p] isnt device.get("build")[p])
-      return false if "version" of filter.build and _.some((p for p of filter.build.version), (p) -> filter.build.version[p] isnt device.get("build").version[p])
+      return false if _.some(filter.build, (v, p) -> p isnt "version" and v isnt device.get("build")[p])
+      return false if "version" of filter.build and _.some(filter.build.version, (v, p) -> v isnt device.get("build").version[p])
     if "tags" of filter  # tags is mandatory for filter, if it's empty, then the match result is always false.
       tags = if filter.tags instanceof Array then filter.tags else [filter.tags]
       return false if _.some(tags, (tag)-> tag not in (device.get("tags") or []))
