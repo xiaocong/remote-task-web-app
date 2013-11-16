@@ -36,8 +36,14 @@ exports = module.exports =
       job["no"] ?= index
       job["priority"] ?= 1  # 1 - 10. default 1 means lowest. 10 means highest.
 
-    if not name or not _.every(jobs, (j) -> j.repo_url?) or _.size(_.countBy(jobs, (job) -> job.no)) isnt jobs.length
-      return res.json 500, error: "Invalid parameters."
+    if not name
+      return res.json 500, error: "Empty task name."
+    else if not _.every(jobs, (j) -> j.repo_url?)
+      return res.json 500, error: "'repo_url' is mandatory for every job."
+    else if _.size(_.countBy(jobs, (job) -> job.no)) isnt jobs.length
+      return res.json 500, error: "Duplicated job no."
+    else if not _.every(jobs, (j) -> j.device_filter?.tags?.length > 0)
+      return res.json 500, error: "Every job should define at least one tag in 'device_filter.tags'."
 
     req.db.models.task.create [{name: name, description: description, creator_id: req.user.id}], (err, tasks) ->
       return next(err) if err?

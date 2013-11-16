@@ -86,7 +86,7 @@ exports = module.exports = (db, cb) ->
   Repo.hasOne "creator", User  # required=true
 
   Job = db.define "job",
-    no: {type: "number", required: true}
+    no: {type: "number", rational: false, required: true}
     environ: {type: "object", required: true}
     device_filter: {type: "object", required: true}  # mac, platform, serial, product, build, locale, tags: [...]
     repo_url: {type: "text", required: true}
@@ -112,7 +112,7 @@ exports = module.exports = (db, cb) ->
     autoFetch: true
     cache: false
     validations:
-      no: orm.enforce.unique scope: ["task_id"], "Sorry, serial already taken for this workstation!"
+      no: orm.enforce.unique scope: ["task_id"]
       priority: orm.enforce.ranges.number(1, 10)
 
   Job.hasOne "device", Device,
