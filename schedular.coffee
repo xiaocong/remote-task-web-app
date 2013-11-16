@@ -20,7 +20,7 @@ dbmodule.initialize ->
   schedule = ->
     live_jobs.forEach (job) -> logger.debug "Job #{job.id}: status=#{job.get('status')}, locked=#{job.get('locked')}"
     devices.forEach (device) -> logger.debug "Device #{device.id}: idle=#{device.get('idle')}, locked=#{device.get('locked')}"
-    live_jobs.filter((job) -> job.get("status") is "new" and not job.get("locked")).forEach (job) ->
+    [10..1].forEach (priority) -> live_jobs.filter((job) -> job.get("priority") is priority and job.get("status") is "new" and not job.get("locked")).forEach (job) ->
       if has_exclusive(job) or has_dependency(job)
         logger.debug "Job #{job.id} has #{job.get('r_type')} on #{JSON.stringify(job.get("r_job_nos"))}."
       else

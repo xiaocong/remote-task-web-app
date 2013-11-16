@@ -93,6 +93,7 @@ exports = module.exports = (db, cb) ->
     repo_branch: String
     repo_username: String
     repo_passowrd: String
+    priority: {type: "number", rational: false, required: true, defaultValue: 1}
     r_type:
       type: "enum"
       values: ["none", "exclusive", "dependency"]
@@ -112,6 +113,7 @@ exports = module.exports = (db, cb) ->
     cache: false
     validations:
       no: orm.enforce.unique scope: ["task_id"], "Sorry, serial already taken for this workstation!"
+      priority: orm.enforce.ranges.number(1, 10)
 
   Job.hasOne "device", Device,
     required: false
