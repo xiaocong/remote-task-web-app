@@ -74,7 +74,8 @@ dbmodule.initialize ->
       return false if "version" of filter.build and _.some(filter.build.version, (v, p) -> v isnt device.get("build").version[p])
     if "tags" of filter  # tags is mandatory for filter, if it's empty, then the match result is always false.
       tags = if filter.tags instanceof Array then filter.tags else [filter.tags]
-      return false if _.some(tags, (tag)-> tag not in (device.get("tags") or []))
+      device_tags = device.get("tags") or []
+      return false if device_tags.length is 0 or _.some(tags, (tag)-> tag not in device_tags)
     return true    
 
   assign_task = (device, job) ->
@@ -127,6 +128,8 @@ dbmodule.initialize ->
           events.trigger "update:job", {find:{id: id}, update: {exit_code: JSON.parse(b).exit_code}}
     )
 
+  devices.on "add", (device) ->
+    db.models.device.create [{workstation_mac: device.get("workstation").mac, serial: device.get("serial")}], ->
   devices.on "change add", (device) -> # when there is an unlocked and idle device, we should schedule.
     schedule() if device.get("idle") and not device.get("locked")
   live_jobs.on "change add", (job) -> # when there is an unlocked and new job, we should schedule.
