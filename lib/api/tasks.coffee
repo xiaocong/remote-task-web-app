@@ -24,7 +24,7 @@ exports = module.exports =
     jobs = req.param("jobs")
     return next(new Error("Invalid parameters!")) if not name?  or jobs not instanceof Array or jobs.length is 0
 
-    properties = ["environ", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
+    properties = ["environ", "priority", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
     jobs.forEach (job, index) ->
       for prop in properties when prop not of job and req.param(prop)?
         job[prop] = req.param(prop)
@@ -34,6 +34,7 @@ exports = module.exports =
       job["r_job_nos"] ?= []
       job["status"] = "new"
       job["no"] ?= index
+      job["priority"] ?= 1  # 1 - 10. default 1 means lowest. 10 means highest.
 
     if not name or not _.every(jobs, (j) -> j.repo_url?) or _.size(_.countBy(jobs, (job) -> job.no)) isnt jobs.length
       return res.json 500, error: "Invalid parameters."
