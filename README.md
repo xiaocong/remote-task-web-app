@@ -319,6 +319,7 @@
                     "r_job_nos": [0, 1, 2],
                     "repo_url": "https://github.com/xiaocong/demo_test.git",
                     "repo_branch": "master",
+                    "priority": 1,
                     "device_filter": {
                         "mac": "00:26:b9:e7:a2:3b",
                         "serial": "014E05DE0F02000E",
@@ -370,10 +371,11 @@
         - `dependency`, means the job should not be run if any one in `r_job_nos` is not finished.
     - `jobs[].r_job_nos` is an array of `jobs[].no`.
     - `jobs[].repo_url` is the repo url of the job.
+    - `jobs[].priority` is the priority of the job. It can be any integer from 1 to 10, priority from low to high.
     - `jobs[].device_filter` is the filter condition for the job. When its all fields have the same value as a device, it means the device can run the job.
     - `jobs[].device_filter.tags` contains all required tags. Matched device must has all tags in it.
     - `jobs[].environ` contains all variables that will be passed to job shell environment.
-    - `environ`, `device_filter`, `repo_url`, `repo_branch` can be set once at the same level of `jobs`, if you want not to set it at all jobs.
+    - `environ`, `device_filter`, `repo_url`, `repo_branch`, `priority` can be set once at the same level of `jobs`, if you want not to set it at every job.
 
     Examples:
 
