@@ -15,7 +15,7 @@ exports = module.exports = (models) ->
               device.tags.length > 0
 
             tags = _.map(devices_with_tag, (device) ->
-              id: "#{device.workstation_mac}-#{device.serial}"
+              id: "#{device.getDeviceID()}"
               tags: device.tagList()
             )
             options.success tags

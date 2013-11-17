@@ -45,6 +45,8 @@ exports = module.exports = (db, cb) ->
     methods:
       tagList: ->
         _.map(@tags, (tag) -> tag.tag)
+      getDeviceID: ->
+        "#{@workstation_mac}-#{@serial}"
     autoFetch: true
     cache: false
 

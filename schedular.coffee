@@ -103,6 +103,7 @@ dbmodule.initialize ->
         job.set {locked: false}, {silent: true} # triggered by device change next step, so silent for job change.
         device.set {locked: false}
       else
+        job.set {assigned_device: device.id}, {silent: true}
         db.models.device.find {workstation_mac: device.get("workstation").mac, serial: device.get("serial")}, (err, devices) ->
           events.trigger("update:job", {find:{id: job.id}, update: {device_id: devices[0].id, status: "started"}}) if devices?.length > 0
 
@@ -132,13 +133,19 @@ dbmodule.initialize ->
     db.models.device.create [{workstation_mac: device.get("workstation").mac, serial: device.get("serial")}], ->
   devices.on "change add", (device) -> # when there is an unlocked and idle device, we should schedule.
     schedule() if device.get("idle") and not device.get("locked")
+
   live_jobs.on "change add", (job) -> # when there is an unlocked and new job, we should schedule.
     schedule() if job.get("status") is "new" and not job.get("locked")
-  live_jobs.on "remove", schedule # when a running removed, some dependent/exclusive jobs need to be scheduled.
-  devices.on "change:idle", (device) -> # unset locked in case of device status change
-    device.set({locked: false}, {silent: not device.get("idle")}) if device.get("locked")
+  live_jobs.on "remove", (job) ->
+    devices.get(job.get("assigned_device"))?.unset("locked", {silent: true}) if job.has("assigned_device")
+    schedule()  # when a running removed, some dependent/exclusive jobs need to be scheduled.
   live_jobs.on "change:status", (job) -> # unset locked in case of job status change due to started or restart
-    job.set({locked: false}, {silent: job.get("status") isnt "new"}) if job.get("locked")
+    if job.get("status") is "new"
+      if job.has("assigned_device")
+        devices.get(job.get("assigned_device"))?.unset("locked")
+        job.unset("assigned_device", silent: true)
+      job.unset("locked")
+
   zk_jobs.on "remove", finish_job
 
   events.on "update:job", (msg) ->
