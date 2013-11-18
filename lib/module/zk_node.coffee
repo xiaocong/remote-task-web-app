@@ -83,7 +83,7 @@ exports = module.exports = (zookeeper_url, path) ->
 
   client.connect()
 
-  "client": client
+  "client": -> client
   "models":
     "workstations": workstations
     "jobs": jobs
