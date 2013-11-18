@@ -46,7 +46,8 @@ exports = module.exports = (zookeeper_url, path) ->
         "ip": ws.get "ip"
         "port": ws.get("api").port
         "job_id": job.job_id
-        "timestamp": job.timestamp
+        "started_at": job.started_at
+        "exclusive": job.exclusive ? true
         "platform": "android" if job.env.ANDROID_SERIAL?
         "serial": job.env.ANDROID_SERIAL
         "env": job.env
@@ -71,7 +72,7 @@ exports = module.exports = (zookeeper_url, path) ->
 
     all_devices = _.map _.flatten(ws_devices, true), (device) ->
       device.idle = not _.some(all_jobs, (job) ->
-        "#{job.mac}-#{job.serial}" is device.id and job.platform is device.platform
+        "#{job.mac}-#{job.serial}" is device.id and job.platform is device.platform and job.exclusive
       )
       device
 
