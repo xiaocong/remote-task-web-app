@@ -1,6 +1,9 @@
+"use strict"
+
 Backbone = require "backbone"
 zookeeper = require "node-zookeeper-client"
 _ = require "underscore"
+logger = require "../logger"
 
 
 exports = module.exports = (zookeeper_url, path) ->
@@ -14,9 +17,7 @@ exports = module.exports = (zookeeper_url, path) ->
     client.getChildren path, (event) ->
       listChildren client, path
     , (error, children, stat) ->
-      if error
-        console.log "Failed to list children of %s due to: %s.", path, error
-        return
+      return logger.error("Failed to list children of #{path} due to: #{error}.") if error
       getChild(client, path, child) for child in children when not workstations.get child
 
   getChild = (client, path, child) ->
@@ -24,17 +25,15 @@ exports = module.exports = (zookeeper_url, path) ->
       switch event.getType()
         when zookeeper.Event.NODE_DELETED
           workstations.remove id: child
-          console.log "Workstation #{child} removed!"
+          logger.info "Workstation #{child} removed!"
         when zookeeper.Event.NODE_DATA_CHANGED
           getChild client, path, child
-          console.log "Workstation #{child} changed!"
+          logger.info "Workstation #{child} changed!"
     , (error, data, stat) ->
-      if error
-        console.log "Failed to get data of %s due to: %s.", path, error
-        return
+      return logger.info("Failed to get data of #{path} due to: #{error}.") if error
       ws = JSON.parse data.toString()
       ws.id = child
-      console.log("Add workstation #{ws.id}.") if not workstations.get(child)
+      logger.info("Workstation #{ws.id} added.") if not workstations.get(child)
       workstations.add [ws], merge: true
 
   workstations.on "change add remove", (event) ->
@@ -47,17 +46,19 @@ exports = module.exports = (zookeeper_url, path) ->
         "ip": ws.get "ip"
         "port": ws.get("api").port
         "job_id": job.job_id
-        "timestamp": job.timestamp
+        "started_at": job.started_at
+        "exclusive": job.exclusive ? true
         "platform": "android" if job.env.ANDROID_SERIAL?
         "serial": job.env.ANDROID_SERIAL
+        "env": job.env
     
     all_jobs = _.flatten(ws_jobs, true)
     jobs.set all_jobs
 
     ws_devices = @filter (ws) ->
-      ws.get("api").status is "up"
+      ws.has("api") and ws.get("api").status is "up"
     .map (ws) ->
-      _.map ws.get("api").devices.android, (device) ->
+      _.map ws.get("api").devices?.android, (device) ->
         "id": "#{ws.get('mac')}-#{device.adb.serial}"
         "workstation":
           "mac": ws.get "mac"
@@ -71,19 +72,19 @@ exports = module.exports = (zookeeper_url, path) ->
 
     all_devices = _.map _.flatten(ws_devices, true), (device) ->
       device.idle = not _.some(all_jobs, (job) ->
-        "#{job.mac}-#{job.serial}" is device.id and job.platform is device.platform
+        "#{job.mac}-#{job.serial}" is device.id and job.platform is device.platform and job.exclusive
       )
       device
 
     devices.set all_devices
 
   client.once "connected", ->
-    console.log "Connected to ZooKeeper."
+    logger.info "Connected to ZooKeeper."
     listChildren client, path
 
   client.connect()
 
-  "client": client
+  "client": -> client
   "models":
     "workstations": workstations
     "jobs": jobs

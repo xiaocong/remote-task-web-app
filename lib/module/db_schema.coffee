@@ -1,7 +1,10 @@
+"use strict"
+
 orm = require "orm"
 modts = require 'orm-timestamps'
 transaction = require 'orm-transaction'
 _ = require "underscore"
+bcrypt = require 'bcrypt'
 
 exports = module.exports = (db, cb) ->
   db.use transaction
@@ -14,14 +17,19 @@ exports = module.exports = (db, cb) ->
   db.defineType "numberArray",
     datastoreType: (prop) -> "TEXT"
     valueToProperty: (value, prop) ->
-      if Array.isArray(value) then value else value.split(',').map((v) -> Number(v))
+      if Array.isArray(value)
+        value
+      else if value.length is 0
+        []
+      else
+        value.split(',').map((v) -> Number(v))
     propertyToValue: (value, prop) -> value.join(',')
 
-  DeviceTag = db.define "device_tag",
-      name: ["job_type"]
-      value: String
-    , validations:
-        value: orm.enforce.unique scope: ["name"], "Sorry, value already taken for this name!"
+  Tag = db.define "tag",
+      tag: {type: "text", required: true}
+    ,
+      validations:
+        tag: orm.enforce.unique "Sorry, tag already taken!"
 
   Workstation = db.define "workstation",
     mac: String
@@ -34,19 +42,23 @@ exports = module.exports = (db, cb) ->
   ,
     validations:
       serial: orm.enforce.unique scope: ["workstation_mac"], "Sorry, serial already taken for this workstation!"
-    autoFetch: true
     methods:
-      getNamedTags: (name="job_type") ->
-        _.map(_.filter(@.tags, (tag) -> tag.name is name), (tag) -> tag.value)
-      getTagNames: ->
-        name for name of _.groupBy(@tags, (tag) -> tag.name)
+      tagList: ->
+        _.map(@tags, (tag) -> tag.tag)
+      getDeviceID: ->
+        "#{@workstation_mac}-#{@serial}"
+    autoFetch: true
+    cache: false
 
-  Device.hasMany "tags", DeviceTag, {comments: String}, {reverse: "devices"}
+  Device.hasMany "tags", Tag
 
   Task = db.define "task",
     name: {type: "text", required: true}
     description: String
-  , timestamp: true
+  ,
+    timestamp: true
+    autoFetch: true
+    cache: false
 
   Repo = db.define "repo",
     url: {type: "text", required: true}
@@ -55,25 +67,35 @@ exports = module.exports = (db, cb) ->
     password: {type: "text"}
 
   User = db.define "user",
-    name: {type: "text", required: true}
     email: {type: "text", required: true}
+    password: {type: "text", required: true}
+    name: String
   ,
+    timestamp: true
+    cache: false
     validations:
-      name: orm.enforce.unique "name already taken!"
-      email: orm.enforce.unique "email already taken!"
+      email: orm.enforce.unique("email already taken!")
+    methods:
+      compare: (password)->
+        bcrypt.compareSync password, @password
+
+  Token = User.extendsTo "token",
+    access_token: String
+  ,
+    timestamp: true
 
   Task.hasOne "creator", User  # required=true
   Repo.hasOne "creator", User  # required=true
 
   Job = db.define "job",
-    no: {type: "number", required: true}
-    environ: {type: "object", defaultValue: {}}
-    device_filter: {type: "object", required: true}  # mac, platform, serial, product, build, locale, tags: {"job_type": '......'}
-    status:
-      type: "enum"
-      values: ["new", "started", "finished"]
-      defaultValue: "new"
-      required: true
+    no: {type: "number", rational: false, required: true}
+    environ: {type: "object", required: true}
+    device_filter: {type: "object", required: true}  # mac, platform, serial, product, build, locale, tags: [...]
+    repo_url: {type: "text", required: true}
+    repo_branch: String
+    repo_username: String
+    repo_passowrd: String
+    priority: {type: "number", rational: false, required: true, defaultValue: 1}
     r_type:
       type: "enum"
       values: ["none", "exclusive", "dependency"]
@@ -81,13 +103,19 @@ exports = module.exports = (db, cb) ->
       required: true
     r_job_nos:
       type: "numberArray"
+    status:
+      type: "enum"
+      values: ["new", "started", "finished", "cancelled"]
+      defaultValue: "new"
+      required: true
     exit_code: Number
   ,
     timestamp: true
     autoFetch: true
-    autoSave: true
+    cache: false
     validations:
-      no: orm.enforce.unique scope: ["task_id"], "Sorry, serial already taken for this workstation!"
+      no: orm.enforce.unique scope: ["task_id"]
+      priority: orm.enforce.ranges.number(1, 10)
 
   Job.hasOne "device", Device,
     required: false
@@ -95,8 +123,5 @@ exports = module.exports = (db, cb) ->
   Job.hasOne "task", Task,
     required: true
     reverse: "jobs"
-
-  Job.hasOne "repo", Repo,
-    required: true
 
   cb()

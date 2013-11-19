@@ -1,3 +1,5 @@
+"use strict"
+
 Backbone = require "backbone"
 _ = require "underscore"
 
@@ -13,20 +15,19 @@ exports = module.exports = (models) ->
               device.tags.length > 0
 
             tags = _.map(devices_with_tag, (device) ->
-              data = id: "#{device.workstation_mac}-#{device.serial}", tags: {}
-              data.tags[name] = _.map(n_tags, (tag) -> tag.value) for name, n_tags of _.groupBy(device.tags, (tag) -> tag.name)
-              data
+              id: "#{device.getDeviceID()}"
+              tags: device.tagList()
             )
             options.success tags
   )
 
-  NewJobs = Backbone.Collection.extend(
+  LiveJobs = Backbone.Collection.extend(
     sync: (method, model, options) ->
       switch method
         when "read"
-          models.job.find {status: "new"}, (err, jobs) ->
+          models.job.find {status: ["new", "started"]}, (err, jobs) ->
             return options.error(err) if err
             options.success(jobs)
   )
 
-  DeviceTags: DeviceTags, NewJobs: NewJobs
+  DeviceTags: DeviceTags, LiveJobs: LiveJobs

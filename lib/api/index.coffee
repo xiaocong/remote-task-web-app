@@ -1,5 +1,7 @@
 "use strict"
 
+logger = require("../logger")
+
 exports.awesomeThings = (req, res) ->
   res.json [
     "HTML5 Boilerplate"
@@ -8,6 +10,10 @@ exports.awesomeThings = (req, res) ->
     "Express"
   ]
 
-exports.devices = (req, res) ->
-    console.log req.zk.models.devices
-    res.json req.zk.models.devices.toJSON()
+exports.devices = require("./devices")
+exports.workstations = require("./workstations")
+exports.tags = require("./tags")
+exports.auth = require("./auth")
+exports.account = require("./account")
+exports.users = require("./users")
+exports.tasks = require("./tasks")
