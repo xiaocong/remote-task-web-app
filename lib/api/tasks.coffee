@@ -44,6 +44,10 @@ exports = module.exports =
       return res.json 500, error: "Duplicated job no."
     else if not _.every(jobs, (j) -> j.device_filter?.tags?.length > 0)
       return res.json 500, error: "Every job should define at least one tag in 'device_filter.tags'."
+    else if not _.isEqual(_.map(jobs, (job) -> job.no), [0...jobs.length])
+      return res.json 500, error: "Job numbers should be continuous integers and start from 0."
+    else if _.some(_.flatten(_.map(jobs, (job) -> job.r_job_nos)), (n) -> n not in [0...jobs.length])
+      return res.json 500, error: "Invalid r_job_nos."
 
     req.db.models.task.create [{name: name, description: description, creator_id: req.user.id}], (err, tasks) ->
       return next(err) if err?
@@ -117,3 +121,25 @@ exports = module.exports =
       return next(err) if err?
       res.json jobs[0]
       req.redis.publish "db.job", JSON.stringify(method: "add", job: jobs[0].id)
+
+  update_job: (req, res, next) ->
+    job = req.body
+    job.task_id = req.task.id
+    job.no = req.params.no
+    if "device_filter" of job
+      if "tags" not of job.device_filter or  job.device_filter.tags not instanceof Array or job.device_filter.tags.length is 0
+        return res.json 500, error: "Tags shoudl not be empty."
+    if "r_job_nos" of job
+      if job.r_job_nos not instanceof Array or _.some(job.r_job_nos, (n) -> n not in [0...req.task.jobs.length])
+        return res.json 500, error: "Invalid r_job_nos."
+    if "status" of job and job.status not in ["new", "cancelled"]
+      return res.json 500, error: "Invalide status."
+    properties = ["status", "r_type", "r_job_nos", "environ", "priority", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
+    req.db.models.job.find {task_id: job.task_id, no: job.no, status: ["new", "cancelled", "finished"]}, (err, jobs) ->
+      return next(err) if err?
+      return res.json(500, error: "No available job found.") if jobs.length is 0
+      jobs[0][prop] = job[prop] for prop in properties when prop of job
+      jobs[0].save (err) ->
+        return next(err) if err?
+        res.json jobs[0]
+        req.redis.publish "db.job", JSON.stringify(method: "update", job: jobs[0].id)

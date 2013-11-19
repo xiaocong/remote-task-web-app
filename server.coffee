@@ -68,6 +68,7 @@ app.delete "/api/tasks/:task", api.auth.authenticate, api.tasks.remove
 app.post "/api/tasks/:task/cancel", api.auth.authenticate, api.tasks.cancel
 app.post "/api/tasks/:task/restart", api.auth.authenticate, api.tasks.restart
 app.post "/api/tasks/:task/jobs", api.auth.authenticate, api.tasks.add_job
+app.post "/api/tasks/:task/jobs/:no", api.auth.authenticate, api.tasks.update_job
 
 app.get "/api/tags", api.auth.authenticate, api.tags.get
 app.post "/api/tags/:tag", api.auth.admin_auth, api.tags.add
