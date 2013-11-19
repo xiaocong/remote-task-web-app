@@ -96,3 +96,24 @@ exports = module.exports =
       req.redis.publish "db.task", JSON.stringify(method: "restart", task: id)
       res.send 200
       logger.info "Task:#{id} re-started."
+
+  add_job: (req, res, next) ->
+    job = req.body
+    job.task_id = req.task.id
+    job["environ"] ?= {}
+    job["device_filter"] ?= {}
+    job["r_type"] ?= "none"
+    job["r_job_nos"] ?= []
+    job["status"] = "new"
+    job["no"] = _.max(req.task.jobs, (j) -> j.no).no + 1
+    job["priority"] ?= 1  # 1 - 10. default 1 means lowest. 10 means highest.
+
+    if not job.repo_url?
+      return res.json 500, error: "'repo_url' is mandatory for job."
+    else if not job.device_filter?.tags?.length > 0
+      return res.json 500, error: "Job should define at least one tag in 'device_filter.tags'."
+
+    req.db.models.job.create [job], (err, jobs) ->
+      return next(err) if err?
+      res.json jobs[0]
+      req.redis.publish "db.job", JSON.stringify(method: "add", job: jobs[0].id)
