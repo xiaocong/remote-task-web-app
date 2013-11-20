@@ -44,6 +44,10 @@ exports = module.exports =
       return res.json 500, error: "Duplicated job no."
     else if not _.every(jobs, (j) -> j.device_filter?.tags?.length > 0)
       return res.json 500, error: "Every job should define at least one tag in 'device_filter.tags'."
+    else if not _.isEqual(_.map(jobs, (job) -> job.no), [0...jobs.length])
+      return res.json 500, error: "Job numbers should be continuous integers and start from 0."
+    else if _.some(_.flatten(_.map(jobs, (job) -> job.r_job_nos)), (n) -> n not in [0...jobs.length])
+      return res.json 500, error: "Invalid r_job_nos."
 
     req.db.models.task.create [{name: name, description: description, creator_id: req.user.id}], (err, tasks) ->
       return next(err) if err?
@@ -55,14 +59,25 @@ exports = module.exports =
         req.redis.publish "db.task", JSON.stringify(method: "add", task: tasks[0].id)
 
   get: (req, res, next) ->
-    res.json req.task
+    task = JSON.parse(JSON.stringify(req.task))
+    delete task.creator.password
+    res.json task
 
   list: (req, res, next) ->
     page = Number(req.param("page")) or 0
     page_count = Number(req.param("page_count")) or 16
-    req.db.models.task.find().order("-id").offset(page*page_count).limit(page_count).all (err, tasks) ->
+    running_only = (req.param("running_only") or "0") not in ["0", "false"]
+    if running_only
+      filter = id: _.uniq(req.zk.models.live_jobs.map((job) -> job.get("task_id")))
+    else
+      filter = {}
+    req.db.models.task.find(filter).count (err, count) ->
       return next(err) if err?
-      res.json tasks
+      req.db.models.task.find(filter).order("-id").offset(page*page_count).limit(page_count).all (err, tasks) ->
+        return next(err) if err?
+        tasks = JSON.parse(JSON.stringify(tasks))
+        delete task.creator.password for task in tasks
+        res.json {page: page, page_count: page_count, pages: Math.ceil(count/page_count), running_only: running_only, tasks: tasks}
 
   remove: (req, res, next) ->
     # calcel running jobs of the task
@@ -96,3 +111,77 @@ exports = module.exports =
       req.redis.publish "db.task", JSON.stringify(method: "restart", task: id)
       res.send 200
       logger.info "Task:#{id} re-started."
+
+  add_job: (req, res, next) ->
+    job = req.body
+    job.task_id = req.task.id
+    job["environ"] ?= {}
+    job["device_filter"] ?= {}
+    job["r_type"] ?= "none"
+    job["r_job_nos"] ?= []
+    job["status"] = "new"
+    job["no"] = _.max(req.task.jobs, (j) -> j.no).no + 1
+    job["priority"] ?= 1  # 1 - 10. default 1 means lowest. 10 means highest.
+
+    if not job.repo_url?
+      return res.json 500, error: "'repo_url' is mandatory for job."
+    else if not job.device_filter?.tags?.length > 0
+      return res.json 500, error: "Job should define at least one tag in 'device_filter.tags'."
+
+    req.db.models.job.create [job], (err, jobs) ->
+      return next(err) if err?
+      res.json jobs[0]
+      req.redis.publish "db.job", JSON.stringify(method: "add", job: jobs[0].id)
+
+  update_job: (req, res, next) ->
+    job = req.body
+    job.no = Number(req.params.no)
+    if "device_filter" of job
+      if "tags" not of job.device_filter or  job.device_filter.tags not instanceof Array or job.device_filter.tags.length is 0
+        return res.json 500, error: "Tags shoudl not be empty."
+    if "r_job_nos" of job
+      if job.r_job_nos not instanceof Array or _.some(job.r_job_nos, (n) -> n not in [0...req.task.jobs.length])
+        return res.json 500, error: "Invalid r_job_nos."
+    if "status" of job and job.status not in ["new", "cancelled"]
+      return res.json 500, error: "Invalide status."
+    t_job = _.find(req.task.jobs, (j) -> j.no is job.no)
+    if not t_job
+      return res.json 500, error: "Job not found."
+    if t_job.status is "started"
+      return res.json 500, error: "Could not update started job."
+    properties = ["status", "r_type", "r_job_nos", "environ", "priority", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
+    t_job[prop] = job[prop] for prop in properties when prop of job
+    t_job.save (err) ->
+      return next(err) if err?
+      res.json t_job
+      req.redis.publish "db.job", JSON.stringify(method: "update", job: t_job.id)
+
+  cancel_job: (req, res, next) ->
+    job_no = Number(req.params.no)
+    job = _.find(req.task.jobs, (job) -> job.no is job_no)
+    if not job
+      return res.json 500, error: "Job not found."
+    if job.status in ["cancelled", "finished"]
+      return res.send 200
+    stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?
+    job.status = "cancelled"
+    job.save (err) ->
+      return next(err) if err?
+      req.redis.publish "db.job", JSON.stringify(method: "cancel", job: job.id)
+      res.send 200
+      logger.info "Job:#{job.id} cancelled."
+
+  restart_job: (req, res, next) ->
+    job_no = Number(req.params.no)
+    job = _.find(req.task.jobs, (job) -> job.no is job_no)
+    if not job
+      return res.json 500, error: "Job not found."
+    if job.status is "new"
+      return res.send 200
+    stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?
+    job.status = "new"
+    job.save (err) ->
+      return next(err) if err?
+      req.redis.publish "db.job", JSON.stringify(method: "restart", job: job.id)
+      res.send 200
+      logger.info "Job:#{job.id} restarted."
