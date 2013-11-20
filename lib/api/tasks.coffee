@@ -159,3 +159,18 @@ exports = module.exports =
       req.redis.publish "db.job", JSON.stringify(method: "cancel", job: job.id)
       res.send 200
       logger.info "Job:#{job.id} cancelled."
+
+  restart_job: (req, res, next) ->
+    job_no = Number(req.params.no)
+    job = _.find(req.task.jobs, (job) -> job.no is job_no)
+    if not job
+      return res.json 500, error: "Job not found."
+    if job.status is "new"
+      return res.send 200
+    stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?
+    job.status = "new"
+    job.save (err) ->
+      return next(err) if err?
+      req.redis.publish "db.job", JSON.stringify(method: "restart", job: job.id)
+      res.send 200
+      logger.info "Job:#{job.id} restarted."
