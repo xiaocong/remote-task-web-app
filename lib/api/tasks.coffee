@@ -124,8 +124,7 @@ exports = module.exports =
 
   update_job: (req, res, next) ->
     job = req.body
-    job.task_id = req.task.id
-    job.no = req.params.no
+    job.no = Number(req.params.no)
     if "device_filter" of job
       if "tags" not of job.device_filter or  job.device_filter.tags not instanceof Array or job.device_filter.tags.length is 0
         return res.json 500, error: "Tags shoudl not be empty."
@@ -134,12 +133,29 @@ exports = module.exports =
         return res.json 500, error: "Invalid r_job_nos."
     if "status" of job and job.status not in ["new", "cancelled"]
       return res.json 500, error: "Invalide status."
+    t_job = _.find(req.task.jobs, (j) -> j.no is job.no)
+    if not t_job
+      return res.json 500, error: "Job not found."
+    if t_job.status is "started"
+      return res.json 500, error: "Could not update started job."
     properties = ["status", "r_type", "r_job_nos", "environ", "priority", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
-    req.db.models.job.find {task_id: job.task_id, no: job.no, status: ["new", "cancelled", "finished"]}, (err, jobs) ->
+    t_job[prop] = job[prop] for prop in properties when prop of job
+    t_job.save (err) ->
       return next(err) if err?
-      return res.json(500, error: "No available job found.") if jobs.length is 0
-      jobs[0][prop] = job[prop] for prop in properties when prop of job
-      jobs[0].save (err) ->
-        return next(err) if err?
-        res.json jobs[0]
-        req.redis.publish "db.job", JSON.stringify(method: "update", job: jobs[0].id)
+      res.json t_job
+      req.redis.publish "db.job", JSON.stringify(method: "update", job: t_job.id)
+
+  cancel_job: (req, res, next) ->
+    job_no = Number(req.params.no)
+    job = _.find(req.task.jobs, (job) -> job.no is job_no)
+    if not job
+      return res.json 500, error: "Job not found."
+    if job.status in ["cancelled", "finished"]
+      return res.send 200
+    stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?
+    job.status = "cancelled"
+    job.save (err) ->
+      return next(err) if err?
+      req.redis.publish "db.job", JSON.stringify(method: "cancel", job: job.id)
+      res.send 200
+      logger.info "Job:#{job.id} cancelled."
