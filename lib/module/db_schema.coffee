@@ -79,6 +79,26 @@ exports = module.exports = (db, cb) ->
       compare: (password)->
         bcrypt.compareSync password, @password
 
+  Project = db.define "project",
+    name: {type: "text", required: true}
+    priority: {type: "number", rational: false, required: true, defaultValue: 1}
+  ,
+    timestamp: true
+    cache: false
+    autoFetch: true
+    validations:
+      priority: orm.enforce.ranges.number(1, 10)
+      name: orm.enforce.unique scope: ["creator_id"], "Sorry, name already taken for the user!"
+    methods:
+      tagList: ->
+        _.map(@tags, (tag) -> tag.tag)
+
+  Project.hasOne "creator", User
+  Project.hasMany "users", User, {owner: Boolean}, reverse: "projects"
+  Project.hasMany "tags", Tag
+  Task.hasOne "project", Project,
+    required: true
+
   Token = User.extendsTo "token",
     access_token: String
   ,

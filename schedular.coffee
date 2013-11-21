@@ -130,7 +130,14 @@ dbmodule.initialize ->
     )
 
   devices.on "add", (device) ->
-    db.models.device.create [{workstation_mac: device.get("workstation").mac, serial: device.get("serial")}], ->
+    db.models.device.create {workstation_mac: device.get("workstation").mac, serial: device.get("serial")}, (err, device) ->
+      return if err?
+      db.models.tag.find (err, tags) ->
+        return if err?
+        default_tags = ["system:role:admin"]
+        device.addTags _.filter(tags, (t) -> t.tag in default_tags), (err) ->
+          return if err?
+          redis.publish "db.device.tag", JSON.stringify(method: "add", device: device.id, tags: default_tags)
   devices.on "change add", (device) -> # when there is an unlocked and idle device, we should schedule.
     schedule() if device.get("idle") and not device.get("locked")
 

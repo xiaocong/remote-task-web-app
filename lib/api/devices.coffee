@@ -5,10 +5,15 @@ _ = require("underscore")
 
 module.exports =
   get: (req, res) ->
-    if req.device?
+    if _.every(req.project.tagList(), (tag) -> tag in req.device.get("tags"))
       res.json req.device.toJSON()
     else
-      res.json req.zk.models.devices.toJSON()
+      res.json 403, error: "No permission to access the device."
+
+  list: (req, res) ->
+    res.json req.zk.models.devices.filter((device) ->
+      _.every(req.project.tagList(), (tag) -> tag in device.get("tags"))
+    )
 
   tag_device: (req, res, next) ->
     req.db.models.tag.find tag: req.param("tag"), (err, tags) ->

@@ -1,9 +1,11 @@
 "use strict"
 
 uuid = require('node-uuid')
+_ = require("underscore")
+projects = require("./projects")
 
 exports = module.exports =
-  authenticate: (req, res, next) ->
+  auth: (req, res, next) ->
     token_fieldname = "access_token"
     token = req.query[token_fieldname] or req.get("x-#{token_fieldname}") or req.body[token_fieldname]
     if token?
@@ -19,7 +21,22 @@ exports = module.exports =
     else
       res.json 401, error: "access token needed."
 
-  admin_auth: (req, res, next) ->  # TODO
+  auth_project: [projects.param, (req, res, next) ->
+    if req.project
+      next()
+    else
+      res.json(404, error: "Project not found.")
+  ]
+
+  auth_task: (req, res, next) ->
+    req.user.getProjects {id: req.task.project_id}, (err, projects) ->
+      return next(err) if err?
+      if projects.length > 0
+        next()
+      else
+        res.json 403, error: "No permission to access the task."
+
+  auth_admin: (req, res, next) ->  # TODO
     console.log "TODO Admin auth."
     next()
 
@@ -31,15 +48,14 @@ exports = module.exports =
         return next(err) if err?
         user = users[0]
         if user? and user.compare(password)
-          user.getToken (err, token) ->
-            if err?
-              token = uuid.v1()
-              user.setToken access_token: token, (err, t) ->
-                return next(err) if err?
-                res.json {access_token: t.access_token}
-            else
-              res.json {access_token: token.access_token}
+          if user.token?
+            res.json {access_token: user.token.access_token}
+          else
+            token = uuid.v1()
+            req.db.models.user_token.create {access_token: token, user_id: user.id}, (err, tk) ->
+              return next(err) if err?
+              res.json {access_token: tk.access_token}
         else
-          res.json 400, error: "Invalid username or password."
+          res.json 401, error: "Invalid username or password."
     else
       res.json 400, error: "No username or password provided."

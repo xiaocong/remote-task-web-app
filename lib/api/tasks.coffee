@@ -24,17 +24,19 @@ exports = module.exports =
     jobs = req.param("jobs")
     return next(new Error("Invalid parameters!")) if not name?  or jobs not instanceof Array or jobs.length is 0
 
-    properties = ["environ", "priority", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
+    properties = ["environ", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
     jobs.forEach (job, index) ->
       for prop in properties when prop not of job and req.param(prop)?
         job[prop] = req.param(prop)
       job["environ"] ?= {}
-      job["device_filter"] ?= {}
       job["r_type"] ?= "none"
       job["r_job_nos"] ?= []
       job["status"] = "new"
       job["no"] ?= index
-      job["priority"] ?= 1  # 1 - 10. default 1 means lowest. 10 means highest.
+      job["priority"] = req.project.priority  # 1 - 10. default 1 means lowest. 10 means highest.
+      job["device_filter"] ?= {}
+      job["device_filter"]["tags"] ?= []
+      job["device_filter"]["tags"] = _.union(job["device_filter"]["tags"], req.project.tagList())
 
     if not name
       return res.json 500, error: "Empty task name."
@@ -49,38 +51,60 @@ exports = module.exports =
     else if _.some(_.flatten(_.map(jobs, (job) -> job.r_job_nos)), (n) -> n not in [0...jobs.length])
       return res.json 500, error: "Invalid r_job_nos."
 
-    req.db.models.task.create [{name: name, description: description, creator_id: req.user.id}], (err, tasks) ->
+    req.db.models.task.create {name: name, description: description, creator_id: req.user.id, project_id: req.project.id}, (err, task) ->
       return next(err) if err?
-      job.task_id = tasks[0].id for job in jobs
+      job.task_id = task.id for job in jobs
       req.db.models.job.create jobs, (err, jobs) ->
         return next(err) if err?
-        tasks[0].jobs = jobs
-        res.json tasks[0]
-        req.redis.publish "db.task", JSON.stringify(method: "add", task: tasks[0].id)
+        task.jobs = jobs
+        res.json task
+        req.redis.publish "db.task", JSON.stringify(method: "add", task: task.id)
 
   get: (req, res, next) ->
-    task = JSON.parse(JSON.stringify(req.task))
-    delete task.creator.password
-    res.json task
+    req.user.getProjects (err, projects) ->
+      return next(err) if err?
+      if req.task.project_id in _.map(projects, (proj) -> proj.id)
+        task = JSON.parse(JSON.stringify(req.task))
+        delete task.creator.password
+        res.json task
+      else
+        res.json 403, error: "No permission to access the task."
 
   list: (req, res, next) ->
     page = Number(req.param("page")) or 0
     page_count = Number(req.param("page_count")) or 16
     running_only = (req.param("running_only") or "0") not in ["0", "false"]
+    
     if running_only
-      filter = id: _.uniq(req.zk.models.live_jobs.map((job) -> job.get("task_id")))
+      filter =  id: _.uniq(req.zk.models.live_jobs.map((job) -> job.get("task_id")))
     else
       filter = {}
-    req.db.models.task.find(filter).count (err, count) ->
-      return next(err) if err?
-      req.db.models.task.find(filter).order("-id").offset(page*page_count).limit(page_count).all (err, tasks) ->
+
+    listTasks = ->
+      req.db.models.task.find(filter).count (err, count) ->
         return next(err) if err?
-        tasks = JSON.parse(JSON.stringify(tasks))
-        delete task.creator.password for task in tasks
-        res.json {page: page, page_count: page_count, pages: Math.ceil(count/page_count), running_only: running_only, tasks: tasks}
+        req.db.models.task.find(filter).order("-id").offset(page*page_count).limit(page_count).all (err, tasks) ->
+          return next(err) if err?
+          tasks = JSON.parse(JSON.stringify(tasks))
+          delete task.creator.password for task in tasks
+          res.json
+            page: page
+            page_count: page_count
+            pages: Math.ceil(count/page_count)
+            running_only: running_only
+            tasks: tasks
+
+    if req.project?
+      filter.project_id = req.project.id
+      listTasks()
+    else
+      filter.project_id = _.map(req.user.projects, (proj) -> proj.id)
+      req.user.getProjects (err, projects) ->
+        filter.project_id = _.map(projects, (proj) -> proj.id)
+        listTasks()
+
 
   remove: (req, res, next) ->
-    # calcel running jobs of the task
     id = req.task.id
     req.task.jobs.forEach (job) ->
       stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?  # stop the running job
@@ -115,30 +139,31 @@ exports = module.exports =
   add_job: (req, res, next) ->
     job = req.body
     job.task_id = req.task.id
+    if not job.repo_url?
+      return res.json 500, error: "'repo_url' is mandatory for job."
     job["environ"] ?= {}
     job["device_filter"] ?= {}
+    job["device_filter"]["tags"] ?= []
     job["r_type"] ?= "none"
     job["r_job_nos"] ?= []
     job["status"] = "new"
     job["no"] = _.max(req.task.jobs, (j) -> j.no).no + 1
-    job["priority"] ?= 1  # 1 - 10. default 1 means lowest. 10 means highest.
-
-    if not job.repo_url?
-      return res.json 500, error: "'repo_url' is mandatory for job."
-    else if not job.device_filter?.tags?.length > 0
-      return res.json 500, error: "Job should define at least one tag in 'device_filter.tags'."
-
-    req.db.models.job.create [job], (err, jobs) ->
+    req.db.models.project.get req.task.project_id, (err, project) ->
       return next(err) if err?
-      res.json jobs[0]
-      req.redis.publish "db.job", JSON.stringify(method: "add", job: jobs[0].id)
+      job["priority"] = project.priority
+      job["device_filter"]["tags"] = _.union(job["device_filter"]["tags"], project.tagList())
+
+      if not job.device_filter?.tags?.length > 0
+        return res.json 500, error: "Job should define at least one tag in 'device_filter.tags'."
+
+      req.db.models.job.create job, (err, j) ->
+        return next(err) if err?
+        res.json j
+        req.redis.publish "db.job", JSON.stringify(method: "add", job: j.id)
 
   update_job: (req, res, next) ->
     job = req.body
     job.no = Number(req.params.no)
-    if "device_filter" of job
-      if "tags" not of job.device_filter or  job.device_filter.tags not instanceof Array or job.device_filter.tags.length is 0
-        return res.json 500, error: "Tags shoudl not be empty."
     if "r_job_nos" of job
       if job.r_job_nos not instanceof Array or _.some(job.r_job_nos, (n) -> n not in [0...req.task.jobs.length])
         return res.json 500, error: "Invalid r_job_nos."
@@ -151,10 +176,15 @@ exports = module.exports =
       return res.json 500, error: "Could not update started job."
     properties = ["status", "r_type", "r_job_nos", "environ", "priority", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
     t_job[prop] = job[prop] for prop in properties when prop of job
-    t_job.save (err) ->
+    req.db.models.project.get req.task.project_id, (err, project) ->
       return next(err) if err?
-      res.json t_job
-      req.redis.publish "db.job", JSON.stringify(method: "update", job: t_job.id)
+      t_job["priority"] = project.priority
+      t_job.device_filter?.tags ?= []
+      t_job["device_filter"]["tags"] = _.union(t_job["device_filter"]["tags"], project.tagList())
+      t_job.save (err) ->
+        return next(err) if err?
+        res.json t_job
+        req.redis.publish "db.job", JSON.stringify(method: "update", job: t_job.id)
 
   cancel_job: (req, res, next) ->
     job_no = Number(req.params.no)

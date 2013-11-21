@@ -4,18 +4,18 @@ bcrypt = require 'bcrypt'
 _ = require "underscore"
 
 dup_user_info = (user) ->
-  result = {}
-  result[k] = v for k, v of user when k isnt "password"
-  result
+  user = JSON.parse(JSON.stringify(user))
+  delete user.password
+  user
 
 exports = module.exports =
   add: (req, res, next) ->
     username = req.body.username or req.body.email
     password = req.body.password
     name = req.body.name or ""
-    req.db.models.user.create [{email: username, password: bcrypt.hashSync(password, bcrypt.genSaltSync(10)), name: name}], (err, users) ->
+    req.db.models.user.create {email: username, password: bcrypt.hashSync(password, bcrypt.genSaltSync(10)), name: name}, (err, user) ->
       return next(err) if err?
-      res.json dup_user_info(users[0])
+      res.json dup_user_info(user)
 
   list: (req, res, next) ->
     req.db.models.user.find (err, users) ->
