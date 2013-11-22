@@ -215,3 +215,25 @@ exports = module.exports =
       req.redis.publish "db.job", JSON.stringify(method: "restart", job: job.id)
       res.send 200
       logger.info "Job:#{job.id} restarted."
+
+  job_output: (req, res, next) ->
+    job_no = Number(req.params.no)
+    job = _.find(req.task.jobs, (job) -> job.no is job_no)
+    if not job
+      return res.json 500, error: "Job not found."
+    if job.status is "new" or not job.device_id
+      return res.json 400, error: "No output."
+    req.db.models.job.get job.id, (err, job) ->
+      return next(err) if err?
+      device = req.zk.models.devices.get(job.device.getDeviceID())
+      if device?
+        url_str = url.format(
+          protocol: "http"
+          hostname: device.get("workstation").ip
+          port: device.get("workstation").port
+          pathname: "/api/0/jobs/#{job.id}/stream"
+          query: req.query
+        )
+        req.pipe(request(url_str)).pipe(res)
+      else
+        res.json 404, error: "The device is disconnected."
