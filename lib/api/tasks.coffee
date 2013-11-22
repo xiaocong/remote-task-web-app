@@ -161,19 +161,24 @@ exports = module.exports =
         res.json j
         req.redis.publish "db.job", JSON.stringify(method: "add", job: j.id)
 
+  retrieve_job: (req, res, next) ->
+    job = _.find(req.task.jobs, (job) -> job.no is Number(req.params.no))
+    if not job
+      return res.json 500, error: "Job not found."
+    req.job = job
+    next()
+
   update_job: (req, res, next) ->
+    t_job = req.job
+    if t_job.status is "started"
+      return res.json 500, error: "Could not update started job."
+
     job = req.body
-    job.no = Number(req.params.no)
     if "r_job_nos" of job
       if job.r_job_nos not instanceof Array or _.some(job.r_job_nos, (n) -> n not in [0...req.task.jobs.length])
         return res.json 500, error: "Invalid r_job_nos."
     if "status" of job and job.status not in ["new", "cancelled"]
       return res.json 500, error: "Invalide status."
-    t_job = _.find(req.task.jobs, (j) -> j.no is job.no)
-    if not t_job
-      return res.json 500, error: "Job not found."
-    if t_job.status is "started"
-      return res.json 500, error: "Could not update started job."
     properties = ["status", "r_type", "r_job_nos", "environ", "priority", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
     t_job[prop] = job[prop] for prop in properties when prop of job
     req.db.models.project.get req.task.project_id, (err, project) ->
@@ -185,47 +190,39 @@ exports = module.exports =
         return next(err) if err?
         res.json t_job
         req.redis.publish "db.job", JSON.stringify(method: "update", job: t_job.id)
+        logger.info "Job:#{t_job.id} updated."
 
   cancel_job: (req, res, next) ->
-    job_no = Number(req.params.no)
-    job = _.find(req.task.jobs, (job) -> job.no is job_no)
-    if not job
-      return res.json 500, error: "Job not found."
+    job = req.job
     if job.status in ["cancelled", "finished"]
-      return res.send 200
+      return res.json job
     stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?
     job.status = "cancelled"
     job.save (err) ->
       return next(err) if err?
+      res.json job
       req.redis.publish "db.job", JSON.stringify(method: "cancel", job: job.id)
-      res.send 200
       logger.info "Job:#{job.id} cancelled."
 
   restart_job: (req, res, next) ->
-    job_no = Number(req.params.no)
-    job = _.find(req.task.jobs, (job) -> job.no is job_no)
-    if not job
-      return res.json 500, error: "Job not found."
+    job = req.job
     if job.status is "new"
       return res.send 200
     stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?
     job.status = "new"
     job.save (err) ->
       return next(err) if err?
+      res.json job
       req.redis.publish "db.job", JSON.stringify(method: "restart", job: job.id)
-      res.send 200
       logger.info "Job:#{job.id} restarted."
 
   job_output: (req, res, next) ->
-    job_no = Number(req.params.no)
-    job = _.find(req.task.jobs, (job) -> job.no is job_no)
-    if not job
-      return res.json 500, error: "Job not found."
+    job = req.job
     if job.status is "new" or not job.device_id
       return res.json 400, error: "No output."
-    req.db.models.job.get job.id, (err, job) ->
+    req.db.models.device.get job.device_id, (err, dev) ->
       return next(err) if err?
-      device = req.zk.models.devices.get(job.device.getDeviceID())
+      device = req.zk.models.devices.get(dev.getDeviceID())
       if device?
         url_str = url.format(
           protocol: "http"
