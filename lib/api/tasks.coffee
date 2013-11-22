@@ -234,3 +234,22 @@ exports = module.exports =
         req.pipe(request(url_str)).pipe(res)
       else
         res.json 404, error: "The device is disconnected."
+
+  job_files: (req, res, next) ->
+    job = req.job
+    if job.status is "new" or not job.device_id
+      return res.json 400, error: "No files available."
+    req.db.models.device.get job.device_id, (err, dev) ->
+      return next(err) if err?
+      device = req.zk.models.devices.get(dev.getDeviceID())
+      if device?
+        url_str = url.format(
+          protocol: "http"
+          hostname: device.get("workstation").ip
+          port: device.get("workstation").port
+          pathname: "/api/0/jobs/#{job.id}/files/#{req.params[0]}"
+          query: req.query
+        )
+        req.pipe(request(url_str)).pipe(res)
+      else
+        res.json 404, error: "The device is disconnected."
