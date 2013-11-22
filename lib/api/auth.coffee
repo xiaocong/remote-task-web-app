@@ -48,13 +48,14 @@ exports = module.exports =
         return next(err) if err?
         user = users[0]
         if user? and user.compare(password)
-          if user.token?
-            res.json {access_token: user.token.access_token}
-          else
-            token = uuid.v1()
-            req.db.models.user_token.create {access_token: token, user_id: user.id}, (err, tk) ->
-              return next(err) if err?
-              res.json {access_token: tk.access_token}
+          user.getToken (err, token) ->
+            if err?
+              token = uuid.v1()
+              req.db.models.user_token.create {access_token: token, user_id: user.id}, (err, tk) ->
+                return next(err) if err?
+                res.json {access_token: tk.access_token}
+            else
+              res.json {access_token: token.access_token}
         else
           res.json 401, error: "Invalid username or password."
     else
