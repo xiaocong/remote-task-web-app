@@ -43,6 +43,8 @@ module.exports =
             addTags()
 
   untag_device: (req, res, next) ->
+    if "system:role:admin" is req.param("tag")
+      return res.json 400, error: "The tag can not be removed."
     req.db.models.tag.find tag: req.param("tag"), (err, tags) ->
       return next(err) if err?
 

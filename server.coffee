@@ -66,6 +66,8 @@ app.post "/api/account", api.auth.auth, api.account.update
 app.post "/api/projects", api.auth.auth, api.projects.add
 app.get "/api/projects", api.auth.auth, api.projects.list
 app.get "/api/projects/:project", api.auth.auth, api.auth.auth_project, api.projects.get
+app.post "/api/projects/:project/add_user", api.auth.auth, api.auth.auth_project, api.projects.add_user
+app.post "/api/projects/:project/remove_user", api.auth.auth, api.auth.auth_project, api.projects.rm_user
 
 app.post "/api/tasks", api.auth.auth, api.auth.auth_project, api.tasks.add
 app.get "/api/tasks", api.auth.auth, api.projects.param, api.tasks.list

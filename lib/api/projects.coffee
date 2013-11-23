@@ -17,7 +17,6 @@ exports = module.exports =
         req.project = _.find(projects, (proj) ->
           proj.id is Number(project_id)
         )
-        console.log JSON.stringify(req.project)
         if req.project?
           next()
         else
@@ -52,3 +51,31 @@ exports = module.exports =
     delete project.creator.password
     delete user.password for user in project.users
     res.json project
+
+  add_user: (req, res, next) ->
+    if req.user.id isnt req.project.creator_id
+      return res.json 403, error: "Only creator has permission to add user."
+    email = req.param("email")
+    if not email
+      return res.json 400, error: "no email parameter."
+    req.db.models.user.find {email: email}, (err, users) ->
+      return next(err) if err?
+      return res.json 404, error: "Specified email doesn't exists." if users.length is 0
+      req.project.addUsers users, (err) ->
+        return next(err) if err?
+        res.send 200
+
+  rm_user: (req, res, next) ->
+    if req.user.id isnt req.project.creator_id
+      return res.json 403, error: "Only creator has permission to remove user."
+    email = req.param("email")
+    if not email
+      return res.json 400, error: "no email parameter."
+    if email is req.user.email
+      return res.json 400, error: "can not remove yourself."
+    req.db.models.user.find {email: email}, (err, users) ->
+      return next(err) if err?
+      return res.json 404, error: "Specified email doesn't exists." if users.length is 0
+      req.project.removeUsers users, (err) ->
+        return next(err) if err?
+        res.send 200

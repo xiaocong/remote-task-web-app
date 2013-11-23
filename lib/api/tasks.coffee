@@ -19,10 +19,10 @@ stop_job = (running_job)->
 
 exports = module.exports =
   add: (req, res, next) ->
-    name = req.param("name")
-    description = req.param("description") or ""
-    jobs = req.param("jobs")
-    return next(new Error("Invalid parameters!")) if not name?  or jobs not instanceof Array or jobs.length is 0
+    jobs = req.param("jobs") ? [{}]
+    return next new Error("Invalid jobs parameter!") if jobs not instanceof Array or jobs.length is 0
+    name = req.param("name") ? "Task - #{new Date}"
+    description = req.param("description") or "Task created by #{req.user.email} at #{new Date} with #{jobs.length} job(s)."
 
     properties = ["environ", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
     jobs.forEach (job, index) ->
@@ -38,9 +38,7 @@ exports = module.exports =
       job["device_filter"]["tags"] ?= []
       job["device_filter"]["tags"] = _.union(job["device_filter"]["tags"], req.project.tagList())
 
-    if not name
-      return res.json 500, error: "Empty task name."
-    else if not _.every(jobs, (j) -> j.repo_url?)
+    if not _.every(jobs, (j) -> j.repo_url?)
       return res.json 500, error: "'repo_url' is mandatory for every job."
     else if _.size(_.countBy(jobs, (job) -> job.no)) isnt jobs.length
       return res.json 500, error: "Duplicated job no."
@@ -177,9 +175,7 @@ exports = module.exports =
     if "r_job_nos" of job
       if job.r_job_nos not instanceof Array or _.some(job.r_job_nos, (n) -> n not in [0...req.task.jobs.length])
         return res.json 500, error: "Invalid r_job_nos."
-    if "status" of job and job.status not in ["new", "cancelled"]
-      return res.json 500, error: "Invalide status."
-    properties = ["status", "r_type", "r_job_nos", "environ", "priority", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
+    properties = ["r_type", "r_job_nos", "environ", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
     t_job[prop] = job[prop] for prop in properties when prop of job
     req.db.models.project.get req.task.project_id, (err, project) ->
       return next(err) if err?
@@ -222,18 +218,18 @@ exports = module.exports =
       return res.json 400, error: "No output."
     req.db.models.device.get job.device_id, (err, dev) ->
       return next(err) if err?
-      device = req.zk.models.devices.get(dev.getDeviceID())
-      if device?
+      ws = req.zk.models.workstations.get(dev.workstation_mac)
+      if ws?.get("api")?.status is "up"
         url_str = url.format(
           protocol: "http"
-          hostname: device.get("workstation").ip
-          port: device.get("workstation").port
+          hostname: ws.get("ip")
+          port: ws.get("api").port
           pathname: "/api/0/jobs/#{job.id}/stream"
           query: req.query
         )
         req.pipe(request(url_str)).pipe(res)
       else
-        res.json 404, error: "The device is disconnected."
+        res.json 404, error: "The workstation is disconnected."
 
   job_files: (req, res, next) ->
     job = req.job
@@ -241,12 +237,12 @@ exports = module.exports =
       return res.json 400, error: "No files available."
     req.db.models.device.get job.device_id, (err, dev) ->
       return next(err) if err?
-      device = req.zk.models.devices.get(dev.getDeviceID())
-      if device?
+      ws = req.zk.models.workstations.get(dev.workstation_mac)
+      if ws?.get("api")?.status is "up"
         url_str = url.format(
           protocol: "http"
-          hostname: device.get("workstation").ip
-          port: device.get("workstation").port
+          hostname: ws.get("ip")
+          port: ws.get("api").port
           pathname: "/api/0/jobs/#{job.id}/files/#{req.params[0]}"
           query: req.query
         )
