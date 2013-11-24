@@ -25,9 +25,9 @@ exports = module.exports =
       next()
 
   add: (req, res, next) ->
-    name = req.param("name")
-    priority = 1
-    tags = _.union(["system:role:guest", "system:job:acceptable"], req.param("tags") or [])
+    name = req.param("name") or "Project created at #{new Date}"
+    priority = req.user.priority
+    tags = _.union(["system:job:acceptable"], req.param("tags") or [], req.user.tags)
     req.db.models.project.create {name: name, priority: priority, creator_id: req.user.id}, (err, project) ->
       return next(err) if err?
       tag_project project, tags, (err) ->
@@ -79,3 +79,14 @@ exports = module.exports =
       req.project.removeUsers users, (err) ->
         return next(err) if err?
         res.send 200
+
+  get_device: (req, res) ->
+    if _.every(req.project.tagList(), (tag) -> tag in req.device.get("tags"))
+      res.json req.device.toJSON()
+    else
+      res.json 403, error: "No permission to access the device."
+
+  list_devices: (req, res) ->
+    res.json req.zk.models.devices.filter((device) ->
+      _.every(req.project.tagList(), (tag) -> tag in device.get("tags"))
+    )

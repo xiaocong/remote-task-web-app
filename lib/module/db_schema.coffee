@@ -19,10 +19,21 @@ exports = module.exports = (db, cb) ->
     valueToProperty: (value, prop) ->
       if Array.isArray(value)
         value
-      else if value.length is 0
+      else if value is null or value.length is 0
         []
       else
         value.split(',').map((v) -> Number(v))
+    propertyToValue: (value, prop) -> value.join(',')
+
+  db.defineType "stringArray",
+    datastoreType: (prop) -> "TEXT"
+    valueToProperty: (value, prop) ->
+      if Array.isArray(value)
+        value
+      else if value is null or value.length is 0
+        []
+      else
+        value.split(',')
     propertyToValue: (value, prop) -> value.join(',')
 
   Tag = db.define "tag",
@@ -70,6 +81,9 @@ exports = module.exports = (db, cb) ->
     email: {type: "text", required: true}
     password: {type: "text", required: true}
     name: String
+    priority: {type: "number", rational: false, required: true, defaultValue: 1}
+    tags:
+      type: "stringArray"
   ,
     timestamp: true
     cache: false

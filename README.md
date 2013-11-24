@@ -38,126 +38,6 @@
 
 **Note**: Below is using [httpie][] as example.
 
-## Users
-
-- Create
-
-        POST /api/users
-        
-        {"email":"xxxx@example.com", "password":"xxxx"}
-
-    Both json and form are supported.
-    
-    Example:
-
-        $ http http://localhost:9000/api/users email=my@test.com password=xxxx
-        HTTP/1.1 200 OK
-        Connection: keep-alive
-        Content-Length: 142
-        Content-Type: application/json; charset=utf-8
-        Date: Thu, 14 Nov 2013 02:09:09 GMT
-        X-Powered-By: Express
-
-        {
-            "created_at": "2013-11-14T02:09:09.294Z", 
-            "email": "my@test.com", 
-            "id": 5, 
-            "modified_at": "2013-11-14T02:09:09.294Z", 
-            "name": ""
-        }
-
-- Get all
-
-        GET /api/users
-
-    Examples:
-
-        $ http http://localhost:9000/api/users
-        HTTP/1.1 200 OK
-        Connection: keep-alive
-        Content-Length: 327
-        Content-Type: application/json; charset=utf-8
-        Date: Thu, 14 Nov 2013 02:11:14 GMT
-        X-Powered-By: Express
-
-        [
-            {
-                "created_at": "2013-11-11T08:17:37.000Z", 
-                "email": "test@example.com", 
-                "id": 1, 
-                "modified_at": "2013-11-11T08:38:04.000Z", 
-                "name": "test"
-            }, 
-            {
-                "created_at": "2013-11-14T02:09:09.000Z", 
-                "email": "my@test.com", 
-                "id": 5, 
-                "modified_at": "2013-11-14T02:09:09.000Z", 
-                "name": ""
-            }
-        ]
-
-- Get one
-
-        GET /api/users/:id
-
-    Examples:
-
-        $ http http://localhost:9000/api/users/5
-        HTTP/1.1 200 OK
-        Connection: keep-alive
-        Content-Length: 142
-        Content-Type: application/json; charset=utf-8
-        Date: Thu, 14 Nov 2013 02:14:59 GMT
-        X-Powered-By: Express
-
-        {
-            "created_at": "2013-11-14T02:09:09.000Z", 
-            "email": "my@test.com", 
-            "id": 5, 
-            "modified_at": "2013-11-14T02:09:09.000Z", 
-            "name": ""
-        }
-
-## Tags
-
-- Add
-
-        POST /api/tags/:tag
-
-    Example:
-
-        $ http POST http://localhost:9000/api/tags/new_tag
-        HTTP/1.1 200 OK
-        Connection: keep-alive
-        Content-Length: 2
-        Content-Type: text/plain
-        Date: Thu, 14 Nov 2013 02:31:18 GMT
-        X-Powered-By: Express
-
-        OK
-
-- Get
-
-        GET /api/tags
-
-    Examples:
-
-        $ http http://localhost:9000/api/tags
-        HTTP/1.1 200 OK
-        Connection: keep-alive
-        Content-Length: 97
-        Content-Type: application/json; charset=utf-8
-        Date: Fri, 22 Nov 2013 06:10:00 GMT
-        X-Powered-By: Express
-
-        [
-            "system:role:admin", 
-            "system:role:user", 
-            "system:role:guest", 
-            "system:job:acceptable"
-        ]
-
 ## Auth
 
 - Get access token
@@ -165,6 +45,11 @@
         POST /api/auth/get_access_token
 
         {"email": "my@test.com", "password": "xxxx"}
+
+    **Note**:
+
+    - detault admin is email: `admin@localhost`, password: `admin`.
+    - `access_token` can be passed via query string, or form body, or json body, or `x-access_token` header.
 
     Examples:
 
@@ -179,8 +64,551 @@
         {
             "access_token": "162ac900-4cd3-11e3-ba42-1fb848ccf3b3"
         }
+
+## Users
+
+- Create (admin permission)
+
+        POST /api/users?access_token=:access_token
+        
+        {"email":"xxxx@example.com", "password":"xxxx", "tags": ["system:role:user"], "name": "xxx", priority: 1}
+
+    Both json and form are supported.
     
-    **Notes**: `access_token` can be passed via query string, or form body, or json body, or `x-access_token` header.
+    Example:
+
+        $ http http://localhost:9000/api/users access_token==675ed270-54b8-11e3-934a-7722a3f49493 email=test@example.com password=test
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 205
+        Content-Type: application/json; charset=utf-8
+        Date: Sun, 24 Nov 2013 03:58:05 GMT
+        X-Powered-By: Express
+
+        {
+            "created_at": "2013-11-24T03:58:05.324Z", 
+            "email": "test@example.com", 
+            "id": 2, 
+            "modified_at": "2013-11-24T03:58:05.324Z", 
+            "name": "", 
+            "priority": 1, 
+            "tags": [
+                "system:role:guest"
+            ]
+        }
+
+- Get all (admin permission)
+
+        GET /api/users?access_token=:access_token
+
+    Examples:
+
+        $ http http://localhost:9000/api/users access_token==675ed270-54b8-11e3-934a-7722a3f49493
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 472
+        Content-Type: application/json; charset=utf-8
+        Date: Sun, 24 Nov 2013 03:58:58 GMT
+        X-Powered-By: Express
+
+        [
+            {
+                "created_at": "2013-11-24T03:20:31.000Z", 
+                "email": "admin@localhost", 
+                "id": 1, 
+                "modified_at": "2013-11-24T03:20:31.000Z", 
+                "name": "Administrator", 
+                "priority": 1, 
+                "tags": [
+                    "system:role:admin"
+                ]
+            }, 
+            {
+                "created_at": "2013-11-24T03:58:05.000Z", 
+                "email": "test@example.com", 
+                "id": 2, 
+                "modified_at": "2013-11-24T03:58:05.000Z", 
+                "name": "", 
+                "priority": 1, 
+                "tags": [
+                    "system:role:guest"
+                ]
+            }
+        ]
+
+- Get one (admin permission)
+
+        GET /api/users/:id?access_token=:access_token
+
+    Examples:
+
+        $ http http://localhost:9000/api/users/2 access_token==675ed270-54b8-11e3-934a-7722a3f49493
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 205
+        Content-Type: application/json; charset=utf-8
+        Date: Sun, 24 Nov 2013 03:59:55 GMT
+        X-Powered-By: Express
+
+        {
+            "created_at": "2013-11-24T03:58:05.000Z", 
+            "email": "test@example.com", 
+            "id": 2, 
+            "modified_at": "2013-11-24T03:58:05.000Z", 
+            "name": "", 
+            "priority": 1, 
+            "tags": [
+                "system:role:guest"
+            ]
+        }
+
+- Update (admin permission)
+
+        POST /api/users/:id?access_token=:access_token
+
+        {"email":"xxxx@example.com", "password":"xxxx", "tags": ["system:role:user"], "name": "xxx"}
+
+    Examples:
+
+        $ http POST http://localhost:9000/api/users/2 access_token==675ed270-54b8-11e3-934a-7722a3f49493 name="John" tags:='["system:role:user"]'
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 208
+        Content-Type: application/json; charset=utf-8
+        Date: Sun, 24 Nov 2013 04:05:34 GMT
+        X-Powered-By: Express
+
+        {
+            "created_at": "2013-11-24T03:58:05.000Z", 
+            "email": "test@example.com", 
+            "id": 2, 
+            "modified_at": "2013-11-24T04:05:34.207Z", 
+            "name": "John", 
+            "priority": 1, 
+            "tags": [
+                "system:role:user"
+            ]
+        }
+
+## Tags
+
+- Add (admin permission)
+
+        POST /api/tags/:tag?access_token=:access_token
+
+    Example:
+
+        $ http POST http://localhost:9000/api/tags/user:demo access_token==675ed270-54b8-11e3-934a-7722a3f49493 
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 2
+        Content-Type: text/plain
+        Date: Sun, 24 Nov 2013 04:09:37 GMT
+        X-Powered-By: Express
+
+        OK
+
+- Get (admin permission)
+
+        GET /api/tags?access_token=:access_token
+
+    Examples:
+
+        $ http http://localhost:9000/api/tags access_token==675ed270-54b8-11e3-934a-7722a3f49493 
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 123
+        Content-Type: application/json; charset=utf-8
+        Date: Sun, 24 Nov 2013 04:08:42 GMT
+        X-Powered-By: Express
+
+        [
+            "system:role:admin", 
+            "system:role:user", 
+            "system:role:guest", 
+            "system:role:disabled", 
+            "system:job:acceptable"
+        ]
+
+## Workstations
+
+- Get workstations list (admin permission)
+
+        GET /api/workstations?access_token=:access_token
+
+    Examples:
+
+        $ http http://localhost:9000/api/workstations access_token==675ed270-54b8-11e3-934a-7722a3f49493
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 1186
+        Content-Type: application/json; charset=utf-8
+        Date: Sun, 24 Nov 2013 04:40:29 GMT
+        ETag: "1331906246"
+        X-Powered-By: Express
+
+        [
+            {
+                "api": {
+                    "devices": {
+                        "android": [
+                            {
+                                "adb": {
+                                    "device": "device", 
+                                    "serial": "0A3BC06902019010"
+                                }, 
+                                "build": {
+                                    "date_utc": "1335479697", 
+                                    "display_id": "7.7.1_84", 
+                                    "fingerprint": "Motorola/RTCOREEU/fleming:4.0.4/7.7.1_84/1335483636:user/release-keys", 
+                                    "id": "7.7.1_84", 
+                                    "type": "user", 
+                                    "version": {
+                                        "codename": "REL", 
+                                        "incremental": "1335483636", 
+                                        "release": "4.0.4", 
+                                        "sdk": "15"
+                                    }
+                                }, 
+                                "locale": {
+                                    "language": "en", 
+                                    "region": "GB"
+                                }, 
+                                "product": {
+                                    "board": "fleming", 
+                                    "brand": "Motorola", 
+                                    "device": "fleming", 
+                                    "manufacturer": "Motorola", 
+                                    "model": "XOOM 2 ME"
+                                }
+                            }
+                        ]
+                    }, 
+                    "jobs": [], 
+                    "path": "/api", 
+                    "port": 8000, 
+                    "status": "up"
+                }, 
+                "id": "84:4b:f5:8a:a8:8f", 
+                "ip": "192.168.10.72", 
+                "mac": "84:4b:f5:8a:a8:8f"
+            }
+        ]
+
+- Get specified workstation info (admin permission)
+
+        GET /api/workstations/:workstations?access_token=:access_token
+
+    Examples:
+
+        ± |develop ✓| → http http://localhost:9000/api/workstations/84:4b:f5:8a:a8:8f access_token==675ed270-54b8-11e3-934a-7722a3f49493
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 1092
+        Content-Type: application/json; charset=utf-8
+        Date: Sun, 24 Nov 2013 04:43:46 GMT
+        ETag: "-1575730870"
+        X-Powered-By: Express
+
+        {
+            "api": {
+                "devices": {
+                    "android": [
+                        {
+                            "adb": {
+                                "device": "device", 
+                                "serial": "0A3BC06902019010"
+                            }, 
+                            "build": {
+                                "date_utc": "1335479697", 
+                                "display_id": "7.7.1_84", 
+                                "fingerprint": "Motorola/RTCOREEU/fleming:4.0.4/7.7.1_84/1335483636:user/release-keys", 
+                                "id": "7.7.1_84", 
+                                "type": "user", 
+                                "version": {
+                                    "codename": "REL", 
+                                    "incremental": "1335483636", 
+                                    "release": "4.0.4", 
+                                    "sdk": "15"
+                                }
+                            }, 
+                            "locale": {
+                                "language": "en", 
+                                "region": "GB"
+                            }, 
+                            "product": {
+                                "board": "fleming", 
+                                "brand": "Motorola", 
+                                "device": "fleming", 
+                                "manufacturer": "Motorola", 
+                                "model": "XOOM 2 ME"
+                            }
+                        }
+                    ]
+                }, 
+                "jobs": [], 
+                "path": "/api", 
+                "port": 8000, 
+                "status": "up"
+            }, 
+            "id": "84:4b:f5:8a:a8:8f", 
+            "ip": "192.168.10.72", 
+            "mac": "84:4b:f5:8a:a8:8f"
+        }
+
+- Invoke workstation WEB API (admin permission)
+
+        GET/POST/DELETE/... /api/workstations/:workstations/api/*?access_token=:access_token
+
+    Notes: It's a proxy API to pass the http method and parameters to workstation's web API service.
+
+    Examples:
+
+        $ http http://localhost:9000/api/workstations/84:4b:f5:8a:a8:8f/api/0/devices access_token==675ed270-54b8-11e3-934a-7722a3f49493
+        HTTP/1.1 200 OK
+        X-Powered-By: Express
+        connection: keep-alive
+        content-length: 496
+        content-type: application/json
+        date: Sun, 24 Nov 2013 05:04:14 GMT
+        server: gunicorn/18.0
+
+        {
+            "android": [
+                {
+                    "adb": {
+                        "device": "device", 
+                        "serial": "014E05DE0F02000E"
+                    }, 
+                    "build": {
+                        "date_utc": "1376434434", 
+                        "display_id": "JWR66Y", 
+                        "fingerprint": "google/takju/maguro:4.3/JWR66Y/776638:user/release-keys", 
+                        "id": "JWR66Y", 
+                        "type": "user", 
+                        "version": {
+                            "codename": "REL", 
+                            "incremental": "776638", 
+                            "release": "4.3", 
+                            "sdk": "18"
+                        }
+                    }, 
+                    "locale": {
+                        "language": "en", 
+                        "region": "US"
+                    }, 
+                    "product": {
+                        "board": "tuna", 
+                        "brand": "google", 
+                        "device": "maguro", 
+                        "manufacturer": "samsung", 
+                        "model": "Galaxy Nexus"
+                    }
+                }
+            ]
+        }
+
+## Devices
+
+- List attached devices (admin permission)
+
+        GET /api/devices?access_token=:access_token
+
+    Examples:
+
+        $ http http://localhost:9000/api/devices access_token==675ed270-54b8-11e3-934a-7722a3f49493
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 921
+        Content-Type: application/json; charset=utf-8
+        Date: Sun, 24 Nov 2013 07:47:07 GMT
+        X-Powered-By: Express
+
+        [
+            {
+                "build": {
+                    "date_utc": "1376434434", 
+                    "display_id": "JWR66Y", 
+                    "fingerprint": "google/takju/maguro:4.3/JWR66Y/776638:user/release-keys", 
+                    "id": "JWR66Y", 
+                    "type": "user", 
+                    "version": {
+                        "codename": "REL", 
+                        "incremental": "776638", 
+                        "release": "4.3", 
+                        "sdk": "18"
+                    }
+                }, 
+                "id": "84:4b:f5:8a:a8:8f-014E05DE0F02000E", 
+                "idle": true, 
+                "locale": {
+                    "language": "en", 
+                    "region": "US"
+                }, 
+                "platform": "android", 
+                "product": {
+                    "board": "tuna", 
+                    "brand": "google", 
+                    "device": "maguro", 
+                    "manufacturer": "samsung", 
+                    "model": "Galaxy Nexus"
+                }, 
+                "serial": "014E05DE0F02000E", 
+                "tags": [
+                    "system:role:admin", 
+                    "system:role:guest", 
+                    "system:job:acceptable"
+                ], 
+                "workstation": {
+                    "ip": "192.168.0.66", 
+                    "mac": "84:4b:f5:8a:a8:8f", 
+                    "port": 8000
+                }
+            }
+        ]
+
+- Get a device's info (admin permission)
+
+        GET /api/devices/:devices?access_token=:access_token
+
+    Examples:
+
+        $ http http://localhost:9000/api/devices/84:4b:f5:8a:a8:8f-014E05DE0F02000E access_token==675ed270-54b8-11e3-934a-7722a3f49493
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 837
+        Content-Type: application/json; charset=utf-8
+        Date: Sun, 24 Nov 2013 13:02:27 GMT
+        X-Powered-By: Express
+
+        {
+            "build": {
+                "date_utc": "1376434434", 
+                "display_id": "JWR66Y", 
+                "fingerprint": "google/takju/maguro:4.3/JWR66Y/776638:user/release-keys", 
+                "id": "JWR66Y", 
+                "type": "user", 
+                "version": {
+                    "codename": "REL", 
+                    "incremental": "776638", 
+                    "release": "4.3", 
+                    "sdk": "18"
+                }
+            }, 
+            "id": "84:4b:f5:8a:a8:8f-014E05DE0F02000E", 
+            "idle": true, 
+            "locale": {
+                "language": "en", 
+                "region": "US"
+            }, 
+            "platform": "android", 
+            "product": {
+                "board": "tuna", 
+                "brand": "google", 
+                "device": "maguro", 
+                "manufacturer": "samsung", 
+                "model": "Galaxy Nexus"
+            }, 
+            "serial": "014E05DE0F02000E", 
+            "tags": [
+                "system:role:admin", 
+                "system:role:guest", 
+                "system:job:acceptable"
+            ], 
+            "workstation": {
+                "ip": "192.168.0.66", 
+                "mac": "84:4b:f5:8a:a8:8f", 
+                "port": 8000
+            }
+        }
+
+- Add tag to device (admin permission)
+
+        POST /api/devices/:device/tag/:tag?access_token=:access_token
+
+    Examples:
+
+        $ http POST http://localhost:9000/api/devices/00:26:b9:e7:a2:3b-014E05DE0F02000E/tag/system:role:guest access_token==28d214c0-535c-11e3-bcde-ad2acffbc212 
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 2
+        Content-Type: text/plain
+        Date: Fri, 22 Nov 2013 10:02:41 GMT
+        X-Powered-By: Express
+
+        OK
+
+- Remove tag from device (admin permission)
+
+        POST /api/devices/:device/untag/:tag?access_token=:access_token
+
+    Examples:
+
+        $ http POST http://localhost:9000/api/devices/00:26:b9:e7:a2:3b-CLV6ECA4D58/untag/system:role:guest access_token==162ac900-4cd3-11e3-ba42-1fb848ccf3b3
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 2
+        Content-Type: text/plain
+        Date: Thu, 14 Nov 2013 03:01:56 GMT
+        X-Powered-By: Express
+
+        OK
+
+## Account
+
+- Get account information
+
+        GET /api/account?access_token=:access_token
+
+    Examples:
+
+        $ http http://localhost:9000/api/account access_token==03227250-54c0-11e3-ba49-7903e87f27a9
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 208
+        Content-Type: application/json; charset=utf-8
+        Date: Sun, 24 Nov 2013 04:23:20 GMT
+        X-Powered-By: Express
+
+        {
+            "created_at": "2013-11-24T03:58:05.000Z", 
+            "email": "test@example.com", 
+            "id": 2, 
+            "modified_at": "2013-11-24T04:05:34.000Z", 
+            "name": "John", 
+            "priority": 1, 
+            "tags": [
+                "system:role:user"
+            ]
+        }
+
+- Update account information
+
+        POST /api/account?access_token=:access_token
+
+        {"name": "Tom", "password": "test"}
+
+    Examples:
+
+        $ http POST http://localhost:9000/api/account access_token==03227250-54c0-11e3-ba49-7903e87f27a9 name=Tom password=test
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 207
+        Content-Type: application/json; charset=utf-8
+        Date: Sun, 24 Nov 2013 04:26:36 GMT
+        X-Powered-By: Express
+
+        {
+            "created_at": "2013-11-24T03:58:05.000Z", 
+            "email": "test@example.com", 
+            "id": 2, 
+            "modified_at": "2013-11-24T04:26:36.377Z", 
+            "name": "Tom", 
+            "priority": 1, 
+            "tags": [
+                "system:role:user"
+            ]
+        }
 
 ## Project
 
@@ -192,20 +620,20 @@
 
     Examples:
 
-        $ http http://localhost:9000/api/projects name="my demo project" access_token==f4c06700-533c-11e3-8508-a36192feacb2
+        $ http POST http://localhost:9000/api/projects access_token=03227250-54c0-11e3-ba49-7903e87f27a9
         HTTP/1.1 200 OK
         Connection: keep-alive
-        Content-Length: 167
+        Content-Length: 210
         Content-Type: application/json; charset=utf-8
-        Date: Fri, 22 Nov 2013 06:12:26 GMT
+        Date: Sun, 24 Nov 2013 06:39:58 GMT
         X-Powered-By: Express
 
         {
-            "created_at": "2013-11-22T06:12:26.110Z", 
+            "created_at": "2013-11-24T06:39:57.770Z", 
             "creator_id": 2, 
             "id": 1, 
-            "modified_at": "2013-11-22T06:12:26.110Z", 
-            "name": "my demo project", 
+            "modified_at": "2013-11-24T06:39:57.770Z", 
+            "name": "Project created at Sun Nov 24 2013 14:39:57 GMT+0800 (CST)", 
             "priority": 1
         }
 
@@ -215,31 +643,36 @@
 
     Examples:
 
-        $ http http://localhost:9000/api/projects access_token==f4c06700-533c-11e3-8508-a36192feacb2
+        $ http http://localhost:9000/api/projects access_token==b0c86590-54d4-11e3-b654-b932b6c09042 
         HTTP/1.1 200 OK
         Connection: keep-alive
-        Content-Length: 887
+        Content-Length: 1048
         Content-Type: application/json; charset=utf-8
-        Date: Fri, 22 Nov 2013 06:14:53 GMT
+        Date: Sun, 24 Nov 2013 06:53:58 GMT
+        ETag: "1017038705"
         X-Powered-By: Express
 
         [
             {
-                "created_at": "2013-11-22T06:12:26.000Z", 
+                "created_at": "2013-11-24T06:50:54.000Z", 
                 "creator": {
-                    "created_at": "2013-11-22T06:07:42.000Z", 
-                    "email": "test@example.com", 
-                    "id": 2, 
-                    "modified_at": "2013-11-22T06:12:26.000Z", 
-                    "name": ""
+                    "created_at": "2013-11-24T06:50:07.000Z", 
+                    "email": "a@example.com", 
+                    "id": 3, 
+                    "modified_at": "2013-11-24T06:50:54.000Z", 
+                    "name": "", 
+                    "priority": 1, 
+                    "tags": [
+                        "system:role:guest"
+                    ]
                 }, 
-                "creator_id": 2, 
+                "creator_id": 3, 
                 "extra": {
                     "owner": true
                 }, 
-                "id": 1, 
-                "modified_at": "2013-11-22T06:12:26.000Z", 
-                "name": "my demo project", 
+                "id": 4, 
+                "modified_at": "2013-11-24T06:50:54.000Z", 
+                "name": "test proj by a@example.com", 
                 "owner": true, 
                 "priority": 1, 
                 "tags": [
@@ -248,21 +681,25 @@
                         "tag": "system:role:guest"
                     }, 
                     {
-                        "id": 4, 
+                        "id": 5, 
                         "tag": "system:job:acceptable"
                     }
                 ], 
                 "users": [
                     {
-                        "created_at": "2013-11-22T06:07:42.000Z", 
-                        "email": "test@example.com", 
+                        "created_at": "2013-11-24T06:50:07.000Z", 
+                        "email": "a@example.com", 
                         "extra": {
                             "owner": true
                         }, 
-                        "id": 2, 
-                        "modified_at": "2013-11-22T06:12:26.000Z", 
+                        "id": 3, 
+                        "modified_at": "2013-11-24T06:50:54.000Z", 
                         "name": "", 
-                        "owner": true
+                        "owner": true, 
+                        "priority": 1, 
+                        "tags": [
+                            "system:role:guest"
+                        ]
                     }
                 ]
             }
@@ -274,30 +711,34 @@
 
     Examples:
 
-        $ http http://localhost:9000/api/projects/1 access_token==f4c06700-533c-11e3-8508-a36192feacb2
+        $ http http://localhost:9000/api/projects/4 access_token==b0c86590-54d4-11e3-b654-b932b6c09042 
         HTTP/1.1 200 OK
         Connection: keep-alive
-        Content-Length: 799
+        Content-Length: 944
         Content-Type: application/json; charset=utf-8
-        Date: Fri, 22 Nov 2013 06:34:07 GMT
+        Date: Sun, 24 Nov 2013 06:55:53 GMT
         X-Powered-By: Express
 
         {
-            "created_at": "2013-11-22T06:12:26.000Z", 
+            "created_at": "2013-11-24T06:50:54.000Z", 
             "creator": {
-                "created_at": "2013-11-22T06:07:42.000Z", 
-                "email": "test@example.com", 
-                "id": 2, 
-                "modified_at": "2013-11-22T06:12:26.000Z", 
-                "name": ""
+                "created_at": "2013-11-24T06:50:07.000Z", 
+                "email": "a@example.com", 
+                "id": 3, 
+                "modified_at": "2013-11-24T06:50:54.000Z", 
+                "name": "", 
+                "priority": 1, 
+                "tags": [
+                    "system:role:guest"
+                ]
             }, 
-            "creator_id": 2, 
+            "creator_id": 3, 
             "extra": {
                 "owner": true
             }, 
-            "id": 1, 
-            "modified_at": "2013-11-22T06:12:26.000Z", 
-            "name": "my demo project", 
+            "id": 4, 
+            "modified_at": "2013-11-24T06:50:54.000Z", 
+            "name": "test proj by a@example.com", 
             "owner": true, 
             "priority": 1, 
             "tags": [
@@ -306,21 +747,25 @@
                     "tag": "system:role:guest"
                 }, 
                 {
-                    "id": 4, 
+                    "id": 5, 
                     "tag": "system:job:acceptable"
                 }
             ], 
             "users": [
                 {
-                    "created_at": "2013-11-22T06:07:42.000Z", 
-                    "email": "test@example.com", 
+                    "created_at": "2013-11-24T06:50:07.000Z", 
+                    "email": "a@example.com", 
                     "extra": {
                         "owner": true
                     }, 
-                    "id": 2, 
-                    "modified_at": "2013-11-22T06:12:26.000Z", 
+                    "id": 3, 
+                    "modified_at": "2013-11-24T06:50:54.000Z", 
                     "name": "", 
-                    "owner": true
+                    "owner": true, 
+                    "priority": 1, 
+                    "tags": [
+                        "system:role:guest"
+                    ]
                 }
             ]
         }
@@ -361,20 +806,18 @@
 
         OK
 
-## Devices
+- List devices the project has access permission
 
-- Get attached devices that the specified project has permission to access.
-
-        GET /api/devices?access_token=:access_token&project=:project
+        GET /api/projects/:project/devices?access_token=:access_token
 
     Examples:
 
-        $ http http://localhost:9000/api/devices access_token==f4c06700-533c-11e3-8508-a36192feacb2 project==1
+        $ http http://localhost:9000/api/projects/4/devices access_token==03227250-54c0-11e3-ba49-7903e87f27a9
         HTTP/1.1 200 OK
         Connection: keep-alive
-        Content-Length: 922
+        Content-Length: 921
         Content-Type: application/json; charset=utf-8
-        Date: Sat, 23 Nov 2013 06:21:12 GMT
+        Date: Sun, 24 Nov 2013 13:07:36 GMT
         X-Powered-By: Express
 
         [
@@ -392,7 +835,7 @@
                         "sdk": "18"
                     }
                 }, 
-                "id": "00:26:b9:e7:a2:3b-014E05DE0F02000E", 
+                "id": "84:4b:f5:8a:a8:8f-014E05DE0F02000E", 
                 "idle": true, 
                 "locale": {
                     "language": "en", 
@@ -413,44 +856,12 @@
                     "system:job:acceptable"
                 ], 
                 "workstation": {
-                    "ip": "192.168.4.232", 
-                    "mac": "00:26:b9:e7:a2:3b", 
+                    "ip": "192.168.0.66", 
+                    "mac": "84:4b:f5:8a:a8:8f", 
                     "port": 8000
                 }
             }
         ]
-
-- Add tag to device (admin permission)
-
-        POST /api/devices/:device/tag/:tag?access_token=:access_token
-
-    Examples:
-
-        $ http POST http://localhost:9000/api/devices/00:26:b9:e7:a2:3b-014E05DE0F02000E/tag/system:role:guest access_token==28d214c0-535c-11e3-bcde-ad2acffbc212 
-        HTTP/1.1 200 OK
-        Connection: keep-alive
-        Content-Length: 2
-        Content-Type: text/plain
-        Date: Fri, 22 Nov 2013 10:02:41 GMT
-        X-Powered-By: Express
-
-        OK
-
-- Remove tag from device (admin permission)
-
-        POST /api/devices/:device/untag/:tag?access_token=:access_token
-
-    Examples:
-
-        $ http POST http://localhost:9000/api/devices/00:26:b9:e7:a2:3b-CLV6ECA4D58/untag/system:role:guest access_token==162ac900-4cd3-11e3-ba42-1fb848ccf3b3
-        HTTP/1.1 200 OK
-        Connection: keep-alive
-        Content-Length: 2
-        Content-Type: text/plain
-        Date: Thu, 14 Nov 2013 03:01:56 GMT
-        X-Powered-By: Express
-
-        OK
 
 ## Tasks
 
@@ -623,7 +1034,7 @@
 
     Note:
 
-    - Only tasks in projects that the user has permission to access will return.
+    - Returns tasks in projects that the user has permission to access.
     - If project is specified, only tasks in the project will return.
 
     Examples:

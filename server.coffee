@@ -48,16 +48,15 @@ app.param "task", param.task
 
 app.get "/api/awesomeThings", api.awesomeThings
 
-app.get "/api/devices", api.auth.auth, api.auth.auth_project, api.devices.list
-app.get "/api/devices/:device", api.auth.auth, api.auth.auth_project, api.devices.get
-
+app.get "/api/devices", api.auth.auth, api.auth.auth_admin, api.devices.list
+app.get "/api/devices/:device", api.auth.auth, api.auth.auth_admin, api.devices.get
 app.post "/api/devices/:device/tag/:tag", api.auth.auth_admin, api.devices.tag_device
 app.post "/api/devices/:device/untag/:tag", api.auth.auth_admin, api.devices.untag_device
 app.delete "/api/devices/:device/tag/:tag", api.auth.auth_admin, api.devices.untag_device
 
-app.get "/api/workstations", api.auth.auth, api.workstations.get
-app.get "/api/workstations/:workstation", api.auth.auth, api.workstations.get
-app.all ///^/api/workstations/([\d\w:]+)/api/(.+)$///, api.auth.auth, api.workstations.api
+app.get "/api/workstations", api.auth.auth_admin, api.workstations.get
+app.get "/api/workstations/:workstation", api.auth.auth_admin, api.workstations.get
+app.all "/api/workstations/:workstation/api/*", api.auth.auth_admin, api.workstations.api
 
 app.post "/api/auth/get_access_token", api.auth.get_access_token
 app.get "/api/account", api.auth.auth, api.account.get
@@ -68,6 +67,8 @@ app.get "/api/projects", api.auth.auth, api.projects.list
 app.get "/api/projects/:project", api.auth.auth, api.auth.auth_project, api.projects.get
 app.post "/api/projects/:project/add_user", api.auth.auth, api.auth.auth_project, api.projects.add_user
 app.post "/api/projects/:project/remove_user", api.auth.auth, api.auth.auth_project, api.projects.rm_user
+app.get "/api/projects/:project/devices", api.auth.auth, api.auth.auth_project, api.projects.list_devices
+app.get "/api/projects/:project/devices/:device", api.auth.auth, api.auth.auth_project, api.projects.get_device
 
 app.post "/api/tasks", api.auth.auth, api.auth.auth_project, api.tasks.add
 app.get "/api/tasks", api.auth.auth, api.projects.param, api.tasks.list
@@ -89,6 +90,7 @@ app.post "/api/tags", api.auth.auth_admin, api.tags.add
 app.post "/api/users", api.auth.auth_admin, api.users.add
 app.get "/api/users", api.auth.auth_admin, api.users.list
 app.get "/api/users/:id", api.auth.auth_admin, api.users.get
+app.post "/api/users/:id", api.auth.auth_admin, api.users.update
 
 http.createServer(app).listen app.get("port"), ->
   console.log "Express server listening on port #{app.get('port')} in #{app.get('env')} mode."
