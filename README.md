@@ -73,8 +73,13 @@
         
         {"email":"xxxx@example.com", "password":"xxxx", "tags": ["system:role:user"], "name": "xxx", priority: 1}
 
-    Both json and form are supported.
-    
+    Notes:
+
+    - Both json and form are supported.
+    - `email` must be unique, `name` is the display name.
+    - `tags` is used in creating new project. We are using the field to control what devices the project can access.
+    - `priority` is used in creating new project. It can be from 1 to 10, higher value means higher priority when assigning jobs.
+
     Example:
 
         $ http http://localhost:9000/api/users access_token==675ed270-54b8-11e3-934a-7722a3f49493 email=test@example.com password=test
