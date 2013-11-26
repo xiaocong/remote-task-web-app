@@ -53,6 +53,7 @@ app.get "/api/devices/:device", api.auth.auth, api.auth.auth_admin, api.devices.
 app.post "/api/devices/:device/tag/:tag", api.auth.auth_admin, api.devices.tag_device
 app.post "/api/devices/:device/untag/:tag", api.auth.auth_admin, api.devices.untag_device
 app.delete "/api/devices/:device/tag/:tag", api.auth.auth_admin, api.devices.untag_device
+app.post "/api/devices/:device/cancel_job/:job", api.auth.auth_admin, api.devices.cancel_job
 
 app.get "/api/workstations", api.auth.auth_admin, api.workstations.get
 app.get "/api/workstations/:workstation", api.auth.auth_admin, api.workstations.get

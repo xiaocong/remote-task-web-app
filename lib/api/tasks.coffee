@@ -5,19 +5,23 @@ url = require("url")
 _ = require("underscore")
 logger = require("../logger")
 
-stop_job = (running_job)->
-  logger.info running_job.toJSON()
-  url_str = url.format(
-    protocol: "http"
-    hostname: running_job.get("ip")
-    port: running_job.get("port")
-    pathname: "/api/0/jobs/#{running_job.id}/stop"
-  )
-  request.get(url_str, (e, r, body)->)
-  logger.info "Stop running job:#{running_job.id}."
+stop_job = (job, workstations)->
+  if job?.get("status") is "started"
+    ws = workstations.get job.get("device").workstation_mac
+    url_str = url.format(
+      protocol: "http"
+      hostname: ws.get("ip")
+      port: ws.get("api").port
+      pathname: "/api/0/jobs/#{job.id}/stop"
+    )
+    request.get(url_str, (e, r, body)->)
+    logger.info "Stop running job:#{job.id}."
 
 
 exports = module.exports =
+  kill_job_process: (job, workstations) ->
+    stop_job(job, workstations)
+
   add: (req, res, next) ->
     jobs = req.param("jobs") ? [{}]
     return next new Error("Invalid jobs parameter!") if jobs not instanceof Array or jobs.length is 0
@@ -104,8 +108,9 @@ exports = module.exports =
 
   remove: (req, res, next) ->
     id = req.task.id
-    req.task.jobs.forEach (job) ->
-      stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?  # stop the running job
+    req.db.models.job.find({task_id: id, status: "started"}).each (job) ->
+    req.zk.models.live_jobs.forEach (job) ->
+      stop_job(job, req.zk.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
     req.task.remove (err) ->
       return next(err) if err?
       req.db.models.job.find(task_id: id).remove (err) ->
@@ -116,9 +121,10 @@ exports = module.exports =
 
   cancel: (req, res, next) ->
     id = req.task.id
+    req.zk.models.live_jobs.forEach (job) ->
+      stop_job(job, req.zk.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
     req.db.models.job.find({task_id: id, status: ["new", "started"]}).each((job) ->
       job.status = "cancelled"
-      stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?  # stop the running job
     ).save (err) ->
       req.redis.publish "db.task", JSON.stringify(method: "cancel", task: id)
       res.send 200
@@ -126,9 +132,10 @@ exports = module.exports =
 
   restart: (req, res, next) ->
     id = req.task.id
+    req.zk.models.live_jobs.forEach (job) ->
+      stop_job(job, req.zk.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
     req.db.models.job.find({task_id: id}).each((job) ->
       job.status = "new"
-      stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?  # stop the running job
     ).save (err) ->
       req.redis.publish "db.task", JSON.stringify(method: "restart", task: id)
       res.send 200
@@ -160,11 +167,11 @@ exports = module.exports =
         req.redis.publish "db.job", JSON.stringify(method: "add", job: j.id)
 
   retrieve_job: (req, res, next) ->
-    job = _.find(req.task.jobs, (job) -> job.no is Number(req.params.no))
-    if not job
-      return res.json 500, error: "Job not found."
-    req.job = job
-    next()
+    req.db.models.job.find {task_id: req.task.id, no: Number(req.params.no)}, (err, jobs) ->
+      return next(err) if err?
+      return res.json(404, error: "Job not found.") if jobs.length is 0
+      req.job = jobs[0]
+      next()
 
   update_job: (req, res, next) ->
     t_job = req.job
@@ -192,7 +199,7 @@ exports = module.exports =
     job = req.job
     if job.status in ["cancelled", "finished"]
       return res.json job
-    stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?
+    stop_job(req.zk.models.live_jobs.get(job.id), req.zk.models.workstations)
     job.status = "cancelled"
     job.save (err) ->
       return next(err) if err?
@@ -204,7 +211,7 @@ exports = module.exports =
     job = req.job
     if job.status is "new"
       return res.send 200
-    stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?
+    stop_job(req.zk.models.live_jobs.get(job.id), req.zk.models.workstations)
     job.status = "new"
     job.save (err) ->
       return next(err) if err?
