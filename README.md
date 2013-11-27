@@ -559,6 +559,158 @@
 
         OK
 
+## Jobs
+
+- List (admin permission)
+
+        GET /api/jobs?access_token=:access_token
+
+    **Note**: Only returns not finished jobs.
+
+    Examples:
+
+        $ http http://localhost:9000/api/jobs access_token==675ed270-54b8-11e3-934a-7722a3f49493
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 4522
+        Content-Type: application/json; charset=utf-8
+        Date: Wed, 27 Nov 2013 03:32:53 GMT
+        ETag: "-1280373730"
+        X-Powered-By: Express
+
+        [
+            {
+                "created_at": "2013-11-26T09:12:58.000Z", 
+                "device_filter": {
+                    "tags": [
+                        "system:role:user", 
+                        "system:job:acceptable"
+                    ]
+                }, 
+                "device_id": null, 
+                "environ": {}, 
+                "exit_code": null, 
+                "id": 5, 
+                "modified_at": "2013-11-27T03:14:27.000Z", 
+                "no": 0, 
+                "priority": 1, 
+                "r_job_nos": [], 
+                "r_type": "none", 
+                "repo_branch": null, 
+                "repo_passowrd": null, 
+                "repo_url": "https://github.com/xiaocong/demo_test.git", 
+                "repo_username": null, 
+                "status": "new", 
+                "task": {
+                    "created_at": "2013-11-26T09:12:58.000Z", 
+                    "creator_id": 2, 
+                    "description": "Task created by test@example.com at Tue Nov 26 2013 17:12:58 GMT+0800 (CST) with 5 job(s).", 
+                    "id": 2, 
+                    "modified_at": "2013-11-27T03:14:28.000Z", 
+                    "name": "Task - Tue Nov 26 2013 17:12:58 GMT+0800 (CST)", 
+                    "project_id": 1
+                }, 
+                "task_id": 2
+            }, 
+            ...
+        ]
+
+- Get one (admin permission)
+
+        GET /api/jobs/:job?access_token=:access_token
+
+    Examples:
+
+        $ http http://localhost:9000/api/jobs/7 access_token==675ed270-54b8-11e3-934a-7722a3f49493
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 836
+        Content-Type: application/json; charset=utf-8
+        Date: Wed, 27 Nov 2013 03:35:45 GMT
+        X-Powered-By: Express
+
+        {
+            "created_at": "2013-11-26T09:12:58.000Z", 
+            "device_filter": {
+                "tags": [
+                    "system:role:user", 
+                    "system:job:acceptable"
+                ]
+            }, 
+            "device_id": null, 
+            "environ": {}, 
+            "exit_code": null, 
+            "id": 7, 
+            "modified_at": "2013-11-27T03:14:27.000Z", 
+            "no": 2, 
+            "priority": 1, 
+            "r_job_nos": [], 
+            "r_type": "none", 
+            "repo_branch": null, 
+            "repo_passowrd": null, 
+            "repo_url": "https://github.com/xiaocong/demo_test.git", 
+            "repo_username": null, 
+            "status": "new", 
+            "task": {
+                "created_at": "2013-11-26T09:12:58.000Z", 
+                "creator_id": 2, 
+                "description": "Task created by test@example.com at Tue Nov 26 2013 17:12:58 GMT+0800 (CST) with 5 job(s).", 
+                "id": 2, 
+                "modified_at": "2013-11-27T03:14:28.000Z", 
+                "name": "Task - Tue Nov 26 2013 17:12:58 GMT+0800 (CST)", 
+                "project_id": 1
+            }, 
+            "task_id": 2
+        }
+
+- Cancel job (admin permission)
+
+        POST /api/jobs/:job/cancel?access_token=:access_token
+
+    Examples:
+
+        $ http POST http://localhost:9000/api/jobs/7/cancel access_token==675ed270-54b8-11e3-934a-7722a3f49493
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 842
+        Content-Type: application/json; charset=utf-8
+        Date: Wed, 27 Nov 2013 03:37:26 GMT
+        X-Powered-By: Express
+
+        {
+            "created_at": "2013-11-26T09:12:58.000Z", 
+            "device_filter": {
+                "tags": [
+                    "system:role:user", 
+                    "system:job:acceptable"
+                ]
+            }, 
+            "device_id": null, 
+            "environ": {}, 
+            "exit_code": null, 
+            "id": 7, 
+            "modified_at": "2013-11-27T03:37:26.788Z", 
+            "no": 2, 
+            "priority": 1, 
+            "r_job_nos": [], 
+            "r_type": "none", 
+            "repo_branch": null, 
+            "repo_passowrd": null, 
+            "repo_url": "https://github.com/xiaocong/demo_test.git", 
+            "repo_username": null, 
+            "status": "cancelled", 
+            "task": {
+                "created_at": "2013-11-26T09:12:58.000Z", 
+                "creator_id": 2, 
+                "description": "Task created by test@example.com at Tue Nov 26 2013 17:12:58 GMT+0800 (CST) with 5 job(s).", 
+                "id": 2, 
+                "modified_at": "2013-11-27T03:37:26.738Z", 
+                "name": "Task - Tue Nov 26 2013 17:12:58 GMT+0800 (CST)", 
+                "project_id": 1
+            }, 
+            "task_id": 2
+        }
+
 ## Account
 
 - Get account information
