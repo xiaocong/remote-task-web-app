@@ -17,7 +17,6 @@ stop_job = (job, workstations)->
     request.get(url_str, (e, r, body)->)
     logger.info "Stop running job:#{job.id}."
 
-
 exports = module.exports =
   kill_job_process: (job, workstations) ->
     stop_job(job, workstations)
@@ -26,7 +25,7 @@ exports = module.exports =
     jobs = req.param("jobs") ? [{}]
     return next new Error("Invalid jobs parameter!") if jobs not instanceof Array or jobs.length is 0
     name = req.param("name") ? "Task - #{new Date}"
-    description = req.param("description") or "Task created by #{req.user.email} at #{new Date} with #{jobs.length} job(s)."
+    description = req.param("description") ? "Task created by #{req.user.email}(#{req.user.name}) at #{new Date} with #{jobs.length} job(s)."
 
     properties = ["environ", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
     jobs.forEach (job, index) ->
@@ -75,7 +74,7 @@ exports = module.exports =
   list: (req, res, next) ->
     page = Number(req.param("page")) or 0
     page_count = Number(req.param("page_count")) or 16
-    running_only = (req.param("running_only") or "0") not in ["0", "false"]
+    running_only = (req.param("running_only") or "0") in ["1", "true", "t", "ok"]
     
     if running_only
       filter =  id: _.uniq(req.zk.models.live_jobs.map((job) -> job.get("task_id")))
@@ -104,7 +103,6 @@ exports = module.exports =
       req.user.getProjects (err, projects) ->
         filter.project_id = _.map(projects, (proj) -> proj.id)
         listTasks()
-
 
   remove: (req, res, next) ->
     id = req.task.id

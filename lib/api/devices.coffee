@@ -2,7 +2,6 @@
 
 logger = require("../logger")
 _ = require("underscore")
-tasks = require("./tasks")
 
 module.exports =
   get: (req, res) ->
@@ -61,18 +60,3 @@ module.exports =
             req.redis.publish "db.device.tag", JSON.stringify(method: "delete", device: device.id, tags: tags)
         else
           res.send 200
-
-  cancel_job: (req, res, next) ->
-    job = req.zk.models.live_jobs.get(Number(req.param("job")))
-    if job?.get("status") is "started" and job.get("device").workstation_mac is req.device.get("workstation").mac
-      tasks.kill_job_process(job, req.zk.models.workstations)
-      req.db.models.job.get job.id, (err, job) ->
-        return next(err) if err?
-        job.status = 'cancelled'
-        job.save (err) ->
-          return next(err) if err?
-          res.json job
-          req.redis.publish "db.job", JSON.stringify(method: "cancel", job: job.id)
-          logger.info "Job:#{job.id} cancelled by #{req.user.email}."
-    else
-      res.json 404, error: "No such a job."
