@@ -17,7 +17,14 @@ dbmodule.initialize ->
   zk_jobs = zk.models.jobs
   events = _.extend {}, Backbone.Events
 
+  schedule_count = 0
   schedule = ->
+    # urgly. We want not to schedule for every "remove" event, so add 5 seconds delay.
+    schedule_count += 1
+    setTimeout arrange, 5000 if schedule_count is 1
+
+  arrange = ->
+    schedule_count = 0
     live_jobs.forEach (job) -> logger.debug "Job #{job.id}: status=#{job.get('status')}, locked=#{job.get('locked')}"
     devices.forEach (device) -> logger.debug "Device #{device.id}: idle=#{device.get('idle')}, locked=#{device.get('locked')}"
     [10..1].forEach (priority) -> live_jobs.filter((job) -> job.get("priority") is priority and job.get("status") is "new" and not job.get("locked")).forEach (job) ->
@@ -79,7 +86,7 @@ dbmodule.initialize ->
     return true    
 
   assign_task = (device, job) ->
-    job.set {locked: true}, {silent: true}
+    job.set {locked: true, assigned_device: device.id}, {silent: true}
     device.set {locked: true}, {silent: true}
     url_str = url.format(
       protocol: "http"
@@ -100,12 +107,19 @@ dbmodule.initialize ->
     request.post {url: url_str, json: body}, (err, res, body) ->
       if err? or res.statusCode isnt 200
         logger.error "Error when assigning job #{job.id} to device #{device.id}, response is #{body}"
-        job.set {locked: false}, {silent: true} # triggered by device change next step, so silent for job change.
-        device.set {locked: false}
+        job.unset "locked", silent: true # triggered by device change next step, so silent for job change.
+        job.unset "assigned_device", silent: true
+        device.unset "locked"
       else
-        job.set {assigned_device: device.id}, {silent: true}
         db.models.device.find {workstation_mac: device.get("workstation").mac, serial: device.get("serial")}, (err, devices) ->
-          events.trigger("update:job", {find:{id: job.id}, update: {device_id: devices[0].id, status: "started"}}) if devices?.length > 0
+          events.trigger("update:job", {
+            find:
+              id: job.id
+              status: "new"
+            update:
+              device: devices[0]
+              status: "started"
+          }) if devices?.length > 0
 
   finish_job = (event) ->
     id = event.id
@@ -130,7 +144,14 @@ dbmodule.initialize ->
     )
 
   devices.on "add", (device) ->
-    db.models.device.create [{workstation_mac: device.get("workstation").mac, serial: device.get("serial")}], ->
+    db.models.device.create {workstation_mac: device.get("workstation").mac, serial: device.get("serial")}, (err, device) ->
+      return if err?
+      db.models.tag.find (err, tags) ->
+        return if err?
+        default_tags = ["system:role:admin"]
+        device.addTags _.filter(tags, (t) -> t.tag in default_tags), (err) ->
+          return if err?
+          redis.publish "db.device.tag", JSON.stringify(method: "add", device: device.id, tags: default_tags)
   devices.on "change add", (device) -> # when there is an unlocked and idle device, we should schedule.
     schedule() if device.get("idle") and not device.get("locked")
 
@@ -148,6 +169,18 @@ dbmodule.initialize ->
 
   zk_jobs.on "remove", finish_job
 
+  zk_jobs.on "add", (job) ->
+    # Due to async issue, job precess may be running but the job status in db is not started.
+    if not live_jobs.get(job.id) or (live_jobs.get(job.id).get("status") is "new" and not live_jobs.get(job.id).get("locked"))
+      url_str = url.format(
+        protocol: "http"
+        hostname: job.get("ip")
+        port: job.get("port")
+        pathname: "/api/0/jobs/#{job.id}/stop"
+      )
+      request.get url_str, (err, r, b) ->
+      logger.warn "Kill untracked job: #{job.id}"
+
   events.on "update:job", (msg) ->
     logger.debug "Find jobs #{JSON.stringify(msg.find)} and update to #{JSON.stringify(msg.update)}"
     db.models.job.find(msg.find).each((job) ->
@@ -157,4 +190,4 @@ dbmodule.initialize ->
       redis.publish "db.job", JSON.stringify({find: msg.find, update: msg.update})
       msg.callback?()
 
-  schedule()
+  setInterval schedule, 60*1000

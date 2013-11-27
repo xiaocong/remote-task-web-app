@@ -5,10 +5,15 @@ _ = require("underscore")
 
 module.exports =
   get: (req, res) ->
-    if req.device?
-      res.json req.device.toJSON()
-    else
-      res.json req.zk.models.devices.toJSON()
+    device = req.device.toJSON()
+    device.jobs = req.zk.models.live_jobs.filter (job) -> job.get("status") is "started" and "#{job.get('device').workstation_mac}-#{job.get('device').serial}" is device.id
+    res.json device
+
+  list: (req, res) ->
+    devices = req.zk.models.devices.toJSON()
+    devices.forEach (device) ->
+      device.jobs = req.zk.models.live_jobs.filter (job) -> job.get("status") is "started" and "#{job.get('device').workstation_mac}-#{job.get('device').serial}" is device.id
+    res.json devices
 
   tag_device: (req, res, next) ->
     req.db.models.tag.find tag: req.param("tag"), (err, tags) ->
@@ -38,6 +43,8 @@ module.exports =
             addTags()
 
   untag_device: (req, res, next) ->
+    if "system:role:admin" is req.param("tag")
+      return res.json 400, error: "The tag can not be removed."
     req.db.models.tag.find tag: req.param("tag"), (err, tags) ->
       return next(err) if err?
 

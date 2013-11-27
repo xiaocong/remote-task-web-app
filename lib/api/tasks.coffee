@@ -5,40 +5,43 @@ url = require("url")
 _ = require("underscore")
 logger = require("../logger")
 
-stop_job = (running_job)->
-  logger.info running_job.toJSON()
-  url_str = url.format(
-    protocol: "http"
-    hostname: running_job.get("ip")
-    port: running_job.get("port")
-    pathname: "/api/0/jobs/#{running_job.id}/stop"
-  )
-  request.get(url_str, (e, r, body)->)
-  logger.info "Stop running job:#{running_job.id}."
-
+stop_job = (job, workstations)->
+  if job?.get("status") is "started"
+    ws = workstations.get job.get("device").workstation_mac
+    url_str = url.format(
+      protocol: "http"
+      hostname: ws.get("ip")
+      port: ws.get("api").port
+      pathname: "/api/0/jobs/#{job.id}/stop"
+    )
+    request.get(url_str, (e, r, body)->)
+    logger.info "Stop running job:#{job.id}."
 
 exports = module.exports =
-  add: (req, res, next) ->
-    name = req.param("name")
-    description = req.param("description") or ""
-    jobs = req.param("jobs")
-    return next(new Error("Invalid parameters!")) if not name?  or jobs not instanceof Array or jobs.length is 0
+  kill_job_process: (job, workstations) ->
+    stop_job(job, workstations)
 
-    properties = ["environ", "priority", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
+  add: (req, res, next) ->
+    jobs = req.param("jobs") ? [{}]
+    return next new Error("Invalid jobs parameter!") if jobs not instanceof Array or jobs.length is 0
+    name = req.param("name") ? "Task - #{new Date}"
+    description = req.param("description") ? "Task created by #{req.user.email}(#{req.user.name}) at #{new Date} with #{jobs.length} job(s)."
+
+    properties = ["environ", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
     jobs.forEach (job, index) ->
       for prop in properties when prop not of job and req.param(prop)?
         job[prop] = req.param(prop)
       job["environ"] ?= {}
-      job["device_filter"] ?= {}
       job["r_type"] ?= "none"
       job["r_job_nos"] ?= []
       job["status"] = "new"
       job["no"] ?= index
-      job["priority"] ?= 1  # 1 - 10. default 1 means lowest. 10 means highest.
+      job["priority"] = req.project.priority  # 1 - 10. default 1 means lowest. 10 means highest.
+      job["device_filter"] ?= {}
+      job["device_filter"]["tags"] ?= []
+      job["device_filter"]["tags"] = _.union(job["device_filter"]["tags"], req.project.tagList())
 
-    if not name
-      return res.json 500, error: "Empty task name."
-    else if not _.every(jobs, (j) -> j.repo_url?)
+    if not _.every(jobs, (j) -> j.repo_url?)
       return res.json 500, error: "'repo_url' is mandatory for every job."
     else if _.size(_.countBy(jobs, (job) -> job.no)) isnt jobs.length
       return res.json 500, error: "Duplicated job no."
@@ -49,41 +52,63 @@ exports = module.exports =
     else if _.some(_.flatten(_.map(jobs, (job) -> job.r_job_nos)), (n) -> n not in [0...jobs.length])
       return res.json 500, error: "Invalid r_job_nos."
 
-    req.db.models.task.create [{name: name, description: description, creator_id: req.user.id}], (err, tasks) ->
+    req.db.models.task.create {name: name, description: description, creator_id: req.user.id, project_id: req.project.id}, (err, task) ->
       return next(err) if err?
-      job.task_id = tasks[0].id for job in jobs
+      job.task_id = task.id for job in jobs
       req.db.models.job.create jobs, (err, jobs) ->
         return next(err) if err?
-        tasks[0].jobs = jobs
-        res.json tasks[0]
-        req.redis.publish "db.task", JSON.stringify(method: "add", task: tasks[0].id)
+        task.jobs = jobs
+        res.json task
+        req.redis.publish "db.task", JSON.stringify(method: "add", task: task.id)
 
   get: (req, res, next) ->
-    task = JSON.parse(JSON.stringify(req.task))
-    delete task.creator.password
-    res.json task
+    req.user.getProjects (err, projects) ->
+      return next(err) if err?
+      if req.task.project_id in _.map(projects, (proj) -> proj.id)
+        task = JSON.parse(JSON.stringify(req.task))
+        delete task.creator.password
+        res.json task
+      else
+        res.json 403, error: "No permission to access the task."
 
   list: (req, res, next) ->
     page = Number(req.param("page")) or 0
     page_count = Number(req.param("page_count")) or 16
-    running_only = (req.param("running_only") or "0") not in ["0", "false"]
+    running_only = (req.param("running_only") or "0") in ["1", "true", "t", "ok"]
+    
     if running_only
-      filter = id: _.uniq(req.zk.models.live_jobs.map((job) -> job.get("task_id")))
+      filter =  id: _.uniq(req.zk.models.live_jobs.map((job) -> job.get("task_id")))
     else
       filter = {}
-    req.db.models.task.find(filter).count (err, count) ->
-      return next(err) if err?
-      req.db.models.task.find(filter).order("-id").offset(page*page_count).limit(page_count).all (err, tasks) ->
+
+    listTasks = ->
+      req.db.models.task.find(filter).count (err, count) ->
         return next(err) if err?
-        tasks = JSON.parse(JSON.stringify(tasks))
-        delete task.creator.password for task in tasks
-        res.json {page: page, page_count: page_count, pages: Math.ceil(count/page_count), running_only: running_only, tasks: tasks}
+        req.db.models.task.find(filter).order("-id").offset(page*page_count).limit(page_count).all (err, tasks) ->
+          return next(err) if err?
+          tasks = JSON.parse(JSON.stringify(tasks))
+          delete task.creator.password for task in tasks
+          res.json
+            page: page
+            page_count: page_count
+            pages: Math.ceil(count/page_count)
+            running_only: running_only
+            tasks: tasks
+
+    if req.project?
+      filter.project_id = req.project.id
+      listTasks()
+    else
+      filter.project_id = _.map(req.user.projects, (proj) -> proj.id)
+      req.user.getProjects (err, projects) ->
+        filter.project_id = _.map(projects, (proj) -> proj.id)
+        listTasks()
 
   remove: (req, res, next) ->
-    # calcel running jobs of the task
     id = req.task.id
-    req.task.jobs.forEach (job) ->
-      stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?  # stop the running job
+    req.db.models.job.find({task_id: id, status: "started"}).each (job) ->
+    req.zk.models.live_jobs.forEach (job) ->
+      stop_job(job, req.zk.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
     req.task.remove (err) ->
       return next(err) if err?
       req.db.models.job.find(task_id: id).remove (err) ->
@@ -94,9 +119,10 @@ exports = module.exports =
 
   cancel: (req, res, next) ->
     id = req.task.id
+    req.zk.models.live_jobs.forEach (job) ->
+      stop_job(job, req.zk.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
     req.db.models.job.find({task_id: id, status: ["new", "started"]}).each((job) ->
       job.status = "cancelled"
-      stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?  # stop the running job
     ).save (err) ->
       req.redis.publish "db.task", JSON.stringify(method: "cancel", task: id)
       res.send 200
@@ -104,9 +130,10 @@ exports = module.exports =
 
   restart: (req, res, next) ->
     id = req.task.id
+    req.zk.models.live_jobs.forEach (job) ->
+      stop_job(job, req.zk.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
     req.db.models.job.find({task_id: id}).each((job) ->
       job.status = "new"
-      stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?  # stop the running job
     ).save (err) ->
       req.redis.publish "db.task", JSON.stringify(method: "restart", task: id)
       res.send 200
@@ -115,73 +142,115 @@ exports = module.exports =
   add_job: (req, res, next) ->
     job = req.body
     job.task_id = req.task.id
+    if not job.repo_url?
+      return res.json 500, error: "'repo_url' is mandatory for job."
     job["environ"] ?= {}
     job["device_filter"] ?= {}
+    job["device_filter"]["tags"] ?= []
     job["r_type"] ?= "none"
     job["r_job_nos"] ?= []
     job["status"] = "new"
     job["no"] = _.max(req.task.jobs, (j) -> j.no).no + 1
-    job["priority"] ?= 1  # 1 - 10. default 1 means lowest. 10 means highest.
-
-    if not job.repo_url?
-      return res.json 500, error: "'repo_url' is mandatory for job."
-    else if not job.device_filter?.tags?.length > 0
-      return res.json 500, error: "Job should define at least one tag in 'device_filter.tags'."
-
-    req.db.models.job.create [job], (err, jobs) ->
+    req.db.models.project.get req.task.project_id, (err, project) ->
       return next(err) if err?
-      res.json jobs[0]
-      req.redis.publish "db.job", JSON.stringify(method: "add", job: jobs[0].id)
+      job["priority"] = project.priority
+      job["device_filter"]["tags"] = _.union(job["device_filter"]["tags"], project.tagList())
+
+      if not job.device_filter?.tags?.length > 0
+        return res.json 500, error: "Job should define at least one tag in 'device_filter.tags'."
+
+      req.db.models.job.create job, (err, j) ->
+        return next(err) if err?
+        res.json j
+        req.redis.publish "db.job", JSON.stringify(method: "add", job: j.id)
+
+  retrieve_job: (req, res, next) ->
+    req.db.models.job.find {task_id: req.task.id, no: Number(req.params.no)}, (err, jobs) ->
+      return next(err) if err?
+      return res.json(404, error: "Job not found.") if jobs.length is 0
+      req.job = jobs[0]
+      next()
 
   update_job: (req, res, next) ->
+    t_job = req.job
+    if t_job.status is "started"
+      return res.json 500, error: "Could not update started job."
+
     job = req.body
-    job.no = Number(req.params.no)
-    if "device_filter" of job
-      if "tags" not of job.device_filter or  job.device_filter.tags not instanceof Array or job.device_filter.tags.length is 0
-        return res.json 500, error: "Tags shoudl not be empty."
     if "r_job_nos" of job
       if job.r_job_nos not instanceof Array or _.some(job.r_job_nos, (n) -> n not in [0...req.task.jobs.length])
         return res.json 500, error: "Invalid r_job_nos."
-    if "status" of job and job.status not in ["new", "cancelled"]
-      return res.json 500, error: "Invalide status."
-    t_job = _.find(req.task.jobs, (j) -> j.no is job.no)
-    if not t_job
-      return res.json 500, error: "Job not found."
-    if t_job.status is "started"
-      return res.json 500, error: "Could not update started job."
-    properties = ["status", "r_type", "r_job_nos", "environ", "priority", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
+    properties = ["r_type", "r_job_nos", "environ", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
     t_job[prop] = job[prop] for prop in properties when prop of job
-    t_job.save (err) ->
+    req.db.models.project.get req.task.project_id, (err, project) ->
       return next(err) if err?
-      res.json t_job
-      req.redis.publish "db.job", JSON.stringify(method: "update", job: t_job.id)
+      t_job["priority"] = project.priority
+      t_job.device_filter?.tags ?= []
+      t_job["device_filter"]["tags"] = _.union(t_job["device_filter"]["tags"], project.tagList())
+      t_job.save (err) ->
+        return next(err) if err?
+        res.json t_job
+        req.redis.publish "db.job", JSON.stringify(method: "update", job: t_job.id)
+        logger.info "Job:#{t_job.id} updated."
 
   cancel_job: (req, res, next) ->
-    job_no = Number(req.params.no)
-    job = _.find(req.task.jobs, (job) -> job.no is job_no)
-    if not job
-      return res.json 500, error: "Job not found."
+    job = req.job
     if job.status in ["cancelled", "finished"]
-      return res.send 200
-    stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?
+      return res.json job
+    stop_job(req.zk.models.live_jobs.get(job.id), req.zk.models.workstations)
     job.status = "cancelled"
     job.save (err) ->
       return next(err) if err?
+      res.json job
       req.redis.publish "db.job", JSON.stringify(method: "cancel", job: job.id)
-      res.send 200
       logger.info "Job:#{job.id} cancelled."
 
   restart_job: (req, res, next) ->
-    job_no = Number(req.params.no)
-    job = _.find(req.task.jobs, (job) -> job.no is job_no)
-    if not job
-      return res.json 500, error: "Job not found."
+    job = req.job
     if job.status is "new"
       return res.send 200
-    stop_job(req.zk.models.jobs.get(job.id)) if req.zk.models.jobs.get(job.id)?
+    stop_job(req.zk.models.live_jobs.get(job.id), req.zk.models.workstations)
     job.status = "new"
     job.save (err) ->
       return next(err) if err?
+      res.json job
       req.redis.publish "db.job", JSON.stringify(method: "restart", job: job.id)
-      res.send 200
       logger.info "Job:#{job.id} restarted."
+
+  job_output: (req, res, next) ->
+    job = req.job
+    if job.status is "new" or not job.device_id
+      return res.json 400, error: "No output."
+    req.db.models.device.get job.device_id, (err, dev) ->
+      return next(err) if err?
+      ws = req.zk.models.workstations.get(dev.workstation_mac)
+      if ws?.get("api")?.status is "up"
+        url_str = url.format(
+          protocol: "http"
+          hostname: ws.get("ip")
+          port: ws.get("api").port
+          pathname: "/api/0/jobs/#{job.id}/stream"
+          query: req.query
+        )
+        req.pipe(request(url_str)).pipe(res)
+      else
+        res.json 404, error: "The workstation is disconnected."
+
+  job_files: (req, res, next) ->
+    job = req.job
+    if job.status is "new" or not job.device_id
+      return res.json 400, error: "No files available."
+    req.db.models.device.get job.device_id, (err, dev) ->
+      return next(err) if err?
+      ws = req.zk.models.workstations.get(dev.workstation_mac)
+      if ws?.get("api")?.status is "up"
+        url_str = url.format(
+          protocol: "http"
+          hostname: ws.get("ip")
+          port: ws.get("api").port
+          pathname: "/api/0/jobs/#{job.id}/files/#{req.params[0]}"
+          query: req.query
+        )
+        req.pipe(request(url_str)).pipe(res)
+      else
+        res.json 404, error: "The device is disconnected."

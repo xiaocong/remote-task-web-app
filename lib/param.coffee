@@ -22,4 +22,10 @@ exports.task = (req, res, next, id) ->
     req.task = task
     next()
 
+exports.job = (req, res, next, id) ->
+  req.db.models.job.get id, (err, job) ->
+    return res.json(500, error: err) if err?
+    req.job = job
+    next()
+
 module.exports = exports

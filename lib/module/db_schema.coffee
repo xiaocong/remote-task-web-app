@@ -19,10 +19,21 @@ exports = module.exports = (db, cb) ->
     valueToProperty: (value, prop) ->
       if Array.isArray(value)
         value
-      else if value.length is 0
+      else if value is null or value.length is 0
         []
       else
         value.split(',').map((v) -> Number(v))
+    propertyToValue: (value, prop) -> value.join(',')
+
+  db.defineType "stringArray",
+    datastoreType: (prop) -> "TEXT"
+    valueToProperty: (value, prop) ->
+      if Array.isArray(value)
+        value
+      else if value is null or value.length is 0
+        []
+      else
+        value.split(',')
     propertyToValue: (value, prop) -> value.join(',')
 
   Tag = db.define "tag",
@@ -70,6 +81,9 @@ exports = module.exports = (db, cb) ->
     email: {type: "text", required: true}
     password: {type: "text", required: true}
     name: String
+    priority: {type: "number", rational: false, required: true, defaultValue: 1}
+    tags:
+      type: "stringArray"
   ,
     timestamp: true
     cache: false
@@ -78,6 +92,26 @@ exports = module.exports = (db, cb) ->
     methods:
       compare: (password)->
         bcrypt.compareSync password, @password
+
+  Project = db.define "project",
+    name: {type: "text", required: true}
+    priority: {type: "number", rational: false, required: true, defaultValue: 1}
+  ,
+    timestamp: true
+    cache: false
+    autoFetch: true
+    validations:
+      priority: orm.enforce.ranges.number(1, 10)
+      name: orm.enforce.unique scope: ["creator_id"], "Sorry, name already taken for the user!"
+    methods:
+      tagList: ->
+        _.map(@tags, (tag) -> tag.tag)
+
+  Project.hasOne "creator", User
+  Project.hasMany "users", User, {owner: Boolean}, reverse: "projects"
+  Project.hasMany "tags", Tag
+  Task.hasOne "project", Project,
+    required: true
 
   Token = User.extendsTo "token",
     access_token: String
