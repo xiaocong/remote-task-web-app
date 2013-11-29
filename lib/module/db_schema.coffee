@@ -89,6 +89,7 @@ exports = module.exports = (db, cb) ->
     cache: false
     validations:
       email: orm.enforce.unique("email already taken!")
+      priority: orm.enforce.ranges.number(1, 10)
     methods:
       compare: (password)->
         bcrypt.compareSync password, @password
