@@ -43,6 +43,7 @@ exports = module.exports =
         project = JSON.parse(JSON.stringify(project))
         delete project.creator.password
         delete user.password for user in project.users
+        project.tags = _.map project.tags, (tag) -> tag.tag
         project
       )
 
@@ -50,6 +51,7 @@ exports = module.exports =
     project = JSON.parse(JSON.stringify(req.project))
     delete project.creator.password
     delete user.password for user in project.users
+    project.tags = _.map project.tags, (tag) -> tag.tag
     res.json project
 
   add_user: (req, res, next) ->
