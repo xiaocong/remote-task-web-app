@@ -49,15 +49,15 @@ app.param "job", param.job
 
 app.get "/api/awesomeThings", api.awesomeThings
 
-app.get "/api/devices", api.auth.auth, api.auth.auth_admin, api.devices.list
-app.get "/api/devices/:device", api.auth.auth, api.auth.auth_admin, api.devices.get
+app.get "/api/devices", api.auth.auth_admin, api.devices.list
+app.get "/api/devices/:device", api.auth.auth_admin, api.devices.get
 app.post "/api/devices/:device/tag/:tag", api.auth.auth_admin, api.devices.tag_device
 app.post "/api/devices/:device/untag/:tag", api.auth.auth_admin, api.devices.untag_device
 app.delete "/api/devices/:device/tag/:tag", api.auth.auth_admin, api.devices.untag_device
 
-app.get "/api/jobs", api.auth.auth, api.auth.auth_admin, api.jobs.list
-app.get "/api/jobs/:job", api.auth.auth, api.auth.auth_admin, api.jobs.get
-app.post "/api/jobs/:job/cancel", api.auth.auth, api.auth.auth_admin, api.jobs.cancel
+app.get "/api/jobs", api.auth.auth_admin, api.jobs.list
+app.get "/api/jobs/:job", api.auth.auth_admin, api.jobs.get
+app.post "/api/jobs/:job/cancel", api.auth.auth_admin, api.jobs.cancel
 
 app.get "/api/workstations", api.auth.auth_admin, api.workstations.get
 app.get "/api/workstations/:workstation", api.auth.auth_admin, api.workstations.get
@@ -96,6 +96,8 @@ app.post "/api/users", api.auth.auth_admin, api.users.add
 app.get "/api/users", api.auth.auth_admin, api.users.list
 app.get "/api/users/:id", api.auth.auth_admin, api.users.get
 app.post "/api/users/:id", api.auth.auth_admin, api.users.update
+
+app.all "/api/*", (req, res) -> res.json 404, error: "API Not Found."
 
 http.createServer(app).listen app.get("port"), ->
   console.log "Express server listening on port #{app.get('port')} in #{app.get('env')} mode."
