@@ -14,7 +14,7 @@ exports = module.exports =
     password = req.body.password
     name = req.body.name or ""
     tags = req.body.tags or ["system:role:guest"]
-    priority = Number(req.body.priority) ? 1
+    priority = Number(req.body.priority ? 1)
     req.db.models.user.create {email: username, password: bcrypt.hashSync(password, bcrypt.genSaltSync(10)), name: name, priority: priority, tags: tags}, (err, user) ->
       return next(err) if err?
       res.json dup_user_info(user)
