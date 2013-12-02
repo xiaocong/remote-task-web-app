@@ -2,11 +2,12 @@
 <button class='btn btn-primary' ng-click="create()">New Tag</button>
 
 <div class='create_tag' style="display:none">
-  <input type='text' ng-model='tagname' placeholder="New Tag Name"><br>
   <select type='text' ng-model='taglevel'>
-  <option value="system">system</option>
-  <option value="user">user</option>
-  </select><br>
+     <option value="system">system</option>
+     <option value="user">user</option>
+  </select>
+  <br>
+  <input type='text' ng-model='tagname' placeholder="New Tag Name"><br>
   <button class='btn' ng-click="cancel()">Cancel</button>
   <button class='btn btn-primary' ng-click="createtag()">Create</button>
 </div>

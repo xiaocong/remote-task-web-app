@@ -1,5 +1,5 @@
 <div >
-    <div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="navbar navbar-inverse navbar-fixed-top" ng-controller="NaviCtrl">
       <div class="navbar-inner">
         <div class="container-fluid">
           <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
@@ -11,7 +11,7 @@
           <div class="nav-collapse collapse pull-right" ng-show="isLogin()">
             <ul class="nav navbar-nav navbar-right">
               <li class="dropdown">
-                <a class="dropdown-toggle" data-toggle="dropdown">Projects
+                <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown">Projects
                 <b class="caret"></b></a>
                 <ul class="dropdown-menu">
                   <li><a ng-repeat="project in projects" ng-click="projectdetail(project.id)">
@@ -19,7 +19,7 @@
                 </ul>
               </li>
               <li class="dropdown">
-                <a class="dropdown-toggle" data-toggle="dropdown">{{getUserName()}}
+                <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown">{{getUserName()}}
                 <b class="caret"></b></a>
                 <ul class="dropdown-menu">
                   <li ng-show="isAdmin()"><a ng-click="managetags()">Tags</a></li>

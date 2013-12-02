@@ -5,7 +5,7 @@ setCookie = (c_name,value,exdays) ->
   exdate = new Date();
   exdate.setDate(exdate.getDate() + exdays)
   c_value = escape(value) + if exdays? then "; expires=" + exdate.toUTCString() else ""
-  document.cookie = c_name + "=" + c_value
+  document.cookie = c_name + "=" + c_value+ "; path=/"
   return
 
 getCookie = (c_name) ->
@@ -23,7 +23,10 @@ getCookie = (c_name) ->
     c_value = unescape(c_value.substring(c_start,c_end));
   return c_value
 
-gMY_TOKEN = gMY_NAME = gMY_ID = gMY_TAGS = ""
+gMY_TOKEN = ""
+gMY_NAME = ""
+gMY_ID = ""
+gMY_TAGS = ""
 
 getAuthCookie = () ->
   gMY_TOKEN = getCookie("smart_token")
@@ -41,8 +44,9 @@ setAuthCookie = (id, name, tags, token) ->
 angular.module('angApp')
   .controller 'appCtrl', ($scope, $location, $route) ->
     getAuthCookie()
-
-  .controller 'MainCtrl', ($rootScope, $scope, $http, $location) ->
+    console.log gMY_TOKEN
+  .controller 'NaviCtrl', ($rootScope, $http, $location) ->
+    console.log gMY_TOKEN
     $rootScope.isLogin = () ->
       return if !(typeof gMY_TOKEN == undefined or gMY_TOKEN == "") then true else false
     $rootScope.getUserName = () ->
@@ -51,7 +55,7 @@ angular.module('angApp')
       return if "system:role:admin" in gMY_TAGS then true else false
     $rootScope.logout = () ->
       gMY_TOKEN = gMY_NAME = gMY_ID = gMY_TAGS = ""
-      setAuthCookie("", "", [], "")
+      setAuthCookie("", "", "", "")
       $location.path "/login"
       return
     $rootScope.manageusers = () ->
@@ -66,6 +70,21 @@ angular.module('angApp')
     $rootScope.projectdetail = (id) ->
       $location.path "/projects/"+id
       return
+    $rootScope.initbasicinfo = () ->
+      if not (gMY_TOKEN?.length > 0)
+        return
+      $http.get("api/account?access_token=" + gMY_TOKEN).success (data) ->
+        gMY_ID = data.id
+        gMY_TAGS = data.tags
+        gMY_NAME = data.email or data.name
+        setCookie(gMY_ID, gMY_NAME, gMY_TAGS, gMY_TOKEN)
+        return
+      $http.get("api/projects?access_token=" + gMY_TOKEN).success (data) ->
+        $rootScope.projects = data
+        return
+    $rootScope.initbasicinfo()
+
+  .controller 'MainCtrl', ($rootScope, $scope, $http, $location) ->
     $scope.create = () ->
       $('.create_project').slideToggle()
       return
@@ -85,18 +104,10 @@ angular.module('angApp')
         $('.create_project').slideUp()
         return
       return
-    $http.get("api/account?access_token=" + gMY_TOKEN).success (data) ->
-      gMY_ID = data.id
-      gMY_TAGS = data.tags
-      gMY_NAME = data.email or data.name
-      setCookie(gMY_ID, gMY_NAME, gMY_TAGS, gMY_TOKEN)
-      return
-    $http.get("api/projects?access_token=" + gMY_TOKEN).success (data) ->
-      $rootScope.projects = data
-      return
     return
 
   .controller 'ProjectCtrl', ($rootScope, $routeParams, $scope, $http, $cookies, $location) ->
+    console.log gMY_TOKEN
     $scope.getProductInfo = (job) ->
       return "- / -" if not job.device_filter.product?
       brand = if job.device_filter.product.manufacturer? then job.device_filter.product.manufacturer else "-"
@@ -145,10 +156,7 @@ angular.module('angApp')
       return
     $http.get("api/projects/"+id+"?access_token=" + gMY_TOKEN).success (data) ->
       $scope.group_users = data.users
-      return
-    $http.get("api/users?access_token=" + gMY_TOKEN).success (data) ->
-      $scope.xusers = data
-      return    
+      return   
     return
 
   .controller 'LoginCtrl', ($rootScope, $scope, $http, $cookies, $location) ->
@@ -169,6 +177,7 @@ angular.module('angApp')
           setAuthCookie(gMY_ID, gMY_NAME, gMY_TAGS, gMY_TOKEN)
           $scope.showMessage = true
           $scope.promptMessage = "Done: " + data.access_token
+          $rootScope.initbasicinfo()
           $location.path "/"
         .error (data, status, headers, config) ->
           # TODO: prompt
@@ -387,14 +396,14 @@ angular.module('angApp')
     # Retrieve the available devices first.
     $scope.devices = []
     $scope.manufacturers = $scope.models = []
-    $scope.id = $routeParams.id or ""
+    prjid = $scope.id = $routeParams.id or ""
     initDeviceOptions = () ->
       #$scope.platforms = groupPlatform()
       #$scope.deviceOptions.manufacturers = groupProductProperties("manufacturer")
       #$scope.deviceOptions.models = groupProductProperties("model")
       $scope.displayedOptions = ['android', 'tizen'] # fake data
 
-    $http.get("api/devices?access_token=" + gMY_TOKEN).success (data) ->
+    $http.get("api/projects/"+prjid+"/devices?access_token=" + gMY_TOKEN).success (data) ->
       $scope.devices = data
       device._index = i for device, i in $scope.devices
       initDeviceOptions()
