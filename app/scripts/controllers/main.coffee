@@ -44,11 +44,7 @@ angular.module('angApp')
 
   .controller 'MainCtrl', ($rootScope, $scope, $http, $location) ->
     $rootScope.isLogin = () ->
-      if !(typeof gMY_TOKEN == undefined or gMY_TOKEN == "") then 
-        return true 
-      else
-        $location.path "/login"
-        return false
+      return if !(typeof gMY_TOKEN == undefined or gMY_TOKEN == "") then true else false
     $rootScope.getUserName = () ->
       return gMY_NAME
     $rootScope.isAdmin = () ->
