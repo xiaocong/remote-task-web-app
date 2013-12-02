@@ -39,13 +39,14 @@ setAuthCookie = (id, name, tags, token) ->
 
 # Agular module definition begins here.
 angular.module('angApp')
-  .controller 'MainCtrl', ($rootScope, $scope, $http, $location) ->
+  .controller 'appCtrl', ($rootScope, $scope, $location) ->
+    getAuthCookie()
     $rootScope.isLogin = () ->
-      return !(typeof gMY_TOKEN == undefined or gMY_TOKEN == "")
+      return !(typeof gMY_TOKEN == undefined or gMY_TOKEN == "") return true else false
     $rootScope.getUserName = () ->
       return gMY_NAME
     $rootScope.isAdmin = () ->
-      return if "system:role:admin" in gMY_TAGS then true else false 
+      return if "system:role:admin" in gMY_TAGS then true else false
     $rootScope.logout = () ->
       gMY_TOKEN = gMY_NAME = gMY_ID = gMY_TAGS = ""
       setAuthCookie("", "", [], "")
@@ -63,6 +64,8 @@ angular.module('angApp')
     $rootScope.projectdetail = (id) ->
       $location.path "/projects/"+id
       return
+
+  .controller 'MainCtrl', ($rootScope, $scope, $http, $location) ->
     $scope.create = () ->
       $('.create_project').slideToggle()
       return
@@ -82,7 +85,6 @@ angular.module('angApp')
         $('.create_project').slideUp()
         return
       return
-    getAuthCookie()
     $http.get("api/account?access_token=" + gMY_TOKEN).success (data) ->
       gMY_ID = data.id
       gMY_TAGS = data.tags
@@ -137,7 +139,6 @@ angular.module('angApp')
         $scope.group_users.push email : $scope.user_mail
         return
       return
-    getAuthCookie()
     id = $scope.pid = $routeParams.id or ""
     $http.get("api/tasks?project="+id+"&access_token=" + gMY_TOKEN).success (data) ->
       $scope.dataset = data
@@ -205,7 +206,6 @@ angular.module('angApp')
     return
 
   .controller 'TagMgtCtrl', ($rootScope, $scope, $http) ->
-    getAuthCookie()
     $http.get("api/tags?access_token=" + gMY_TOKEN).success (data) ->
       $scope.tags = data
       return
@@ -227,7 +227,6 @@ angular.module('angApp')
     return
 
   .controller 'UserMgtCtrl', ($rootScope, $scope, $http, $window) ->
-    getAuthCookie()
     $scope.seltag = {}
     $http.get("api/users?access_token=" + gMY_TOKEN).success (data) ->
       $scope.users = data
@@ -281,7 +280,6 @@ angular.module('angApp')
     return
 
   .controller 'DeviceMgtCtrl', ($rootScope, $scope, $http) ->
-    getAuthCookie()
     $scope.my_filter = {}
     $scope.seltag = {}
     $http.get("api/devices?access_token=" + gMY_TOKEN).success (data) ->

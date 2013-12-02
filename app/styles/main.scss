@@ -16,7 +16,7 @@ body {
 
 .hero-unit {
     margin: 50px auto 0 auto;
-    width: 600px;
+    width: 300px;
     font-size: 18px;
     font-weight: 200;
     line-height: 30px;
@@ -29,4 +29,40 @@ body {
     font-size: 60px;
     line-height: 1;
     letter-spacing: -1px;
+}
+
+/* Template style */
+body {
+  padding-top: 60px;
+  padding-bottom: 40px;
+}
+.sidebar-nav {
+  padding: 9px 0;
+}
+
+@media (max-width: 980px) {
+/* Enable use of floated navbar text */
+ .navbar-text.pull-right {
+  float: none;
+  padding-left: 5px;
+  padding-right: 5px;
+ }
+}
+
+.p_job {
+    margin: 5px 1px 1px 1px;
+    border-bottom: 1px dashed #DDD;
+}
+
+/* Sub table */
+.subtable {
+    width: 100%;
+}
+.subtable td {
+    border-left: 0px;
+}
+
+/* Form */
+select.short {
+    width: 150px;
 }
