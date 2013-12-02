@@ -33,14 +33,8 @@ else
   app.use express.static(path.join(__dirname, "public"))
 
 app.use (err, req, res, next) ->
-  if err?
-    logger.error "#{err}"
-    if req.path[..4] is "/api/"
-      res.json 500, error: "#{err}"
-    else
-      res.send 500, "Server Error"  #TODO error page
-  else
-    next()
+  logger.error "#{err}"
+  next(err)
 
 app.param "workstation", param.workstation
 app.param "device", param.device

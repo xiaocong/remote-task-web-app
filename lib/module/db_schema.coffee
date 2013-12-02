@@ -91,8 +91,12 @@ exports = module.exports = (db, cb) ->
       email: [orm.enforce.unique("email already taken!"), orm.enforce.security.username(expr: ///^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$///)]
       priority: orm.enforce.ranges.number(1, 10)
     methods:
-      compare: (password)->
+      compare: (password) ->
         bcrypt.compareSync password, @password
+    hooks:
+      beforeSave: (next) ->
+        @tags = _.uniq @tags
+        next()
 
   Project = db.define "project",
     name: {type: "text", required: true}
