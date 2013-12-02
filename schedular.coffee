@@ -32,12 +32,9 @@ dbmodule.initialize ->
         logger.debug "Job #{job.id} has #{job.get('r_type')} on #{JSON.stringify(job.get("r_job_nos"))}."
       else
         filter = job.get("device_filter") or {}
-        devices.filter((dev) -> dev.get("idle") and not dev.get("locked")).some (device) ->
-          if match(filter, device)
-            logger.info "Assigning Job #{job.id} to device #{device.id}."
-            assign_task(device, job) 
-            return true
-          false
+        device = devices.find (dev) ->
+          dev.get("idle") and not dev.get("locked") and match(filter, dev)
+        assign_task(device, job) if device?
 
   has_exclusive = (job) ->
     # return true if any exclusive job is in running or locked status
@@ -86,6 +83,7 @@ dbmodule.initialize ->
     return true    
 
   assign_task = (device, job) ->
+    logger.info "Assigning job #{job.id} to device #{device.id}."
     job.set {locked: true, assigned_device: device.id}, {silent: true}
     device.set {locked: true}, {silent: true}
     url_str = url.format(
