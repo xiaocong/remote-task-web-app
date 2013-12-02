@@ -13,7 +13,7 @@ exports = module.exports = (db) ->
   ], (err, tags) ->
 
   db.models.user.create {
-    email: "admin@localhost"
+    email: "admin@example.com"
     password: bcrypt.hashSync("admin", bcrypt.genSaltSync(10))
     name: "Administrator"
     tags: ["system:role:admin"]
