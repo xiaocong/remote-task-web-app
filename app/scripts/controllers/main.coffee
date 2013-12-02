@@ -39,10 +39,16 @@ setAuthCookie = (id, name, tags, token) ->
 
 # Agular module definition begins here.
 angular.module('angApp')
-  .controller 'appCtrl', ($rootScope, $scope, $location) ->
+  .controller 'appCtrl', ($scope, $location, $route) ->
     getAuthCookie()
+
+  .controller 'MainCtrl', ($rootScope, $scope, $http, $location) ->
     $rootScope.isLogin = () ->
-      return !(typeof gMY_TOKEN == undefined or gMY_TOKEN == "") return true else false
+      if !(typeof gMY_TOKEN == undefined or gMY_TOKEN == "") then 
+        return true 
+      else
+        $location.path "/login"
+        return false
     $rootScope.getUserName = () ->
       return gMY_NAME
     $rootScope.isAdmin = () ->
@@ -64,8 +70,6 @@ angular.module('angApp')
     $rootScope.projectdetail = (id) ->
       $location.path "/projects/"+id
       return
-
-  .controller 'MainCtrl', ($rootScope, $scope, $http, $location) ->
     $scope.create = () ->
       $('.create_project').slideToggle()
       return
