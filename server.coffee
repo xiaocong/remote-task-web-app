@@ -8,18 +8,20 @@ logger = require("./lib/logger")
 api = require("./lib/api")
 dbmodule = require("./lib/module")
 param = require("./lib/param")
+routes = require("./app/routes")
 
 app = express()
 
 # all environments
 app.set "port", process.env.PORT or 3000
+app.set('views', path.join(__dirname, "app"))
+app.engine('html', require('ejs').renderFile)
 app.enable('trust proxy')
 
 app.use express.logger(stream: {write: (msg, encode) -> logger.info(msg)})
 app.use dbmodule.setup()
 app.use express.bodyParser()
 app.use express.methodOverride()
-app.use app.router
 
 # development only
 if "development" is app.get("env")
@@ -31,6 +33,8 @@ if "development" is app.get("env")
 else
   app.use express.favicon(path.join(__dirname, "public/favicon.ico"))
   app.use express.static(path.join(__dirname, "public"))
+
+app.use app.router
 
 app.use (err, req, res, next) ->
   if err?
@@ -96,6 +100,9 @@ app.post "/api/users", api.auth.auth_admin, api.users.add
 app.get "/api/users", api.auth.auth_admin, api.users.list
 app.get "/api/users/:id", api.auth.auth_admin, api.users.get
 app.post "/api/users/:id", api.auth.auth_admin, api.users.update
+
+# redirect all others to the index (HTML5 history)
+app.get('*', routes.index);
 
 http.createServer(app).listen app.get("port"), ->
   console.log "Express server listening on port #{app.get('port')} in #{app.get('env')} mode."

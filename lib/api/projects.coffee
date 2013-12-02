@@ -28,6 +28,7 @@ exports = module.exports =
     name = req.param("name") or "Project created at #{new Date}"
     priority = req.user.priority
     tags = _.union(["system:job:acceptable"], req.param("tags") or [], req.user.tags)
+    console.log tags
     req.db.models.project.create {name: name, priority: priority, creator_id: req.user.id}, (err, project) ->
       return next(err) if err?
       tag_project project, tags, (err) ->

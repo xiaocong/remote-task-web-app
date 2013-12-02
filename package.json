@@ -15,7 +15,8 @@
     "request": "~2.27.0",
     "winston": "~0.7.2",
     "bcrypt": "~0.7.7",
-    "node-uuid": "~1.4.1"
+    "node-uuid": "~1.4.1",
+    "ejs": "*"
   },
   "devDependencies": {
     "grunt": "~0.4.1",

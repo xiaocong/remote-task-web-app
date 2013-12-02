@@ -1,0 +1,78 @@
+
+<form class="form-horizontal" class="css-form" novalidation>
+  <h3>Create new task</h3>
+
+    <fieldset>
+      <legend>Task Info</legend>
+    <div class="control-group">
+      <label class="control-label">Name</label>
+      <div class="controls">
+        <input name='name' placeholder='Task Name' ng-model="newTaskForm.name" required>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label">Description</label>
+      <div class="controls">
+        <input name='description' placeholder='Task Description' ng-model="newTaskForm.description" required>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label">Repo</label>
+      <div class="controls">
+        <input name='repo_url' placeholder='Repo URL' ng-model="newTaskForm.repo_url" required>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label">Rule</label>
+      <div class="controls">
+        <select ng-model="newTaskForm.r_type">
+          <option value="none" selected>None</option>
+          <option value="exclusive">Exclusive</option>
+          <option value="dependent">Dependent</option>
+        </select>
+      </div>
+    </div>
+</fieldset>
+
+    <hr>
+
+  <fieldset ng-repeat="job in newTaskForm.jobs">
+    <legend>Job Info - {{job.no}}
+      <button class="btn btn-mini btn-danger" ng-click="deleteJob(job.no)">Remove</button>
+    </legend>
+    <input name="no" type="hidden" ng-model="job.no">
+
+    <div class="control-group">
+      <label class="control-label">Device</label>
+      <div class="controls">
+        <select class="short" ng-model="job.device_filter.platform" ng-options="i for i in platforms" ng-change="updateManufactures(job)">
+          <option value="">&lt;Platform&gt;</option>
+        </select>
+        <select class="short" ng-model="job.device_filter.manufacturer" ng-options="i for i in job.deviceOptions.manufacturers" ng-show="job.device_filter.platform.length > 0" ng-change="updateModels(job)">
+          <option value="">&lt;Manufacturer&gt;</option>
+        </select>
+        <select class="short" ng-model="job.device_filter.model" ng-options="i for i in job.deviceOptions.models" ng-show="job.device_filter.manufacturer.length > 0" ng-change="updateDevices(job)">
+          <option value="">&lt;Product&gt;</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="control-group" ng-show="job.device_filter.model.length > 0">
+      <span ng-repeat="d in job.deviceOptions.devices">
+      <input type="checkbox" ng-model="job.device_filter.device_id">{{d}}
+      </span>
+    </div>
+  </fieldset>
+
+  <hr>
+    <div class="control-group">
+      <div class="controls">
+        <input type='button' name='add_job' value='Add Job' class='btn btn-info' ng-click="newJob()" >
+        <input type='submit' name='submit' value='Create Task' class='btn btn-primary' ng-click="submitTask()" ng-disabled="newTaskForm.$invalid">
+      </div>
+  </div>
+
+</form>
