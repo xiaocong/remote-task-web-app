@@ -37,15 +37,12 @@ angular.module('angApp', [
       .when '/jobs',
         templateUrl: 'views/jobs.html'
         controller: 'JobsCtrl'
-      .when '/projects/:id/addtask1',
+      .when '/projects/:id/addtask3',
         templateUrl: 'views/addtask3.html'
         controller: 'AddTaskCtrl3'
       .when '/projects/:id/addtask2',
         templateUrl: 'views/addtask2.html'
         controller: 'AddTaskCtrl2'
-      .when '/projects/:id/addtask3',
-        templateUrl: 'views/addtask1.html'
-        controller: 'AddTaskCtrl'
       .otherwise
         redirectTo: '/'
     $locationProvider.html5Mode true

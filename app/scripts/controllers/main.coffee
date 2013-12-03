@@ -44,9 +44,8 @@ setAuthCookie = (id, name, tags, token) ->
 angular.module('angApp')
   .controller 'appCtrl', ($scope, $location, $route) ->
     getAuthCookie()
-    console.log gMY_TOKEN
+
   .controller 'NaviCtrl', ($rootScope, $http, $location) ->
-    console.log gMY_TOKEN
     $rootScope.isLogin = () ->
       return if !(typeof gMY_TOKEN == undefined or gMY_TOKEN == "") then true else false
     $rootScope.getUserName = () ->
@@ -107,15 +106,11 @@ angular.module('angApp')
     return
 
   .controller 'ProjectCtrl', ($rootScope, $routeParams, $scope, $http, $cookies, $location) ->
-    console.log gMY_TOKEN
     $scope.getProductInfo = (job) ->
       return "- / -" if not job.device_filter.product?
       brand = if job.device_filter.product.manufacturer? then job.device_filter.product.manufacturer else "-"
       product = if job.device_filter.product.model? then job.device_filter.product.model else "-"
       brand + " / " + product
-    $scope.addtask1 = (job) ->
-      id = $scope.pid
-      $location.path "/projects/"+id+"/addtask1"
     $scope.addtask2 = (job) ->
       id = $scope.pid
       $location.path "/projects/"+id+"/addtask2"
@@ -500,6 +495,10 @@ angular.module('angApp')
         count++
       return count
 
+    $scope.cancelTask = () ->
+      $location.path "/projects/"+$scope.id
+      return
+
     $scope.submitTask = () ->
       # Two cases depending on device_filter.anyDevice:
       #   1) true: generate jobs based on models;
@@ -541,167 +540,93 @@ angular.module('angApp')
       return
     return
 
-
-  .controller 'AddTaskCtrl2', ($rootScope, $scope, $routeParams, $http, $location) ->
-    resort = () ->
-      job.no = i for job, i in $scope.newTaskForm.jobs
-      return
-    createJob = () ->
-      job = {}
-      job.no = $scope.newTaskForm.jobs.length
-      job.repo_url = $scope.newTaskForm.repo_url
-      job.device_filter = {platform: "", manufacturer: "", model: ""}
-      # Register some watchers on device selection.
-      job.deviceOptions = 
-        manufacturers: []
-        models: []
-        devices: []
-      $scope.$watch('job.device_filter.platform', () ->
-        if not job.device_filter.platform?
-          return
-          # Reset job.deviceOptions.manufacturers
-        job.deviceOptions.manufacturer = []
-        for d in $scope.devices
-          # Filtered by platform.
-          if d.platform isnt job.device_filter.platform
-            continue
-          if job.deviceOptions.manufacturer.indexOf(d.product.manufacturer) is -1
-            job.deviceOptions.manufacturer.push(d.product.manufacturer)
-      )
-      $scope.$watch(job.device_filter.manufacturer, () ->
-        if not job.device_filter.manufacturer?
-          return
-        job.deviceOptions.models = []
-        for d in $scope.devices
-          # Filtered by platform and manufacturer
-          if d.platform isnt job.device_filter.platform
-            continue
-          if d.product.manufacturer isnt job.device_filter.manufacturer
-            continue
-          if job.deviceOptions.models.indexOf(d.product.model) is -1
-            job.deviceOptions.models.push(d.product.model)
-      )
-      # Add the job to job list.
-      $scope.newTaskForm.jobs.push(job)
-      job
-    removeJob = (index) ->
-      return if index >= $scope.newTaskForm.jobs.length
-      $scope.newTaskForm.jobs.splice(index, 1)
-      resort()
-      return
-    # TODO: Use underscore.js
-    groupPlatform = () ->
-      result = []
-      return result if $scope.devices.length is 0
-      for d in $scope.devices
-        if not d.platform?
-          continue
-        if result.indexOf(d.platform) is -1
-          result.push(d.platform)
-      result
-    # TODO: Use underscore.js
-    groupProductProperties = (key) ->
-      result = []
-      return result if $scope.devices.length is 0
-      for d in $scope.devices
-        #if d.product.hasOwnProperty(key) and d.product.
-        if not d.product[key]?
-          continue
-        if result.indexOf(d.product[key]) == -1
-          result.push(d.product[key])
-      return result
-    initDeviceOptions = () ->
-      $scope.platforms = groupPlatform()
-      #$scope.deviceOptions.manufacturers = groupProductProperties("manufacturer")
-      #$scope.deviceOptions.models = groupProductProperties("model")
-
+  .controller 'AddTaskCtrl2', ($routeParams, $scope, $http, $location) ->
     # Some initialization.
     $scope.newTaskForm = {}
     $scope.newTaskForm.jobs = []
-    #createJob()
-    # Data used to show as HTML select options. Contents of [manufacturers] and [products] may change each time user makes a new selection.
-    $scope.platforms = []
-    $scope.id = $routeParams.id or ""
+    $scope.id = $routeParams.id
     # Retrieve the available devices first.
     $scope.devices = []
-    $scope.manufacturers = $scope.models = []
-    $http.get("api/devices?access_token=" + gMY_TOKEN).success (data) ->
+
+    $http.get("api/projects/"+$scope.id+"/devices?access_token=" + gMY_TOKEN).success (data) ->
       $scope.devices = data
-      initDeviceOptions()
+      #device._index = i for device, i in $scope.devices
 
-    # Triggered when user clicks the button to add a job in a task.
-    $scope.newJob = () ->
-      createJob()
-
-    # Triggered when user clicks the button to remove an existing job in a task.
-    $scope.deleteJob = (index) ->
-      removeJob(index)
-
-    # TODO: use underscore.js + Angular filter to group it.
-    $scope.updateManufactures = (job) ->
-      if not job.device_filter.platform?
-        job.deviceOptions.manufacturers = []
-        return
-        # Reset job.deviceOptions.manufacturers
-      job.deviceOptions.manufacturers = []
-      for d in $scope.devices
-        # Filtered by platform.
-        if d.platform isnt job.device_filter.platform
-          continue
-        if job.deviceOptions.manufacturers.indexOf(d.product.manufacturer) is -1
-          job.deviceOptions.manufacturers.push(d.product.manufacturer)
+    $scope.checkModel = ($event, device) ->
+      el = $event.target
+      #index = $scope.selectedOptions.models.indexOf(el.value)
+      if el.checked is true
+        device._deviceFilter = false
+      else
+        delete device._deviceFilter
       return
 
-    # TODO: use underscore.js + Angular filter to group it.
-    $scope.updateModels = (job) ->
-      if not job.device_filter.manufacturer?
-        job.deviceOptions.models = []
-        return
-        # Reset job.deviceOptions.manufacturers
-      job.deviceOptions.models = []
-      for d in $scope.devices
-        # Filtered by platform and manufacturer
-        if d.platform isnt job.device_filter.platform
-          continue
-        if d.product.manufacturer isnt job.device_filter.manufacturer
-          continue
-        if job.deviceOptions.models.indexOf(d.product.model) is -1
-          job.deviceOptions.models.push(d.product.model)
+    $scope.checkDevice = ($event, device) ->
+      el = $event.target
+      #index = $scope.selectedOptions.models.indexOf(el.value)
+      if el.checked is true
+        device._deviceFilter = true
+      else
+        delete device._deviceFilter
       return
 
-    # TODO: use underscore.js + Angular filter to group it.
-    $scope.updateDevices = (job) ->
-      if not job.device_filter.model?
-        job.deviceOptions.devices = []
-        return
-      job.deviceOptions.devices = []
-      for d in $scope.devices
-        # Filtered by platform and manufacturer
-        if d.platform isnt job.device_filter.platform
-          continue
-        if d.product.manufacturer isnt job.device_filter.manufacturer
-          continue
-        if d.product.model isnt job.device_filter.model
-          continue
-        if job.deviceOptions.devices.indexOf(d.id) is -1
-          job.deviceOptions.devices.push(d.id)
+    resetSorting = (el) ->
+      el.removeClass()
+      el.addClass("sorting")
+      return
+
+    $scope.sortByPlatform = () ->
+      resetSorting($("#sort_brand"))
+      el = $("#sort_platform")
+      el.removeClass()
+      el.addClass(if $scope.reverse is true then "sorting_asc" else "sorting_desc")
+      return
+
+    $scope.sortByBrand = () ->
+      resetSorting($("#sort_platform"))
+      el = $("#sort_brand")
+      el.removeClass()
+      el.addClass(if $scope.reverse is true then "sorting_asc" else "sorting_desc")
+      return
+
+    $scope.cancelTask = () ->
+      $location.path "/projects/"+$scope.id
       return
 
     $scope.submitTask = () ->
-      # split the device ID into mac and SN.
-      for job in $scope.newTaskForm.jobs
-        if job._the_device? and job._the_device.id?
-          tokens = job._the_device.id.split("-")
-          if tokens.length == 2
-            job.device_filter = {}
-            job.device_filter.mac = tokens[0]
-            job.device_filter.serial = tokens[1]
-          # delete _the_device
-          delete job._the_device
-
-      $http.post("api/tasks?project="+$scope.id+"access_token=" + gMY_TOKEN, $scope.newTaskForm).success (data) ->
+      # Two cases depending on device_filter.anyDevice:
+      #   1) true: generate jobs based on models;
+      #   2) false: generate jobs based on devices.
+      $scope.newTaskForm.jobs = []
+      iii = 0
+      for d in $scope.devices
+        if d._deviceFilter is undefined
+          continue
+        if d._deviceFilter is true
+          tokens = d.id.split("-")
+          job = {
+            r_type: $scope.newTaskForm.r_type
+            device_filter:
+              platform: d.platform
+              mac: tokens[0]
+              serial: tokens[1]
+          }
+          job.no = iii++
+        else
+          job = {
+            r_type: $scope.newTaskForm.r_type
+            device_filter:
+              platform: d.platform
+              product:
+                manufacturer: d.product.manufacturer
+                model: d.product.model
+          }
+          job.no = iii++
+        $scope.newTaskForm.jobs.push(job)
+      # OK to submit it now.
+      $http.post("api/tasks?project="+$scope.id+"&access_token=" + gMY_TOKEN, $scope.newTaskForm).success (data) ->
         $location.path "/projects/"+$scope.id
-        return;
+        return
       return
 
     return

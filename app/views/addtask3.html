@@ -1,27 +1,25 @@
 
-<form class="form-horizontal" class="css-form" novalidation ng-app>
-  <h3>Create new task</h3>
-
+<form class="form-horizontal" class="css-form" novalidation>
     <fieldset>
       <legend>Task Info</legend>
     <div class="control-group">
       <label class="control-label">Name</label>
       <div class="controls">
-        <input name='name' placeholder='Task Name' ng-model="newTaskForm.name" required>
+        <input type="text" name='name' placeholder='Task Name' ng-model="newTaskForm.name" required>
       </div>
     </div>
 
     <div class="control-group">
       <label class="control-label">Description</label>
       <div class="controls">
-        <input name='description' placeholder='Task Description' ng-model="newTaskForm.description" required>
+        <input type="text" name='description' placeholder='Task Description' ng-model="newTaskForm.description" required>
       </div>
     </div>
 
     <div class="control-group">
       <label class="control-label">Repo</label>
       <div class="controls">
-        <input name='repo_url' placeholder='Repo URL' ng-model="newTaskForm.repo_url" required>
+        <input type="text" name='repo_url' placeholder='Repo URL' ng-model="newTaskForm.repo_url" required>
       </div>
     </div>
 
@@ -86,7 +84,8 @@
   <hr>
     <div class="control-group">
       <div class="controls">
-        <input type='submit' name='submit' value='Create Task' class='btn btn-primary' ng-click="submitTask()" ng-disabled="newTaskForm.$invalid">
+        <input type='submit' name='submit' value='Create' class='btn btn-primary' ng-click="submitTask()" ng-disabled="newTaskForm.$invalid">
+        <input type='button' value='Cancel' class='btn btn-warning' ng-click="cancelTask()">        
       </div>
   </div>
 

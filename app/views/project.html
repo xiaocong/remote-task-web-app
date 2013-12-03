@@ -4,13 +4,8 @@
         <div class="span8">
             <ul class="nav nav-pills">
               <li class="nav-header">Operations</li>
-              <li><a ng-click="addtask1()">Create task</a></li>
-              <li><a ng-click="addtask2()">Create task 2</a></li>
-              <li><a ng-click="addtask3()">Create task 3</a></li>
-            </ul>
-            <ul class="nav nav-tabs">
-              <li><a ng-click="taskFilter={creator_id:myId}" class="active">My Tasks</a></li>
-              <li><a ng-click="taskFilter={}">All</a></li>
+              <li><a href="javascript:void(0)" ng-click="addtask2()">Create task 2</a></li>
+              <li><a href="javascript:void(0)" ng-click="addtask3()">Create task 3</a></li>
             </ul>
 
 			<table class="table table-bordered table-hover">
@@ -23,7 +18,7 @@
 			      <th>Description</th>
 			    </tr>
 			  </thead>
-			  <tbody ng-repeat='task in dataset.tasks | filter:taskFilter'>
+			  <tbody ng-repeat='task in dataset.tasks'>
 			  <tr class="success">
 			    <td><a href="javascript:void(0)" ng-click="task.hidden = !task.hidden">{{task.name}}</a></td>
 			    <td>{{task.created_at | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
