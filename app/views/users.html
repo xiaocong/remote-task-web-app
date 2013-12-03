@@ -27,15 +27,17 @@
     <td>{{user.priority}}</td>
     <td>
       <ul class="subtable">
-        <li ng-repeat="tag in user.tags">{{tag}}<a ng-click="remove_usertag(user.id, user.tags, tag)">[x]</a></li>
+        <li ng-repeat="tag in user.tags">{{tag}}
+          <a href="javascript:void(0)" ng-click="remove_usertag(user.id, user.tags, tag)">[x]</a>
+        </li>
       </ul>
-      <a ng-click="showaddtag(user.id)">[+Tag]</a>
+      <a href="javascript:void(0)" ng-click="showaddtag(user.id)">[+Tag]</a>
       <div class='add_tag{{user.id}}' style="display:none">
         <select ng-model="seltag[user.id]">
           <option ng-repeat="tag in tags" value="{{tag}}">{{tag}}</option>
         </select>
-        <a class='btn btn-small' ng-click="hideaddtag(user.id)">Cancel</a>
-        <a class='btn btn-small btn-primary' ng-click="add_usertag(user.id, user.tags)">Ok</a>
+        <a class='btn btn-small' href="javascript:void(0)" ng-click="hideaddtag(user.id)">Cancel</a>
+        <a class='btn btn-small btn-primary' href="javascript:void(0)" ng-click="add_usertag(user.id, user.tags)">Ok</a>
       </div>
     </td>
   </tr>
