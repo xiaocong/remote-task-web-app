@@ -101,7 +101,7 @@ exports = module.exports = (db, cb) ->
     cache: false
     autoFetch: true
     validations:
-      priority: orm.enforce.ranges.number(0, 10)
+      priority: orm.enforce.ranges.number(1, 10)
       name: orm.enforce.unique scope: ["creator_id"], "Sorry, name already taken for the user!"
     methods:
       tagList: ->
@@ -149,7 +149,7 @@ exports = module.exports = (db, cb) ->
     cache: false
     validations:
       no: orm.enforce.unique scope: ["task_id"]
-      priority: orm.enforce.ranges.number(0, 10)
+      priority: orm.enforce.ranges.number(1, 10)
 
   Job.hasOne "device", Device,
     required: false
