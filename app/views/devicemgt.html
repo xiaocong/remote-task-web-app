@@ -29,7 +29,7 @@
     <td>
       <ul class="subtable">
         <li ng-repeat="tag in device.tags">
-          {{tag}}<a href="javascript:void(0)" ng-click="remove_devicetag(device.id, tag)">[x]</a>
+          {{tag}}<a href="javascript:void(0)" ng-click="remove_devicetag(device.id, device.tags, tag)">[x]</a>
         </li>
       </ul>
       <a href="javascript:void(0)" ng-click="showaddtag(device.serial)">[+Tag]</a>
@@ -37,8 +37,8 @@
         <select ng-model="seltag[device.id]">
             <option ng-repeat="tag in tags" value="{{tag}}">{{tag}}</option>
         </select>
-        <a class='btn btn-small' href="javascript:void(0)" ng-click="hideaddtag(device.serial)">Cancel</a>
-        <a class='btn btn-small btn-primary' href="javascript:void(0)" ng-click="add_devicetag(device.id)">Ok</a>
+        <input type="button" class='btn btn-small' ng-click="hideaddtag(device.serial)" value="Cancel">
+        <input type="button" class='btn btn-small btn-primary' ng-click="add_devicetag(device.id, device.tags)" value="Ok">
       </div>
     </td>
     </tr>

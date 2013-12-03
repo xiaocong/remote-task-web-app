@@ -299,13 +299,15 @@ angular.module('angApp')
     $scope.hideaddtag = (id) ->
       $('.add_tag' + id).slideUp()
       return
-    $scope.add_devicetag = (id) ->
+    $scope.add_devicetag = (id, tags) ->
       vtag = $scope.seltag[id]
       $http.post("api/devices/"+id+"/tag/"+vtag+"?access_token=" + gMY_TOKEN, {}).success (data) ->
+        tags.push vtag
         return
       return
-    $scope.remove_devicetag = (id, vtag) ->
+    $scope.remove_devicetag = (id, tags, vtag) ->
       $http.post("api/devices/"+id+"/untag/"+vtag+"?access_token=" + gMY_TOKEN, {}).success (data) ->
+        tags.pop vtag
         return
       return
     $scope.getWkName = (device) ->
