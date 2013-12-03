@@ -44,7 +44,9 @@ setAuthCookie = (id, name, tags, token) ->
 angular.module('angApp')
   .controller 'appCtrl', ($scope, $location, $route) ->
     getAuthCookie()
-
+  .controller 'SampleCtrl', ($scope, $http) ->
+    $http.get('/api/awesomeThings').success (awesomeThings) ->
+      $scope.awesomeThings = awesomeThings
   .controller 'NaviCtrl', ($rootScope, $http, $location) ->
     $rootScope.isLogin = () ->
       return if !(typeof gMY_TOKEN == undefined or gMY_TOKEN == "") then true else false
