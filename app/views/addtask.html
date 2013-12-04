@@ -1,0 +1,73 @@
+
+<form class="form-horizontal" novalidation ng-submit="submitTask()">
+  <fieldset>
+    <legend>Create new task</legend>
+    <div class="control-group">
+      <label class="control-label">Available Devices</label>
+      <div class="controls">
+      <select multiple="multiple" ng-model="newTaskForm.device" required>
+        <option value="11">1</option>
+        <option value="22">2</option>
+        <option value="33">3</option>
+        <option value="44">4</option>
+      </select>
+    </div>
+  </div>
+
+    <div class="control-group">
+      <label class="control-label">Product (Model)</label>
+      <div class="controls">
+        <input name='product' placeholder='Product (Model)' ng-model="newTaskForm.product" required>
+      </div>
+  </div>
+
+    <div class="control-group">
+      <label class="control-label">SDK Version</label>
+      <div class="controls">
+        <select ng-model="newTaskForm.sdk">
+          <option value="11">1</option>
+          <option value="22">2</option>
+        </select>
+      </div>
+  </div>
+
+    <div class="control-group">
+      <label class="control-label">Repo</label>
+      <div class="controls">
+        <input name='product' placeholder='Repo URL' ng-model="newTaskForm.repo">
+      </div>
+  </div>
+
+    <div class="control-group">
+      <label class="control-label">Test Type</label>
+      <div class="controls">
+        <select ng-model="newTaskForm.test_type">
+          <option value="0"></option>
+          <option value="1">Exclusive</option>
+          <option value="2">Dependent</option>
+        </select>
+      </div>
+  </div>
+
+    <div class="control-group">
+      <label class="control-label">Rule</label>
+      <div class="controls">
+        <input name='product' placeholder='Rule' ng-model="newTaskForm.rule" required>
+      </div>
+  </div>
+
+    <div class="control-group">
+      <label class="control-label">Repeat</label>
+      <div class="controls">
+        <input name='product' value="0" placeholder='Repeat'  ng-model="newTaskForm.repeat">
+      </div>
+  </div>
+
+    <div class="control-group">
+      <div class="controls">
+        <input type='submit' name='submit' value='Create Task' class='btn btn-primary' ng-disabled="newTaskForm.$invalid">
+      </div>
+  </div>
+
+  </fieldset>
+</form>

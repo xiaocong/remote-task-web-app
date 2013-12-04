@@ -1,0 +1,73 @@
+
+<form class="form-horizontal" class="css-form" novalidation>
+    <fieldset>
+      <legend>Task Info</legend>
+    <div class="control-group">
+      <label class="control-label">Name</label>
+      <div class="controls">
+        <input type="text" name='name' placeholder='Task Name' ng-model="newTaskForm.name" required>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label">Description</label>
+      <div class="controls">
+        <input type="text" name='description' placeholder='Task Description' ng-model="newTaskForm.description" required>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label">Repo</label>
+      <div class="controls">
+        <input type="text" name='repo_url' placeholder='Repo URL' ng-model="newTaskForm.repo_url" required>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label">Rule</label>
+      <div class="controls">
+        <select ng-model="newTaskForm.r_type">
+          <option value="none" selected>None</option>
+          <option value="exclusive">Exclusive</option>
+          <option value="dependent">Dependent</option>
+        </select>
+      </div>
+    </div>
+</fieldset>
+
+    <hr>
+
+  <fieldset >
+    <legend>Device Info
+    </legend>
+
+    <table class="table table-bordered table-hover" ng-init="reverse=false">
+      <thead>
+        <tr>
+          <th id="sort_platform" class="sorting"><a href="javascript:void(0)" title="Sort by Platform" ng-click="predicate='platform'; reverse=!reverse; sortByPlatform()">Platform</a></th>
+          <th id="sort_brand" class="sorting"><a href="javascript:void(0)" title="Sort by Brand" ng-click="predicate='product.model'; reverse=!reverse; sortByBrand()">Brand</a></th>
+          <th>Model</th>
+          <th>Device</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="device in devices | orderBy:predicate:reverse" ng-class="{success:device.idle}">
+          <td>{{device.platform}}</td>
+          <td>{{device.product.manufacturer}}</td>
+          <td><input type="checkbox" value="{{device.product.model}}" ng-checked="device._deviceFilter == false" ng-click="checkModel($event, device)">{{device.product.model}}</td>
+          <td><input type="checkbox" value="{{device.id}}" ng-checked="device._deviceFilter == true" ng-click="checkDevice($event, device)">{{device.id}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </fieldset>
+
+  <hr>
+    <div class="control-group">
+      <div class="controls">
+        <input type='submit' name='submit' value='Create' class='btn btn-primary' ng-click="submitTask()" ng-disabled="newTaskForm.$invalid">
+        <input type='button' value='Cancel' class='btn btn-warning' ng-click="cancelTask()">
+      </div>
+  </div>
+
+</form>

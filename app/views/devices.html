@@ -1,0 +1,39 @@
+<p>There are {{devices.length}} devices(s).
+</p>
+
+<p>
+  <button class="btn btn-primary" ng-click="my_filter={creator_id:myId}">My Devices</button>
+  <button class="btn btn-primary" ng-click="my_filter={}">All</button>
+  <button class="btn btn-primary" ng-click="my_filter={idle:true}">Idle</button>
+</p>
+
+<table class="table table-bordered table-hover">
+  <thead>
+    <tr>
+      <th>Workstaion</th>
+      <th>IP</th>
+      <th>Brand</th>
+      <th>Product</th>
+      <th>SN</th>
+      <th>Job ID</th>
+      <th>Start Time</th>
+      <th>Task</th>
+      <th>Creator</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="device in devices | filter:my_filter" ng-class="{success:device.idle}">
+      <td>{{getWkName(device)}}</a></td>
+      <td>{{device.workstation.ip}}</td>
+      <td>{{device.product.brand}}</td>
+      <td>{{device.product.model}}</td>
+      <td>{{device.serial}}</td>
+      <td>{{device.a}}</td>
+      <td>{{device.b}}</td>
+      <td>{{device.c}}</td>
+      <td>{{device.d}}</td>
+    </tr>
+  </tbody>
+</table>
+
+<br>

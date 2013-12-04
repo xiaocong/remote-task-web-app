@@ -1,0 +1,34 @@
+<p>There are {{jobs.length}} job(s).
+</p>
+
+<table class="table table-bordered table-hover">
+  <tr>
+    <th>Job ID</th>
+    <th>Task</th>
+    <th>Start Time</th>
+    <th>Group</th>
+    <th>Tester</th>
+    <th>Status</th>
+    <th col="2">Operation</th>
+  </tr>
+  <tr ng-repeat='job in jobs' ng-class="{success:job.status=='running', error:job.status=='failed'}">
+    <td>{{job.id}}</td>
+    <td>{{job.task}}</td>
+    <td>{{job.start_time *1000 | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+    <td>{{job.group}}</td>
+    <td>{{job.tester}}</td>
+    <td>{{job.status}}</td>
+    <td>
+      <div ng-switch on="job.status">
+        <div ng-switch-when="running">
+          <button class="btn btn-info">Stream</button>
+          <button class="btn btn-danger">Stop</button>
+        </div>
+        <div ng-switch-default>
+          <button class="btn btn-primary">View Log</button>
+        </div>
+      </div>
+    </td>
+  </tr>
+</table>
+

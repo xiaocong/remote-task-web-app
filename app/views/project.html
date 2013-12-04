@@ -1,0 +1,71 @@
+<div style='width:1024px; height:auto; margin:40px auto'>
+	<div class="container-fluid">
+	    <div class="row-fluid">
+        <div class="span8">
+            <ul class="nav nav-pills">
+              <li class="nav-header">Operations</li>
+              <li><a href="javascript:void(0)" ng-click="addtask2()">Create task 2</a></li>
+              <li><a href="javascript:void(0)" ng-click="addtask3()">Create task 3</a></li>
+            </ul>
+
+			<table class="table table-bordered table-hover">
+			  <thead>
+			    <tr>
+			      <th>Name</th>
+			      <th>Time</th>
+			      <th>Creator</th>
+			      <th>Repo</th>
+			      <th>Description</th>
+			    </tr>
+			  </thead>
+			  <tbody ng-repeat='task in dataset.tasks'>
+			  <tr class="success">
+			    <td><a href="javascript:void(0)" ng-click="task.hidden = !task.hidden">{{task.name}}</a></td>
+			    <td>{{task.created_at | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
+			    <td>{{task.creator.email}}</td>
+			    <td>{{task.jobs[0].repo_url}}</td>
+			    <td>{{task.description}}</td>
+			  </tr>
+			  <tr ng-class="{hide:task.hidden==true}" ng-init="task.hidden=true" >
+			    <td></td>
+			    <td colspan="4">
+			      <!-- Embedded table -->
+			      <table class="subtable">
+			        <tr ng-repeat="job in task.jobs">
+			          <td>Job-{{job.no}}</td>
+			          <td>{{getWorkstation(job)}}</td>
+			          <td>{{getProductInfo(job)}}</td>
+			          <td>{{getSerial(job)}}</td>
+			          <td>{{job.status}}</td>
+			        </tr>
+			      </table>
+			  </tr>
+			  </tbody>
+			</table>
+
+		<br>
+        </div><!--/span-->
+
+
+		 <div class="span3"  class="well sidebar-nav">
+		     <p><h4>Members</h4></p>
+		     <p><a ng-click="create()">[Invite]</a></p>
+		     <div class='add_user' style="display:none">
+			  <input type='email' ng-model='user_mail'/>
+			  <button class='btn btn-small' ng-click="cancel()">Cancel</button>
+			  <button class='btn btn-small btn-primary' ng-click="adduser()">Confirm</button>
+		    </div>
+		    <table class="subtable">
+             <tr ng-repeat="user in group_users">
+               <td>{{user.email}}</td>
+               <td><a ng-click="deleteuser(user.email)">[x]</a></td>
+             </tr>
+             </table>
+
+		    </div>
+
+       </div>
+     </div>
+</div>
+
+	

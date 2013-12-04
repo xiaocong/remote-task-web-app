@@ -1,0 +1,48 @@
+<p>There are {{devices.length}} devices(s).
+</p>
+
+<p>
+  <button class="btn btn-primary" ng-click="my_filter={}">All</button>
+  <button class="btn btn-primary" ng-click="my_filter={idle:true}">Idle</button>
+</p>
+
+<table class="table table-bordered table-hover">
+  <thead>
+    <tr>
+      <th>Workstaion</th>
+      <th>IP</th>
+      <th>Brand</th>
+      <th>Product</th>
+      <th>SN</th>
+      <th>Job ID</th>
+      <th>Tags</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="device in devices | filter:my_filter" ng-class="{success:device.idle}">
+      <td>{{getWkName(device)}}</a></td>
+      <td>{{device.workstation.ip}}</td>
+      <td>{{device.product.brand}}</td>
+      <td>{{device.product.model}}</td>
+      <td>{{device.serial}}</td>
+      <td>{{device.job_id}}</td>
+    <td>
+      <ul class="subtable">
+        <li ng-repeat="tag in device.tags">
+          {{tag}}<a href="javascript:void(0)" ng-click="remove_devicetag(device.id, device.tags, tag)">[x]</a>
+        </li>
+      </ul>
+      <a href="javascript:void(0)" ng-click="showaddtag(device.serial)">[+Tag]</a>
+      <div class='add_tag{{device.serial}}' style="display:none">
+        <select ng-model="seltag[device.id]">
+            <option ng-repeat="tag in tags" value="{{tag}}">{{tag}}</option>
+        </select>
+        <input type="button" class='btn btn-small' ng-click="hideaddtag(device.serial)" value="Cancel">
+        <input type="button" class='btn btn-small btn-primary' ng-click="add_devicetag(device.id, device.tags)" value="Ok">
+      </div>
+    </td>
+    </tr>
+  </tbody>
+</table>
+
+<br>
