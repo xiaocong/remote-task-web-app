@@ -40,14 +40,19 @@ setAuthCookie = (id, name, tags, token) ->
   setCookie("smart_id", id, 30)
   setCookie("smart_tags", tags, 30)
 
+resetAuthCookie = () ->
+  gMY_TOKEN = ""
+  gMY_NAME = ""
+  gMY_ID = ""
+  gMY_TAGS = ""
+  setAuthCookie("", "", "", "")
+
 # Agular module definition begins here.
 angular.module('angApp')
-  .controller 'appCtrl', ($scope, $location, $route) ->
+  .controller 'AppCtrl', ($scope, $location, $route, $rootScope) ->
     getAuthCookie()
-  .controller 'SampleCtrl', ($scope, $http) ->
-    $http.get('/api/awesomeThings').success (awesomeThings) ->
-      $scope.awesomeThings = awesomeThings
-  .controller 'NaviCtrl', ($rootScope, $http, $location) ->
+    $scope.isLogin = () ->
+      return (gMY_TOKEN?.length > 0 and gMY_NAME?.length > 0 and gMY_ID?)
     $rootScope.isLogin = () ->
       return if !(typeof gMY_TOKEN == undefined or gMY_TOKEN == "") then true else false
     $rootScope.getUserName = () ->
@@ -55,10 +60,21 @@ angular.module('angApp')
     $rootScope.isAdmin = () ->
       return if "system:role:admin" in gMY_TAGS then true else false
     $rootScope.logout = () ->
-      gMY_TOKEN = gMY_NAME = gMY_ID = gMY_TAGS = ""
-      setAuthCookie("", "", "", "")
+      resetAuthCookie()
       $location.path "/login"
       return
+    $rootScope.$on('event:auth-loginRequired', () ->
+      # Clear all cookies and reset login state.
+      $rootScope.logout()
+    )
+    $rootScope.logout() if not $rootScope.isLogin()
+    return
+
+  .controller 'SampleCtrl', ($scope, $http) ->
+    $http.get('/api/awesomeThings').success (awesomeThings) ->
+      $scope.awesomeThings = awesomeThings
+
+  .controller 'NaviCtrl', ($rootScope, $http, $location) ->
     $rootScope.manageusers = () ->
       $location.path "/mgtusers"
       return
@@ -415,7 +431,6 @@ angular.module('angApp')
       else
         $scope.selectedOptions.platforms.splice(index, 1) if index >= 0
       # Update the optional manufacturer list.
-
       return
 
     $scope.selectManufacturer = ($event) ->
@@ -632,7 +647,6 @@ angular.module('angApp')
         $location.path "/projects/"+$scope.id
         return
       return
-
     return
 
   .controller 'AddTaskCtrl', ($rootScope, $scope, $routeParams, $http, $location) ->
