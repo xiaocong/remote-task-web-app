@@ -29,13 +29,13 @@ gMY_ID = ""
 gMY_TAGS = ""
 
 getAuthCookie = () ->
-  gMY_TOKEN = getCookie("smart_token")
+  gMY_TOKEN = getCookie("access_token")
   gMY_NAME = getCookie("smart_name")
   gMY_ID = parseInt(getCookie("smart_id"))
   gMY_TAGS = getCookie("smart_tags")
 
 setAuthCookie = (id, name, tags, token) ->
-  setCookie("smart_token", token, 30)
+  setCookie("access_token", token, 30)
   setCookie("smart_name", name, 30)
   setCookie("smart_id", id, 30)
   setCookie("smart_tags", tags, 30)
@@ -51,10 +51,8 @@ resetAuthCookie = () ->
 angular.module('angApp')
   .controller 'AppCtrl', ($scope, $location, $route, $rootScope) ->
     getAuthCookie()
-    $scope.isLogin = () ->
-      return (gMY_TOKEN?.length > 0 and gMY_NAME?.length > 0 and gMY_ID?)
     $rootScope.isLogin = () ->
-      return if !(typeof gMY_TOKEN == undefined or gMY_TOKEN == "") then true else false
+      return (gMY_TOKEN?.length > 0) and (gMY_NAME?.length > 0)
     $rootScope.getUserName = () ->
       return gMY_NAME
     $rootScope.isAdmin = () ->
@@ -89,12 +87,6 @@ angular.module('angApp')
       return
     $rootScope.initbasicinfo = () ->
       if not (gMY_TOKEN?.length > 0)
-        return
-      $http.get("api/account?access_token=" + gMY_TOKEN).success (data) ->
-        gMY_ID = data.id
-        gMY_TAGS = data.tags
-        gMY_NAME = data.email or data.name
-        setCookie(gMY_ID, gMY_NAME, gMY_TAGS, gMY_TOKEN)
         return
       $http.get("api/projects?access_token=" + gMY_TOKEN).success (data) ->
         $rootScope.projects = data
@@ -186,10 +178,12 @@ angular.module('angApp')
       $http.post("api/auth/get_access_token", data)
         .success (data) ->
           gMY_TOKEN = data.access_token
-          gMY_NAME = $scope.loginForm.email
+          gMY_ID = data.id
+          gMY_NAME = data.email or data.name
+          gMY_TAGS = data.tags
           setAuthCookie(gMY_ID, gMY_NAME, gMY_TAGS, gMY_TOKEN)
-          $scope.showMessage = true
-          $scope.promptMessage = "Done: " + data.access_token
+          #$scope.showMessage = true
+          #$scope.promptMessage = "Done: " + data.access_token
           $rootScope.initbasicinfo()
           $location.path "/"
         .error (data, status, headers, config) ->
@@ -224,7 +218,7 @@ angular.module('angApp')
           $scope.showMessage = true
       return
     $scope.showLogin = () ->
-      return typeof gMY_TOKEN == undefined or gMY_TOKEN == ""
+      return not (gMY_TOKEN?.length > 0 and gMY_NAME?.length > 0)
     return
 
   .controller 'TagMgtCtrl', ($rootScope, $scope, $http) ->
