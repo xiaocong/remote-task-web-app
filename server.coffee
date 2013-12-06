@@ -14,27 +14,31 @@ app = express()
 
 # all environments
 app.set "port", process.env.PORT or 3000
-app.set('views', path.join(__dirname, "app"))
-app.engine('html', require('ejs').renderFile)
-app.enable('trust proxy')
+app.engine 'html', require('ejs').renderFile
+app.set 'view engine', 'html'
+app.enable 'trust proxy'
 
 app.use express.logger(stream: {write: (msg, encode) -> logger.info(msg)})
 app.use dbmodule.setup()
 app.use express.bodyParser()
 app.use express.methodOverride()
 
+app.use app.router
+
 # development only
 if "development" is app.get("env")
   app.use express.static(path.join(__dirname, ".tmp"))
   app.use express.static(path.join(__dirname, "app"))
+  app.use (req, res, next) -> res.sendfile path.join(__dirname, "app/index.html")
   app.use express.errorHandler()
+  app.set 'views', path.join(__dirname, "app")
 
 # production only
 else
   app.use express.favicon(path.join(__dirname, "public/favicon.ico"))
   app.use express.static(path.join(__dirname, "public"))
-
-app.use app.router
+  app.use (req, res, next) -> res.sendfile path.join(__dirname, "public/index.html")
+  app.set 'views', path.join(__dirname, "public")
 
 app.use (err, req, res, next) ->
   logger.error "#{err}"
@@ -97,7 +101,7 @@ app.post "/api/users/:id", api.auth.auth_admin, api.users.update
 
 app.all "/api/*", (req, res) -> res.json 404, error: "API Not Found."
 
-app.get '*', routes.index
+app.get '/views/*', routes.views
 
 http.createServer(app).listen app.get("port"), ->
   console.log "Express server listening on port #{app.get('port')} in #{app.get('env')} mode."
