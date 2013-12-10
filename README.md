@@ -1187,12 +1187,13 @@
 
 - Get a list of tasks
 
-        GET /api/tasks?access_token=:access_token[&project=:project]
+        GET /api/tasks?access_token=:access_token[&project=:project][&status=:status][&page=:page][&page_count=:page_count]
 
     Note:
 
     - Returns tasks in projects that the user has permission to access.
     - If project is specified, only tasks in the project will return.
+    - `status` parameter can be `all`, `finished` or `living`, default is `all`
 
     Examples:
 
@@ -1209,7 +1210,7 @@
             "page": 0, 
             "page_count": 16, 
             "pages": 1, 
-            "running_only": false, 
+            "status": "all", 
             "tasks": [
                 {
                     "created_at": "2013-11-23T07:05:53.000Z", 
