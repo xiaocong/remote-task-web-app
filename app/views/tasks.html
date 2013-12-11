@@ -18,7 +18,7 @@
   </thead>
   <tbody ng-repeat='task in dataset.tasks | filter:taskFilter'>
   <tr class="success">
-    <td><a href="" ng-click="task.hidden = !task.hidden">{{task.name}}</a></td>
+    <td><a href="javascript:void(0)" ng-click="task.hidden = !task.hidden">{{task.name}}</a></td>
     <td>{{task.created_at | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
     <td>{{task.creator.email}}</td>
     <td>{{task.jobs[0].repo_url}}</td>
