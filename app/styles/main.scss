@@ -33,8 +33,9 @@ body {
 
 /* Template style */
 body {
-  padding-top: 60px;
-  padding-bottom: 40px;
+  padding-top: 40px;
+  max-width: 960px;
+  margin: 0 AUTO;
 }
 .sidebar-nav {
   padding: 9px 0;
@@ -47,6 +48,10 @@ body {
   padding-left: 5px;
   padding-right: 5px;
  }
+}
+
+.breadcrumb {
+  background-color: #DDDDDD;
 }
 
 .p_job {
@@ -70,6 +75,7 @@ select.short {
 input[type="checkbox"] {
   margin: 4px;
 }
+
 /* Sort */
 table.table thead .sorting {
   background: url('../images/sort_both.png') no-repeat center right;

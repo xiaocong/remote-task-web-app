@@ -1,8 +1,7 @@
 
-<form class="form-horizontal" class="css-form" novalidation>
-    <fieldset>
-      <legend>Task Info</legend>
-    <div class="control-group">
+<form class="form-horizontal" class="css-form" novalidate>
+  <fieldset>
+    <div class="control-group" style="margin-left='AUTO'; margin-right='AUTO'">
       <label class="control-label">Name</label>
       <div class="controls">
         <input type="text" name='name' placeholder='Task Name' ng-model="newTaskForm.name" required>
@@ -33,29 +32,45 @@
         </select>
       </div>
     </div>
-</fieldset>
+  </fieldset>
 
-    <hr>
+  <hr>
 
   <fieldset >
-    <legend>Device Info
-    </legend>
+    <div class="control-group">
+        <button class='btn' ng-class="{'btn-primary':deviceFilter==false}" ng-click="deviceFilter=false">Models</button>
+        <button class='btn' ng-class="{'btn-primary':deviceFilter==true}" ng-click="deviceFilter=true">Devices</button>
+    </div>
 
     <table class="table table-bordered table-hover" ng-init="reverse=false">
       <thead>
         <tr>
           <th id="sort_platform" class="sorting"><a href="javascript:void(0)" title="Sort by Platform" ng-click="predicate='platform'; reverse=!reverse; sortByPlatform()">Platform</a></th>
+          <th>Version</th>
           <th id="sort_brand" class="sorting"><a href="javascript:void(0)" title="Sort by Brand" ng-click="predicate='product.model'; reverse=!reverse; sortByBrand()">Brand</a></th>
           <th>Model</th>
-          <th>Device</th>
+          <th ng-show="deviceFilter">SW</th>
+          <th ng-show="deviceFilter">Device</th>
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="device in devices | orderBy:predicate:reverse" ng-class="{success:device.idle}">
-          <td>{{device.platform}}</td>
+        <tr ng-repeat="device in devices | orderBy:predicate:reverse" ng-class="{info:device._selected}" ng-click="setSelected(device)">
+          <td>
+            <span ng-show="device._selected" class="label label-info"><i class="icon-ok icon-white"></i></span>
+            <span ng-show="!device._selected" class="label "><i class="icon-ok icon-white"></i></span>
+             {{device.platform}}
+           </td>
+          <td>{{device.build.version.release}}</td>
           <td>{{device.product.manufacturer}}</td>
-          <td><input type="checkbox" value="{{device.product.model}}" ng-checked="device._deviceFilter == false" ng-click="checkModel($event, device)">{{device.product.model}}</td>
-          <td><input type="checkbox" value="{{device.id}}" ng-checked="device._deviceFilter == true" ng-click="checkDevice($event, device)">{{device.id}}</td>
+          <td>
+            {{device.product.model}}
+            <span class="badge badge-success" ng-show="!deviceFilter" style="float:right;"><i class="icon-leaf icon-white"></i></span>
+          </td>
+          <td ng-show="deviceFilter">{{device.build.version.codename}}</td>
+          <td ng-show="deviceFilter">
+            {{device.id}}
+            <span class="badge badge-success" style="float:right;"><i class="icon-leaf icon-white"></i></span>
+          </td>
         </tr>
       </tbody>
     </table>

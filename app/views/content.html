@@ -36,7 +36,15 @@
     </div>
 
     <div class="container-fluid">
-      <div class="row-fluid">
+      <div>
+        <div class="row-fluid">
+          <ul class="breadcrumb">
+            <li ng-repeat="b in breadcrumbs.getAll()" class="{{b.class}}">
+              <a href="{{b.path}}">{{b.name}}</a>
+              <span class="divider">&gt;</span>
+            </li>
+          </ul>
+        </div>
         <div ng-view="">
         </div>
       </div><!--/row-->
