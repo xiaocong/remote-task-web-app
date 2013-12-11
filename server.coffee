@@ -20,6 +20,7 @@ app.enable 'trust proxy'
 
 app.use express.logger(stream: {write: (msg, encode) -> logger.info(msg)})
 app.use dbmodule.setup()
+app.use express.cookieParser()
 app.use express.bodyParser()
 app.use express.methodOverride()
 

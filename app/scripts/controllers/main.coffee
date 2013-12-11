@@ -72,7 +72,9 @@ angular.module('angApp')
     $http.get('/api/awesomeThings').success (awesomeThings) ->
       $scope.awesomeThings = awesomeThings
 
-  .controller 'NaviCtrl', ($rootScope, $http, $location) ->
+  .controller 'NaviCtrl', ($rootScope, $http, $location, breadcrumbs) ->
+    $rootScope.breadcrumbs = breadcrumbs
+    $rootScope.projects = []
     $rootScope.manageusers = () ->
       $location.path "/mgtusers"
       return
@@ -91,6 +93,8 @@ angular.module('angApp')
       $http.get("api/projects?access_token=" + gMY_TOKEN).success (data) ->
         $rootScope.projects = data
         return
+    $rootScope.getProjectName = (id) ->
+      return p.name for p, i in $rootScope.projects when p.id is id
     $rootScope.initbasicinfo()
 
   .controller 'MainCtrl', ($rootScope, $scope, $http, $location) ->
@@ -155,9 +159,22 @@ angular.module('angApp')
         $scope.group_users.push email : $scope.user_mail
         return
       return
+    $scope.statusFilter = (task) ->
+      return (task._active is $scope.activeFilter)
+    initData = (data) ->
+      for t in data.tasks
+        active = false
+        for j in t.jobs
+          if j.status is "started" or j.status is "new"
+            active = true
+            break
+        t._active = active
+      return
+    $scope.activeFilter = true
     id = $scope.pid = $routeParams.id or ""
     $http.get("api/tasks?project="+id+"&access_token=" + gMY_TOKEN).success (data) ->
       $scope.dataset = data
+      initData($scope.dataset)
       return
     $http.get("api/projects/"+id+"?access_token=" + gMY_TOKEN).success (data) ->
       $scope.group_users = data.users
@@ -187,6 +204,7 @@ angular.module('angApp')
           $rootScope.initbasicinfo()
           $location.path "/"
         .error (data, status, headers, config) ->
+          # Never reaches here since HTTP 401 has been captured in interceptor.
           # TODO: prompt
           return
         return
@@ -555,6 +573,7 @@ angular.module('angApp')
 
   .controller 'AddTaskCtrl2', ($routeParams, $scope, $http, $location) ->
     # Some initialization.
+    $scope.deviceFilter = false
     $scope.newTaskForm = {}
     $scope.newTaskForm.jobs = []
     $scope.id = $routeParams.id
@@ -563,25 +582,8 @@ angular.module('angApp')
 
     $http.get("api/projects/"+$scope.id+"/devices?access_token=" + gMY_TOKEN).success (data) ->
       $scope.devices = data
+      device._selected = false for device, i in $scope.devices
       #device._index = i for device, i in $scope.devices
-
-    $scope.checkModel = ($event, device) ->
-      el = $event.target
-      #index = $scope.selectedOptions.models.indexOf(el.value)
-      if el.checked is true
-        device._deviceFilter = false
-      else
-        delete device._deviceFilter
-      return
-
-    $scope.checkDevice = ($event, device) ->
-      el = $event.target
-      #index = $scope.selectedOptions.models.indexOf(el.value)
-      if el.checked is true
-        device._deviceFilter = true
-      else
-        delete device._deviceFilter
-      return
 
     resetSorting = (el) ->
       el.removeClass()
@@ -606,6 +608,10 @@ angular.module('angApp')
       $location.path "/projects/"+$scope.id
       return
 
+    $scope.setSelected = (device) ->
+      device._selected = !device._selected
+      return device._selected
+
     $scope.submitTask = () ->
       # Two cases depending on device_filter.anyDevice:
       #   1) true: generate jobs based on models;
@@ -613,28 +619,23 @@ angular.module('angApp')
       $scope.newTaskForm.jobs = []
       iii = 0
       for d in $scope.devices
-        if d._deviceFilter is undefined
-          continue
-        if d._deviceFilter is true
+        continue if d._selected is false
+        # First fill in the common params.
+        job = {
+          r_type: $scope.newTaskForm.r_type
+          device_filter:
+            platform: d.platform
+        }
+        # selected by model.
+        if $scope.deviceFilter is false
+          job.device_filter.product =
+            manufacturer: d.product.manufacturer
+            model: d.product.model
+        else # selected by device.
           tokens = d.id.split("-")
-          job = {
-            r_type: $scope.newTaskForm.r_type
-            device_filter:
-              platform: d.platform
-              mac: tokens[0]
-              serial: tokens[1]
-          }
-          job.no = iii++
-        else
-          job = {
-            r_type: $scope.newTaskForm.r_type
-            device_filter:
-              platform: d.platform
-              product:
-                manufacturer: d.product.manufacturer
-                model: d.product.model
-          }
-          job.no = iii++
+          job.device_filter.mac = tokens[0]
+          job.device_filter.serial = tokens[1]
+        job.no = iii++
         $scope.newTaskForm.jobs.push(job)
       # OK to submit it now.
       $http.post("api/tasks?project="+$scope.id+"&access_token=" + gMY_TOKEN, $scope.newTaskForm).success (data) ->

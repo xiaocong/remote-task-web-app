@@ -1,12 +1,12 @@
-<div style='width:1024px; height:auto; margin:40px auto'>
-	<div class="container-fluid">
 	    <div class="row-fluid">
-		    <div class="span9" >
+	    	<span><h4>My Projects</h4></span>
+	    	<span style="float:right"><button class='btn btn-primary' ng-click="create()"><i class="icon-leaf icon-white"></i> New Project</button></span>
+	    </div>
+
+	    <div class="row-fluid">
 				<div class='tab-content'>
 				<div class='tab-pane active'>
 
-				<div><button class='btn btn-primary' ng-click="create()">New Project</button></div>
-				<br>
 				<div class='create_project' style='display:none'>
 					<input type='text' ng-model='newproject' placeholder="New project Name"><br>
 					<button class='btn' ng-click="cancel()">Cancel</button>
@@ -19,7 +19,7 @@
 								<th></th>
 							</thead>
 						<tbody>
-							<tr ng-repeat='project in projects' ng-switch on='project.userrole'>
+							<tr ng-repeat='project in projects' ng-switch on='project.userrole' ng-click="projectdetail(project.id)">
 							<td class='projecthover' style='width:500px;'>
 							    {{project.name}}
 							</td>
@@ -28,7 +28,6 @@
 							</td>                                              
                             <td> 
                             <td class='projecthover'>
-							<button style='margin-left:5px;' ng-click="projectdetail(project.id)" type='button' class='btn btn-mini btn-info'>detail</button>
 						    </td>
 						    <td class='projecthover'>
 	                        <button style='margin-left:5px;' ng-click="deleteproject(project.id)"  type='button 'class='btn btn-mini btn-danger'>delete</button>
@@ -39,13 +38,4 @@
 						</table>	
 					</div>
 				</div>
-		    </div>
-		    <div class="span2">
-		    	<div>
-					<img style='width:150px;height:150px;' ng-src='{{avatar || "http://storage.aliyun.com/wutong-data/system/1_L.jpg"}}'>
-					<span style='display:block;font-weight:bold;font-size:16px;width:150px;text-align:center;' ng-model='username'>{{getUserName()}}</span>
-			</div>
-		    </div>
-	    </div>
-    </div> 
-</div>
+		  </div>
