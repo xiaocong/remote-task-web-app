@@ -25,7 +25,7 @@ angular.module('services.breadcrumbs', [])
           id = parseInt(tokens[2])
           result.push {name: "Home", path: "/"}
           result.push {name: $rootScope.getProjectName(id), path: tokens.splice(-1, 0).join("/")}
-          result.push {name: "Create Task", path: path, class: "active"}
+          result.push {name: $rootScope.getProjectAction(), path: path, class: "active"}
         else
           # TODO. Anything else for now?
           result.push {name: "Home", path: "/", active: true}
@@ -78,6 +78,9 @@ angular.module('angApp', [
       .when '/jobs',
         templateUrl: 'views/jobs.html'
         controller: 'JobsCtrl'
+      .when '/projects/:id/users',
+        templateUrl: 'views/groupusers.html'
+        controller: 'GroupUserCtrl'
       .when '/projects/:id/addtask3',
         templateUrl: 'views/addtask3.html'
         controller: 'AddTaskCtrl3'

@@ -95,6 +95,8 @@ angular.module('angApp')
         return
     $rootScope.getProjectName = (id) ->
       return p.name for p, i in $rootScope.projects when p.id is id
+    $rootScope.getProjectAction = () ->
+      return $rootScope.actionName
     $rootScope.initbasicinfo()
 
   .controller 'MainCtrl', ($rootScope, $scope, $http, $location) ->
@@ -131,34 +133,15 @@ angular.module('angApp')
     $scope.addtask3 = (job) ->
       id = $scope.pid
       $location.path "/projects/"+id+"/addtask3"
+    $scope.cfgusers = (job) ->
+      id = $scope.pid
+      $location.path "/projects/"+id+"/users"
     $scope.getWorkstation = (job) ->
       return "-" if not job.device_filter.mac?
       job.device_filter.mac
     $scope.getSerial = (job) ->
       return "-" if not job.device_filter.serial?
       job.device_filter.serial
-    $scope.create = () ->
-      $('.add_user').slideToggle()
-      return
-    $scope.cancel = () ->
-      $('.add_user').slideUp()
-      return
-    $scope.deleteuser = (mail) ->
-      id = $scope.pid
-      data =
-        email : mail
-      $http.post("api/projects/"+id+"/remove_user?access_token=" + gMY_TOKEN, data).success (data) ->
-        $scope.group_users.pop mail
-        return
-      return      
-    $scope.adduser = () ->
-      id = $scope.pid
-      data =
-        email : $scope.user_mail
-      $http.post("api/projects/"+id+"/add_user?access_token=" + gMY_TOKEN, data).success (data) ->
-        $scope.group_users.push email : $scope.user_mail
-        return
-      return
     $scope.statusFilter = (task) ->
       return (task._active is $scope.activeFilter)
     initData = (data) ->
@@ -176,10 +159,37 @@ angular.module('angApp')
       $scope.dataset = data
       initData($scope.dataset)
       return
-    $http.get("api/projects/"+id+"?access_token=" + gMY_TOKEN).success (data) ->
-      $scope.group_users = data.users
-      return   
     return
+
+  .controller 'GroupUserCtrl', ($rootScope, $scope, $routeParams, $http, $cookies, $location) ->
+    $scope.showusers = () ->
+      $http.get("api/projects/"+id+"?access_token=" + gMY_TOKEN).success (data) ->
+        $scope.group_users = data.users
+    $scope.showadd = () ->
+      $('.add_user').slideToggle()
+      return
+    $scope.cancel = () ->
+      $('.add_user').slideUp()
+      return
+    $scope.deleteuser = (mail) ->
+      id = $scope.pid
+      data =
+        email : mail
+      $http.post("api/projects/"+id+"/remove_user?access_token=" + gMY_TOKEN, data).success (data) ->
+        $scope.group_users.pop mail
+        return
+      return      
+    $scope.adduser = () ->
+      id = $scope.pid
+      data =
+        email : $scope.user_email
+      $http.post("api/projects/"+id+"/add_user?access_token=" + gMY_TOKEN, data).success (data) ->
+        $scope.showusers()
+        return
+      return
+    $rootScope.actionName = "Group User"
+    id = $scope.pid = $routeParams.id or ""
+    $scope.showusers()
 
   .controller 'LoginCtrl', ($rootScope, $scope, $http, $cookies, $location) ->
     $scope.loginForm = {}
@@ -399,8 +409,10 @@ angular.module('angApp')
 
   .controller 'AddTaskCtrl3', ($rootScope, $scope, $routeParams, $http, $location) ->
     # Some initialization.
+    $rootScope.actionName = "Create Task"
     $scope.newTaskForm = {}
     $scope.newTaskForm.jobs = []
+    $scope.newTaskForm.r_type = "none"
     #createJob()
     # Data used to show as HTML select options. Contents of [manufacturers] and [products] may change each time user makes a new selection.
     $scope.platforms = []
@@ -571,11 +583,13 @@ angular.module('angApp')
       return
     return
 
-  .controller 'AddTaskCtrl2', ($routeParams, $scope, $http, $location) ->
+  .controller 'AddTaskCtrl2', ($rootScope, $routeParams, $scope, $http, $location) ->
     # Some initialization.
+    $rootScope.actionName = "Create Task"
     $scope.deviceFilter = false
     $scope.newTaskForm = {}
     $scope.newTaskForm.jobs = []
+    $scope.newTaskForm.r_type = "none"
     $scope.id = $routeParams.id
     # Retrieve the available devices first.
     $scope.devices = []
