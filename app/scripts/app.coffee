@@ -41,7 +41,7 @@ angular.module('angApp', [
       .when '/projects/:id/addtask3',
         templateUrl: 'views/addtask3.html'
         controller: 'AddTaskCtrl3'
-      .when '/projects/:id/addtask2',
+      .when '/projects/:id/addtask',
         templateUrl: 'views/addtask2.html'
         controller: 'AddTaskCtrl2'
       .otherwise

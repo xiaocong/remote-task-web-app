@@ -1,4 +1,10 @@
 
+<div class="row-fluid">
+  <div style="float:right">
+      <button class='btn btn-danger' ng-click="">Cancel All</button>
+      <button class='btn btn-primary' ng-click="">Restart All</button>
+  </div>
+</div>
 <h4>{{task.name}}</h4>
 
 <table class="table table-bordered table-hover">
@@ -23,7 +29,7 @@
           <button class="btn btn-danger">Stop</button>
         </div>
         <div ng-switch-default>
-          <button class="btn btn-primary">View Log</button>
+          <button class="btn btn-primary">Restart</button>
         </div>
       </div>
     </td>

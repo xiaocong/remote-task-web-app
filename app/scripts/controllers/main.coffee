@@ -57,9 +57,9 @@ angular.module('angApp')
       brand = if job.device_filter.product.manufacturer? then job.device_filter.product.manufacturer else "-"
       product = if job.device_filter.product.model? then job.device_filter.product.model else "-"
       brand + " / " + product
-    $scope.addtask2 = (job) ->
+    $scope.addtask = (job) ->
       id = $scope.pid
-      $location.path "/projects/"+id+"/addtask2"
+      $location.path "/projects/"+id+"/addtask"
     $scope.addtask3 = (job) ->
       id = $scope.pid
       $location.path "/projects/"+id+"/addtask3"
@@ -91,9 +91,16 @@ angular.module('angApp')
         $scope.group_users.push email : $scope.user_mail
         return
       return
+    $scope.restart = ($event, task) ->
+      # TODO
+      return false
+    $scope.cancel = ($event, task) ->
+      # TODO
+      return false
     $scope.statusFilter = (task) ->
       return (task._active is $scope.activeFilter)
-    $scope.viewTask = (task) ->
+    $scope.viewTask = ($event, task) ->
+      return if $event.target.name is "operation"
       $location.path "/projects/" + $scope.pid + "/tasks/" + task.id
     initData = (data) ->
       for t in data.tasks
