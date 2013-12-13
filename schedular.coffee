@@ -138,7 +138,12 @@ dbmodule.initialize ->
         )
         request.get url_str, (err, r, b) ->
           return logger.error("Error when retrieving job result from workstation: #{err}") if err?
-          events.trigger "update:job", {find:{id: id}, update: {exit_code: JSON.parse(b).exit_code}}
+          events.trigger "update:job",
+            find:
+              id: id
+            update:
+              exit_code: JSON.parse(b).exit_code
+              exec_info: JSON.parse(b)
     )
 
   devices.on "add", (device) ->

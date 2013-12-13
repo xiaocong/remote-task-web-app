@@ -148,6 +148,7 @@ exports = module.exports = (db, cb) ->
       defaultValue: "new"
       required: true
     exit_code: Number
+    exec_info: Object
   ,
     timestamp: true
     autoFetch: true
