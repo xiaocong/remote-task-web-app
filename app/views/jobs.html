@@ -1,22 +1,26 @@
-<p>There are {{jobs.length}} job(s).
-</p>
+
+<div class="row-fluid">
+  <div style="float:right">
+      <button class='btn btn-danger' ng-click="">Cancel All</button>
+      <button class='btn btn-primary' ng-click="">Restart All</button>
+  </div>
+</div>
+<h4>{{task.name}}</h4>
 
 <table class="table table-bordered table-hover">
   <tr>
     <th>Job ID</th>
-    <th>Task</th>
     <th>Start Time</th>
-    <th>Group</th>
-    <th>Tester</th>
+    <th>End Time</th>
+    <th>Creator</th>
     <th>Status</th>
     <th col="2">Operation</th>
   </tr>
-  <tr ng-repeat='job in jobs' ng-class="{success:job.status=='running', error:job.status=='failed'}">
-    <td>{{job.id}}</td>
-    <td>{{job.task}}</td>
-    <td>{{job.start_time *1000 | date:'yyyy-MM-dd HH:mm:ss'}}</td>
-    <td>{{job.group}}</td>
-    <td>{{job.tester}}</td>
+  <tr class="clickable" ng-repeat='job in task.jobs' ng-class="{success:job.status=='running', error:job.status=='failed'}">
+    <td>{{job.no}}</td>
+    <td>{{job.created_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+    <td>{{job.modified_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+    <td>{{task.creator.email}}</td>
     <td>{{job.status}}</td>
     <td>
       <div ng-switch on="job.status">
@@ -25,7 +29,7 @@
           <button class="btn btn-danger">Stop</button>
         </div>
         <div ng-switch-default>
-          <button class="btn btn-primary">View Log</button>
+          <button class="btn btn-primary">Restart</button>
         </div>
       </div>
     </td>
