@@ -74,17 +74,24 @@ exports = module.exports =
   list: (req, res, next) ->
     page = Number(req.param("page")) or 0
     page_count = Number(req.param("page_count")) or 16
-    running_only = (req.param("running_only") or "0") in ["1", "true", "t", "ok"]
-    
-    if running_only
-      filter =  id: _.uniq(req.zk.models.live_jobs.map((job) -> job.get("task_id")))
-    else
-      filter = {}
+    status = req.param("status") or "all"
+    status = "all" if status not in ["living", "finished", "all"]
+    task_ids = _.uniq(req.zk.models.live_jobs.map((job) -> job.get("task_id")))
+    filter = {}
 
     listTasks = ->
-      req.db.models.task.find(filter).count (err, count) ->
+      q = req.db.models.task.find(filter)
+      switch status
+        when "living"
+          if task_ids.length is 0
+            return res.json {page: page, page_count: page_count, pages: 0, status: status, tasks: []}
+          q = q.where("id in (#{task_ids.join(',')})")
+        when "finished"
+          q = q.where("id not in (#{task_ids.join(',')})") if task_ids.length > 0
+
+      q.count (err, count) ->
         return next(err) if err?
-        req.db.models.task.find(filter).order("-id").offset(page*page_count).limit(page_count).all (err, tasks) ->
+        q.order("-id").offset(page*page_count).limit(page_count).all (err, tasks) ->
           return next(err) if err?
           tasks = JSON.parse(JSON.stringify(tasks))
           delete task.creator.password for task in tasks
@@ -92,7 +99,7 @@ exports = module.exports =
             page: page
             page_count: page_count
             pages: Math.ceil(count/page_count)
-            running_only: running_only
+            status: status
             tasks: tasks
 
     if req.project?

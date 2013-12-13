@@ -50,6 +50,10 @@ body {
  }
 }
 
+tr.clickable:hover {
+  cursor: pointer;
+}
+
 .breadcrumb {
   background-color: #DDDDDD;
 }
