@@ -17,6 +17,12 @@ stop_job = (job, workstations)->
     request.get(url_str, (e, r, body)->)
     logger.info "Stop running job:#{job.id}."
 
+retrieve_task = (req, res, next, id) ->
+  req.db.models.task.get id, (err, task) ->
+    task = JSON.parse(JSON.stringify(task))
+    delete task.creator.password
+    res.json task
+
 exports = module.exports =
   kill_job_process: (job, workstations) ->
     stop_job(job, workstations)
@@ -62,14 +68,9 @@ exports = module.exports =
         req.redis.publish "db.task", JSON.stringify(method: "add", task: task.id)
 
   get: (req, res, next) ->
-    req.user.getProjects (err, projects) ->
-      return next(err) if err?
-      if req.task.project_id in _.map(projects, (proj) -> proj.id)
-        task = JSON.parse(JSON.stringify(req.task))
-        delete task.creator.password
-        res.json task
-      else
-        res.json 403, error: "No permission to access the task."
+    task = JSON.parse(JSON.stringify(req.task))
+    delete task.creator.password
+    res.json task
 
   list: (req, res, next) ->
     page = Number(req.param("page")) or 0
@@ -106,7 +107,6 @@ exports = module.exports =
       filter.project_id = req.project.id
       listTasks()
     else
-      filter.project_id = _.map(req.user.projects, (proj) -> proj.id)
       req.user.getProjects (err, projects) ->
         filter.project_id = _.map(projects, (proj) -> proj.id)
         listTasks()
@@ -131,8 +131,8 @@ exports = module.exports =
     req.db.models.job.find({task_id: id, status: ["new", "started"]}).each((job) ->
       job.status = "cancelled"
     ).save (err) ->
+      retrieve_task(req, res, next, id)
       req.redis.publish "db.task", JSON.stringify(method: "cancel", task: id)
-      res.send 200
       logger.info "Task:#{id} cancelled."
 
   restart: (req, res, next) ->
@@ -142,8 +142,8 @@ exports = module.exports =
     req.db.models.job.find({task_id: id}).each((job) ->
       job.status = "new"
     ).save (err) ->
+      retrieve_task(req, res, next, id)
       req.redis.publish "db.task", JSON.stringify(method: "restart", task: id)
-      res.send 200
       logger.info "Task:#{id} re-started."
 
   add_job: (req, res, next) ->
@@ -171,7 +171,7 @@ exports = module.exports =
         res.json j
         req.redis.publish "db.job", JSON.stringify(method: "add", job: j.id)
 
-  retrieve_job: (req, res, next) ->
+  param_job_no: (req, res, next) ->
     req.db.models.job.find {task_id: req.task.id, no: Number(req.params.no)}, (err, jobs) ->
       return next(err) if err?
       return res.json(404, error: "Job not found.") if jobs.length is 0
@@ -215,7 +215,7 @@ exports = module.exports =
   restart_job: (req, res, next) ->
     job = req.job
     if job.status is "new"
-      return res.send 200
+      return res.json job
     stop_job(req.zk.models.live_jobs.get(job.id), req.zk.models.workstations)
     job.status = "new"
     job.save (err) ->

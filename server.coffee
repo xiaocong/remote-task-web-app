@@ -85,11 +85,11 @@ app.delete "/api/tasks/:task", api.auth.auth, api.auth.auth_task, api.tasks.remo
 app.post "/api/tasks/:task/cancel", api.auth.auth, api.auth.auth_task, api.tasks.cancel
 app.post "/api/tasks/:task/restart", api.auth.auth, api.auth.auth_task, api.tasks.restart
 app.post "/api/tasks/:task/jobs", api.auth.auth, api.auth.auth_task, api.tasks.add_job
-app.post "/api/tasks/:task/jobs/:no", api.auth.auth, api.auth.auth_task, api.tasks.retrieve_job, api.tasks.update_job
-app.post "/api/tasks/:task/jobs/:no/cancel", api.auth.auth, api.auth.auth_task, api.tasks.retrieve_job, api.tasks.cancel_job
-app.post "/api/tasks/:task/jobs/:no/restart", api.auth.auth, api.auth.auth_task, api.tasks.retrieve_job, api.tasks.restart_job
-app.get "/api/tasks/:task/jobs/:no/stream", api.auth.auth, api.auth.auth_task, api.tasks.retrieve_job, api.tasks.job_output
-app.get "/api/tasks/:task/jobs/:no/files/*", api.auth.auth, api.auth.auth_task, api.tasks.retrieve_job, api.tasks.job_files
+app.post "/api/tasks/:task/jobs/:no", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.update_job
+app.post "/api/tasks/:task/jobs/:no/cancel", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.cancel_job
+app.post "/api/tasks/:task/jobs/:no/restart", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.restart_job
+app.get "/api/tasks/:task/jobs/:no/stream", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.job_output
+app.get "/api/tasks/:task/jobs/:no/files/*", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.job_files
 
 app.get "/api/tags", api.auth.auth_admin, api.tags.get
 app.post "/api/tags/:tag", api.auth.auth_admin, api.tags.add
