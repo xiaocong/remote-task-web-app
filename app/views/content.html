@@ -8,7 +8,7 @@
             <span class="icon-bar"></span>
           </button>
           <a class="brand" href="/">Home</a>
-          <div class="nav-collapse collapse pull-right" ng-show="isLogin()">
+          <div class="nav-collapse collapse pull-right" ng-show="auth.isLogin()">
             <ul class="nav navbar-nav navbar-right">
               <li class="dropdown">
                 <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown">Projects
@@ -19,14 +19,14 @@
                 </ul>
               </li>
               <li class="dropdown">
-                <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown">{{getUserName()}}
+                <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown">{{auth.getUserName()}}
                 <b class="caret"></b></a>
                 <ul class="dropdown-menu">
-                  <li ng-show="isAdmin()"><a ng-click="managetags()">Tags</a></li>
-                  <li ng-show="isAdmin()"><a ng-click="managedevices()">Devices</a></li>
-                  <li ng-show="isAdmin()"><a ng-click="manageusers()">Users</a></li>
-                  <li ng-show="isAdmin()" class="divider"></li>
-                  <li><a ng-click="logout()">Logout</a></li>
+                  <li ng-show="auth.isAdmin()"><a ng-click="managetags()">Tags</a></li>
+                  <li ng-show="auth.isAdmin()"><a ng-click="managedevices()">Devices</a></li>
+                  <li ng-show="auth.isAdmin()"><a ng-click="manageusers()">Users</a></li>
+                  <li ng-show="auth.isAdmin()" class="divider"></li>
+                  <li><a ng-click="auth.logout()">Logout</a></li>
                 </ul>
               </li>
            </ul>
@@ -36,18 +36,20 @@
     </div>
 
     <div class="container-fluid">
-      <div>
-        <div class="row-fluid">
-          <ul class="breadcrumb">
-            <li ng-repeat="b in breadcrumbs.getAll()" class="{{b.class}}">
-              <a href="{{b.path}}">{{b.name}}</a>
-              <span class="divider">&gt;</span>
-            </li>
-          </ul>
-        </div>
-        <div ng-view="">
-        </div>
-      </div><!--/row-->
+      <div class="row-fluid">
+        <ul class="breadcrumb">
+          <li ng-repeat="b in naviService.getAll()">
+            <span ng-switch on="b.last">
+              <a ng-switch-when="true">{{b.name}}</a>
+              <a ng-switch-default href="{{b.path}}">{{b.name}}</a>
+            </span>
+            <span class="divider" ng-show="!b.last">&gt;</span>
+          </li>
+        </ul>
+      </div>
+
+      <div ng-view="">
+      </div><!--another row-->
       <hr>
 
       <footer align="center">

@@ -19,7 +19,7 @@
 								<th></th>
 							</thead>
 						<tbody>
-							<tr ng-repeat='project in projects' ng-switch on='project.userrole' ng-click="projectdetail(project.id)">
+							<tr class="clickable" ng-repeat='project in projects' ng-switch on='project.userrole' ng-click="projectdetail(project.id)">
 							<td class='projecthover' style='width:500px;'>
 							    {{project.name}}
 							</td>
