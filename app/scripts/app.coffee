@@ -38,6 +38,9 @@ angular.module('angApp', [
       .when '/projects/:id/tasks/:tid',
         templateUrl: 'views/jobs.html'
         controller: 'JobsCtrl'
+      .when '/projects/:id/users',
+        templateUrl: 'views/groupusers.html'
+        controller: 'GroupUserCtrl'
       .when '/projects/:id/addtask3',
         templateUrl: 'views/addtask3.html'
         controller: 'AddTaskCtrl3'

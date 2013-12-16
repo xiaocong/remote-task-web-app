@@ -63,34 +63,15 @@ angular.module('angApp')
     $scope.addtask3 = (job) ->
       id = $scope.pid
       $location.path "/projects/"+id+"/addtask3"
+    $scope.cfgusers = (job) ->
+      id = $scope.pid
+      $location.path "/projects/"+id+"/users"
     $scope.getWorkstation = (job) ->
       return "-" if not job.device_filter.mac?
       job.device_filter.mac
     $scope.getSerial = (job) ->
       return "-" if not job.device_filter.serial?
       job.device_filter.serial
-    $scope.create = () ->
-      $('.add_user').slideToggle()
-      return
-    $scope.cancel = () ->
-      $('.add_user').slideUp()
-      return
-    $scope.deleteuser = (mail) ->
-      id = $scope.pid
-      data =
-        email : mail
-      $http.post("api/projects/"+id+"/remove_user?access_token=" + authService.getToken(), data).success (data) ->
-        $scope.group_users.pop mail
-        return
-      return
-    $scope.adduser = () ->
-      id = $scope.pid
-      data =
-        email : $scope.user_mail
-      $http.post("api/projects/"+id+"/add_user?access_token=" + authService.getToken(), data).success (data) ->
-        $scope.group_users.push email : $scope.user_mail
-        return
-      return
     $scope.restart = ($event, task) ->
       # TODO
       return false
@@ -121,6 +102,36 @@ angular.module('angApp')
       $scope.group_users = data.users
       return
     return
+
+  .controller 'GroupUserCtrl', ($rootScope, $scope, $routeParams, $http, $cookies, $location, authService) ->
+    $scope.showusers = () ->
+      $http.get("api/projects/"+id+"?access_token=" + authService.getToken()).success (data) ->
+        $scope.group_users = data.users
+    $scope.showadd = () ->
+      $('.add_user').slideToggle()
+      return
+    $scope.cancel = () ->
+      $('.add_user').slideUp()
+      return
+    $scope.deleteuser = (mail) ->
+      id = $scope.pid
+      data =
+        email : mail
+      $http.post("api/projects/"+id+"/remove_user?access_token=" + authService.getToken(), data).success (data) ->
+        $scope.group_users.pop mail
+        return
+      return      
+    $scope.adduser = () ->
+      id = $scope.pid
+      data =
+        email : $scope.user_email
+      $http.post("api/projects/"+id+"/add_user?access_token=" + authService.getToken(), data).success (data) ->
+        $scope.showusers()
+        return
+      return
+    $rootScope.actionName = "Group User"
+    id = $scope.pid = $routeParams.id or ""
+    $scope.showusers()
 
   .controller 'LoginCtrl', ($rootScope, $scope, $http, $location, authService) ->
     $scope.loginForm = {}
@@ -308,6 +319,7 @@ angular.module('angApp')
     # Some initialization.
     $scope.newTaskForm = {}
     $scope.newTaskForm.jobs = []
+    $scope.newTaskForm.r_type = "none"
     #createJob()
     # Data used to show as HTML select options. Contents of [manufacturers] and [products] may change each time user makes a new selection.
     $scope.platforms = []
@@ -483,6 +495,7 @@ angular.module('angApp')
     $scope.deviceFilter = false
     $scope.newTaskForm = {}
     $scope.newTaskForm.jobs = []
+    $scope.newTaskForm.r_type = "none"
     $scope.id = $routeParams.id
     # Retrieve the available devices first.
     $scope.devices = []

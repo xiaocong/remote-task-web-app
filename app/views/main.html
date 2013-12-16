@@ -1,41 +1,45 @@
-	    <div class="row-fluid">
-	    	<span><h4>My Projects</h4></span>
-	    	<span style="float:right"><button class='btn btn-primary' ng-click="create()"><i class="icon-leaf icon-white"></i> New Project</button></span>
-	    </div>
+<div class="row-fluid">
+	<span><h4>My Projects</h4></span>
+	<span class="pull-right">
+		<button class='btn btn-primary' ng-click="create()"><i class="icon-leaf icon-white"></i> New Project</button>
+	</span>
+</div>
+<hr>
+<div class="row-fluid">
+	<div class='create_project pull-right' style='display:none'>
+		<input type='text' ng-model='newproject' placeholder="New project Name"><br>
+		<button class='btn pull-right' ng-click="cancel()">Cancel</button>
+		<button class='btn btn-primary pull-right' ng-click="createproject()">Create</button>
+	</div>
+</div>
 
-	    <div class="row-fluid">
-				<div class='tab-content'>
-				<div class='tab-pane active'>
-
-				<div class='create_project' style='display:none'>
-					<input type='text' ng-model='newproject' placeholder="New project Name"><br>
-					<button class='btn' ng-click="cancel()">Cancel</button>
-					<button class='btn btn-primary' ng-click="createproject()">Create</button>
-				</div>
-				<table class='table table-striped table-hover'>
-							<thead>
-								<th>Name</th>
-								<th>Owner</th>
-								<th></th>
-							</thead>
-						<tbody>
-							<tr class="clickable" ng-repeat='project in projects' ng-switch on='project.userrole' ng-click="projectdetail(project.id)">
-							<td class='projecthover' style='width:500px;'>
-							    {{project.name}}
-							</td>
-							<td class='projecthover'>
-                                <span style=''>{{project.creator.email}}</span>
-							</td>                                              
-                            <td> 
-                            <td class='projecthover'>
-						    </td>
-						    <td class='projecthover'>
-	                        <button style='margin-left:5px;' ng-click="deleteproject(project.id)"  type='button 'class='btn btn-mini btn-danger'>delete</button>
-	                        </td>
-						</tr>
-							</tbody>
-							
-						</table>	
-					</div>
-				</div>
-		  </div>
+<div class="row-fluid">
+		<div class='tab-content'>
+		<div class='tab-pane active'>
+		<table class='table table-striped table-hover'>
+					<thead>
+						<th>Name</th>
+						<th>Owner</th>
+						<th></th>
+					</thead>
+				<tbody>
+					<tr class="clickable" ng-repeat='project in projects' ng-switch on='project.userrole' ng-click="projectdetail(project.id)">
+					<td class='projecthover' style='width:500px;'>
+					    {{project.name}}
+					</td>
+					<td class='projecthover'>
+                        <span style=''>{{project.creator.email}}</span>
+					</td>                                              
+                    <td> 
+                    <td class='projecthover'>
+				    </td>
+				    <td class='projecthover'>
+                    <button style='margin-left:5px;' ng-click="deleteproject(project.id)"  type='button 'class='btn btn-mini btn-danger'>delete</button>
+                    </td>
+				</tr>
+					</tbody>
+					
+				</table>	
+			</div>
+		</div>
+</div>
