@@ -112,7 +112,7 @@ angular.module('services.naviService', ['services.authService'])
     $rootScope.initbasicinfo = () ->
       if not authService.isLogin()
         return
-      $http.get("api/projects?access_token=" + authService.getToken()).success (data) ->
+      $http.get("api/projects?access_token=#{ authService.getToken() }").success (data) ->
         $rootScope.projects = data
         # Update navi data 
         breadcrumbsService.onDataChanged()
