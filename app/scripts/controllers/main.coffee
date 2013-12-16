@@ -72,28 +72,6 @@ angular.module('angApp')
     $scope.getSerial = (job) ->
       return "-" if not job.device_filter.serial?
       job.device_filter.serial
-    $scope.create = () ->
-      $('.add_user').slideToggle()
-      return
-    $scope.cancel = () ->
-      $('.add_user').slideUp()
-      return
-    $scope.deleteuser = (mail) ->
-      id = $scope.pid
-      data =
-        email : mail
-      $http.post("api/projects/"+id+"/remove_user?access_token=" + authService.getToken(), data).success (data) ->
-        $scope.group_users.pop mail
-        return
-      return
-    $scope.adduser = () ->
-      id = $scope.pid
-      data =
-        email : $scope.user_mail
-      $http.post("api/projects/"+id+"/add_user?access_token=" + authService.getToken(), data).success (data) ->
-        $scope.group_users.push email : $scope.user_mail
-        return
-      return
     $scope.restart = ($event, task) ->
       # TODO
       return false
