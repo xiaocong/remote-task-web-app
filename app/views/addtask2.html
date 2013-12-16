@@ -27,8 +27,8 @@
 
   <fieldset >
     <div class="control-group">
-        <button class='btn' ng-class="{'btn-primary':deviceFilter==false}" ng-click="deviceFilter=false">Models</button>
-        <button class='btn' ng-class="{'btn-primary':deviceFilter==true}" ng-click="deviceFilter=true">Devices</button>
+        <button class='btn' ng-class="{'btn-primary':showDevice==false}" ng-click="toggleModelDevice()">Models</button>
+        <button class='btn' ng-class="{'btn-primary':showDevice==true}" ng-click="toggleModelDevice()">Devices</button>
     </div>
 
     <table class="table table-bordered table-hover" ng-init="reverse=false">
@@ -38,12 +38,12 @@
           <th>Version</th>
           <th id="sort_brand" class="sorting"><a href="javascript:void(0)" title="Sort by Brand" ng-click="predicate='product.model'; reverse=!reverse; sortByBrand()">Brand</a></th>
           <th>Model</th>
-          <th ng-show="deviceFilter">SW</th>
-          <th ng-show="deviceFilter">Device</th>
+          <th ng-show="showDevice">SW</th>
+          <th ng-show="showDevice">Device</th>
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="device in devices | orderBy:predicate:reverse" ng-class="{info:device._selected}" ng-click="setSelected(device)">
+        <tr class="clickable" ng-repeat="device in devices | filter:filterCondition | orderBy:predicate:reverse" ng-class="{info:device._selected}" ng-click="setSelected(device)">
           <td>
             <span ng-show="device._selected" class="label label-info"><i class="icon-ok icon-white"></i></span>
             <span ng-show="!device._selected" class="label "><i class="icon-ok icon-white"></i></span>
@@ -53,10 +53,10 @@
           <td>{{device.product.manufacturer}}</td>
           <td>
             {{device.product.model}}
-            <span class="badge badge-success" ng-show="!deviceFilter" style="float:right;"><i class="icon-leaf icon-white"></i></span>
+            <span class="badge badge-success" ng-show="!showDevice" style="float:right;"><i class="icon-leaf icon-white"></i></span>
           </td>
-          <td ng-show="deviceFilter">{{device.build.version.codename}}</td>
-          <td ng-show="deviceFilter">
+          <td ng-show="showDevice">{{device.build.version.codename}}</td>
+          <td ng-show="showDevice">
             {{device.id}}
             <span class="badge badge-success" style="float:right;"><i class="icon-leaf icon-white"></i></span>
           </td>

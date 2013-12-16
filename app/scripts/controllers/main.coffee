@@ -52,6 +52,16 @@ angular.module('angApp')
     return
 
   .controller 'ProjectCtrl', ($rootScope, $routeParams, $scope, $http, $location, authService) ->
+    setTaskStatus = (task) ->
+      task._active = false
+      for j in task.jobs
+        if j.status is "started" or j.status is "new"
+          task._active = true
+          return
+    updateTask = (newTask) ->
+      setTaskStatus(newTask)
+      $scope.dataset.tasks[i] = newTask for t, i in $scope.dataset.tasks when t.id is newTask.id
+      return
     $scope.getProductInfo = (job) ->
       return "- / -" if not job.device_filter.product?
       brand = if job.device_filter.product.manufacturer? then job.device_filter.product.manufacturer else "-"
@@ -72,25 +82,27 @@ angular.module('angApp')
     $scope.getSerial = (job) ->
       return "-" if not job.device_filter.serial?
       job.device_filter.serial
-    $scope.restart = ($event, task) ->
-      # TODO
-      return false
-    $scope.cancel = ($event, task) ->
-      # TODO
-      return false
+    $scope.restart = (task) ->
+      $http.post("api/tasks/#{ task.id }/restart?access_token=#{ authService.getToken() }")
+        .success (data) ->
+          updateTask(data)
+        .error (data, status, headers, config) ->
+          result = data
+          return
+    $scope.cancel = (task) ->
+      $http.post("api/tasks/#{ task.id }/cancel?access_token=#{ authService.getToken() }")
+        .success (data) ->
+          updateTask(data)
+        .error (data, status, headers, config) ->
+          result = data
+          return
     $scope.statusFilter = (task) ->
       return (task._active is $scope.activeFilter)
     $scope.viewTask = ($event, task) ->
       return if $event.target.name is "operation"
       $location.path "/projects/" + $scope.pid + "/tasks/" + task.id
     initData = (data) ->
-      for t in data.tasks
-        active = false
-        for j in t.jobs
-          if j.status is "started" or j.status is "new"
-            active = true
-            break
-        t._active = active
+      setTaskStatus(t) for t in data.tasks
       return
     $scope.activeFilter = true
     id = $scope.pid = $routeParams.id or ""
@@ -309,8 +321,41 @@ angular.module('angApp')
     return
 
   .controller 'JobsCtrl', ($rootScope, $routeParams, $scope, $http, authService, naviService) ->
+    updateJob = (job) ->
+      $rootScope.task.jobs[job.no] = job
+    $scope.restart = (job) ->
+      $http.post("api/tasks/#{ $rootScope.task.id }/jobs/#{ job.no }/restart", { access_token: authService.getToken() })
+        .success (data) ->
+          updateJob(data)
+        .error (data, status) ->
+          result = data
+          return
+    $scope.cancel = (job) ->
+      $http.post("api/tasks/#{ $rootScope.task.id }/jobs/#{ job.no }/cancel", { access_token: authService.getToken() })
+        .success (data) ->
+          updateJob(data)
+        .error (data, status) ->
+          result = data
+          return
+    $scope.stream = (job) ->
+      # TODO
+      return
+    $scope.restartAll = () ->
+      $http.post("api/tasks/#{ rootScope.id }/restart?access_token=#{ authService.getToken() }")
+        .success (data) ->
+          $rootScope.task = data
+        .error (data, status) ->
+          result = data
+          return
+    $scope.cancelAll = () ->
+      $http.post("api/tasks/#{ rootScope.id }/cancel?access_token=#{ authService.getToken() }")
+        .success (data) ->
+          $rootScope.task = data
+        .error (data, status) ->
+          result = data
+          return
     $rootScope.task = {}
-    $http.get("api/tasks/" + $routeParams.tid + "?access_token=" + authService.getToken()).success (data) ->
+    $http.get("api/tasks/#{ $routeParams.tid }?access_token=#{ authService.getToken() }").success (data) ->
       $rootScope.task = data
       naviService.onDataChanged()
     return
@@ -492,7 +537,8 @@ angular.module('angApp')
 
   .controller 'AddTaskCtrl2', ($routeParams, $scope, $http, $location, authService) ->
     # Some initialization.
-    $scope.deviceFilter = false
+    $scope.showDevice = false
+    $scope.filterCondition = {_displayModel:true}
     $scope.newTaskForm = {}
     $scope.newTaskForm.jobs = []
     $scope.newTaskForm.r_type = "none"
@@ -502,14 +548,22 @@ angular.module('angApp')
 
     $http.get("api/projects/"+$scope.id+"/devices?access_token=" + authService.getToken()).success (data) ->
       $scope.devices = data
-      device._selected = false for device, i in $scope.devices
-      #device._index = i for device, i in $scope.devices
+      displayedModels = {}
+      #device._selected = false for device, i in $scope.devices
+      for d in $scope.devices
+        d._selected = false
+        if displayedModels[d.product.model] is true
+          continue
+        d._displayModel = true
+        displayedModels[d.product.model] = true
+      return
 
     resetSorting = (el) ->
       el.removeClass()
       el.addClass("sorting")
       return
 
+    # TODO: Ideally we should not manipulate DOM in controller.
     $scope.sortByPlatform = () ->
       resetSorting($("#sort_brand"))
       el = $("#sort_platform")
@@ -522,6 +576,12 @@ angular.module('angApp')
       el = $("#sort_brand")
       el.removeClass()
       el.addClass(if $scope.reverse is true then "sorting_asc" else "sorting_desc")
+      return
+
+    $scope.toggleModelDevice = () ->
+      device._selected = false for device, i in $scope.devices
+      $scope.showDevice = !$scope.showDevice
+      $scope.filterCondition = if $scope.showDevice is true then {} else {_displayModel:true}
       return
 
     $scope.cancelTask = () ->
@@ -547,7 +607,7 @@ angular.module('angApp')
             platform: d.platform
         }
         # selected by model.
-        if $scope.deviceFilter is false
+        if $scope.showDevice is false
           job.device_filter.product =
             manufacturer: d.product.manufacturer
             model: d.product.model

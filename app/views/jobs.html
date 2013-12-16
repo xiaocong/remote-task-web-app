@@ -1,8 +1,8 @@
 
 <div class="row-fluid">
   <div style="float:right">
-      <button class='btn btn-danger' ng-click="">Cancel All</button>
-      <button class='btn btn-primary' ng-click="">Restart All</button>
+      <button class='btn btn-danger' ng-click="cancelAll()">Cancel All</button>
+      <button class='btn btn-primary' ng-click="restartAll()">Restart All</button>
   </div>
 </div>
 <h4>{{task.name}}</h4>
@@ -16,7 +16,7 @@
     <th>Status</th>
     <th col="2">Operation</th>
   </tr>
-  <tr class="clickable" ng-repeat='job in task.jobs' ng-class="{success:job.status=='running', error:job.status=='failed'}">
+  <tr ng-repeat='job in task.jobs' ng-class="{success:job.status=='running', error:job.status=='failed'}">
     <td>{{job.no}}</td>
     <td>{{job.created_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
     <td>{{job.modified_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
@@ -24,12 +24,15 @@
     <td>{{job.status}}</td>
     <td>
       <div ng-switch on="job.status">
-        <div ng-switch-when="running">
-          <button class="btn btn-info">Stream</button>
-          <button class="btn btn-danger">Stop</button>
+        <div ng-switch-when="finished">
+          <button class="btn btn-primary" ng-click="restart(job)">Restart</button>
         </div>
-        <div ng-switch-default>
-          <button class="btn btn-primary">Restart</button>
+        <div ng-switch-when="cancelled">
+          <button class="btn btn-primary" ng-click="restart(job)">Restart</button>
+        </div>
+        <div ng-switch-default> <!-- new/started/running -->
+          <button class="btn btn-info" ng-click="stream(job)">Stream</button>
+          <button class="btn btn-danger" ng-click="cancel(job)">Cancel</button>
         </div>
       </div>
     </td>
