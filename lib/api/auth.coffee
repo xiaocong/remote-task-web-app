@@ -6,7 +6,7 @@ projects = require("./projects")
 
 auth = (req, res, next) ->
   token_fieldname = "access_token"
-  token = req.query[token_fieldname] or req.get("x-#{token_fieldname}") or req.body[token_fieldname]
+  token = req.query[token_fieldname] or req.get("x-#{token_fieldname}") or req.body[token_fieldname] or req.cookies[token_fieldname]
   if token?
     req.db.models.user_token.find {access_token: token}, (err, tokens) ->
       return next(err) if err?
@@ -54,14 +54,18 @@ exports = module.exports =
         return next(err) if err?
         user = users[0]
         if user? and user.compare(password)
+          userInfo = JSON.parse JSON.stringify(user)
+          delete userInfo.password
           user.getToken (err, token) ->
             if err?
               token = uuid.v1()
-              req.db.models.user_token.create {access_token: token, user_id: user.id}, (err, tk) ->
+              req.db.models.user_token.create {access_token: token, user_id: user.id}, (err, token) ->
                 return next(err) if err?
-                res.json {access_token: tk.access_token}
+                userInfo.access_token = token.access_token
+                res.json userInfo
             else
-              res.json {access_token: token.access_token}
+              userInfo.access_token = token.access_token
+              res.json userInfo
         else
           res.json 401, error: "Invalid username or password."
     else
