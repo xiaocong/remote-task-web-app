@@ -1,50 +1,10 @@
 'use strict'
 
-# TODO: move this to a separate service file.
-angular.module('services.breadcrumbs', [])
-  .factory('breadcrumbs', ['$rootScope', '$location', ($rootScope, $location) ->
-    breadcrumbs = []
-    breadcrumbsService = {}
-
-    # Update breadcrumbs only when a route is actually changed.
-    # $location.path() will get updated imediatelly (even if route change fails)
-    $rootScope.$on '$routeChangeSuccess', (event, current) ->
-      tokens = $location.path().split('/')
-      path = $location.path()
-      #console.log($location.path())
-      result = []
-      # TODO: Need to rewrite it when we have more complex URLs.
-      switch tokens.length
-        when 0, 1, 2
-          result.push {name: "Home", path: "/"}
-        when 3
-          id = parseInt(tokens[2])
-          result.push {name: "Home", path: "/"}
-          result.push {name: $rootScope.getProjectName(id), path: path, class: "active"}
-        when 4
-          id = parseInt(tokens[2])
-          result.push {name: "Home", path: "/"}
-          result.push {name: $rootScope.getProjectName(id), path: tokens.splice(-1, 0).join("/")}
-          result.push {name: $rootScope.getProjectAction(), path: path, class: "active"}
-        else
-          # TODO. Anything else for now?
-          result.push {name: "Home", path: "/", active: true}
-      breadcrumbs = result
-
-    breadcrumbsService.getAll = () ->
-      return breadcrumbs
-    breadcrumbsService.getFirst = () ->
-      return breadcrumbs[0] || {}
-
-    return breadcrumbsService
-  ])
-
-
 angular.module('angApp', [
   'ngCookies',
   'ngResource',
   'ngSanitize', 
-  'http-auth-interceptor', 'services.breadcrumbs'
+  'http-auth-interceptor', 'services.authService', 'services.naviService'
 ])
   .config ['$routeProvider', '$locationProvider', ($routeProvider, $locationProvider) ->
     $routeProvider
@@ -75,7 +35,7 @@ angular.module('angApp', [
       .when '/tasks',
         templateUrl: 'views/tasks.html'
         controller: 'TasksCtrl'
-      .when '/jobs',
+      .when '/projects/:id/tasks/:tid',
         templateUrl: 'views/jobs.html'
         controller: 'JobsCtrl'
       .when '/projects/:id/users',
@@ -84,7 +44,7 @@ angular.module('angApp', [
       .when '/projects/:id/addtask3',
         templateUrl: 'views/addtask3.html'
         controller: 'AddTaskCtrl3'
-      .when '/projects/:id/addtask2',
+      .when '/projects/:id/addtask',
         templateUrl: 'views/addtask2.html'
         controller: 'AddTaskCtrl2'
       .otherwise
