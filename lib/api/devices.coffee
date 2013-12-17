@@ -1,5 +1,7 @@
 "use strict"
 
+request = require("request")
+url = require("url")
 logger = require("../logger")
 _ = require("underscore")
 
@@ -60,3 +62,13 @@ module.exports =
             req.redis.publish "db.device.tag", JSON.stringify(method: "delete", device: device.id, tags: tags)
         else
           res.send 200
+
+  screenshot: (req, res) ->
+    url_str = url.format(
+      protocol: "http"
+      hostname: req.device.get("workstation").ip
+      port: req.device.get("workstation").port
+      pathname: "/api/0/devices/#{req.device.get('serial')}/screenshot"
+      query: req.query
+    )
+    req.pipe(request(url_str)).pipe(res)

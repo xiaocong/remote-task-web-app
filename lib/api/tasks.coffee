@@ -4,6 +4,7 @@ request = require("request")
 url = require("url")
 _ = require("underscore")
 logger = require("../logger")
+devices = require("./devices")
 
 stop_job = (job, workstations)->
   if job?.get("status") is "started"
@@ -261,3 +262,14 @@ exports = module.exports =
         req.pipe(request(url_str)).pipe(res)
       else
         res.json 404, error: "The device is disconnected."
+
+  job_screenshot: [
+    (req, res, next) ->
+      job = req.zk.models.jobs.find (job) -> Number(job.id) is req.job.id
+      if job?
+        req.device = req.zk.models.devices.get "#{job.get('mac')}-#{job.get('serial')}"
+        next()
+      else
+        res.json 403, error: "Forbidden on not running job."
+    devices.screenshot
+  ]

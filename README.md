@@ -559,6 +559,17 @@
 
         OK
 
+- Take screenshot of specified device (admin permission)
+
+        GET /api/devices/:device/screenshot?access_token=:access_token[&width=:width&height=:height]
+
+    Note:
+
+    - It returns a PNG image of the screenshot of the device.
+    - It's equal to:
+
+        GET /api/workstations/:workstations/api/0/devices/:serial/screenshot?access_token=:access_token&width=:width&height=:height
+
 ## Jobs
 
 - List (admin permission)
@@ -1742,5 +1753,14 @@
           Downloading uiautomator-0.1.16.tar.gz
           Running setup.py egg_info for package uiautomator
             warning: no previously-included files matching '*.pyc' found anywhere in distribution       
+
+- Take screenshot of a device on which the job is running
+
+        GET /api/tasks/:task/jobs/:no/screenshot?access_token=:access_token[&width=:width&height=:height]
+
+    Notes:
+
+    - It's same as device screenshoot API, but this API doesn't need admin permission.
+    - It can only work on running job. For not running job, it returns 403 Forbidden.
 
 [httpie]: https://github.com/jkbr/httpie

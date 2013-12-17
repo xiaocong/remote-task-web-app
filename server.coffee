@@ -57,6 +57,7 @@ app.get "/api/devices/:device", api.auth.auth_admin, api.devices.get
 app.post "/api/devices/:device/tag/:tag", api.auth.auth_admin, api.devices.tag_device
 app.post "/api/devices/:device/untag/:tag", api.auth.auth_admin, api.devices.untag_device
 app.delete "/api/devices/:device/tag/:tag", api.auth.auth_admin, api.devices.untag_device
+app.get "/api/devices/:device/screenshot", api.auth.auth_admin, api.devices.screenshot
 
 app.get "/api/jobs", api.auth.auth_admin, api.jobs.list
 app.get "/api/jobs/:job", api.auth.auth_admin, api.jobs.get
@@ -90,6 +91,7 @@ app.post "/api/tasks/:task/jobs/:no/cancel", api.auth.auth, api.auth.auth_task, 
 app.post "/api/tasks/:task/jobs/:no/restart", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.restart_job
 app.get "/api/tasks/:task/jobs/:no/stream", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.job_output
 app.get "/api/tasks/:task/jobs/:no/files/*", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.job_files
+app.get "/api/tasks/:task/jobs/:no/screenshot", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.job_screenshot
 
 app.get "/api/tags", api.auth.auth_admin, api.tags.get
 app.post "/api/tags/:tag", api.auth.auth_admin, api.tags.add
