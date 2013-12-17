@@ -6,10 +6,17 @@
 </div>
 
 <div class="row-fluid">
-  <div class="control-group">
+  <!-- div class="control-group">
     <button class='btn' ng-class="{'btn-primary':activeFilter==true}" ng-click="activeFilter=true">Active</button>
     <button class='btn' ng-class="{'btn-primary':activeFilter==false}" ng-click="activeFilter=false">Finished</button>
+  </div -->
+  <div class="tabbable">
+    <ul class="nav nav-tabs nav-tabs-narrow">
+      <li class="active"><a href="javascript:void(0)" data-toggle="tab" ng-click="activeFilter=true">Active</a></li>
+      <li><a href="javascript:void(0)" data-toggle="tab" ng-click="activeFilter=false">Finished</a></li>
+    </ul>
   </div>
+
   <table class="table table-bordered table-hover">
     <thead>
       <tr>

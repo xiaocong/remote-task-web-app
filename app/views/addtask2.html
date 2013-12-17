@@ -1,7 +1,7 @@
 
 <form class="form-horizontal" class="css-form" novalidate>
   <fieldset>
-    <div class="control-group" style="margin-left='AUTO'; margin-right='AUTO'">
+    <div class="control-group">
       <label class="control-label">Name</label>
       <div class="controls">
         <input type="text" name='name' placeholder='Task Name' ng-model="newTaskForm.name" required>
@@ -23,12 +23,18 @@
     </div>
   </fieldset>
 
-  <hr>
+  <hr style="margin-top:0px;">
 
   <fieldset >
-    <div class="control-group">
+    <!-- div class="control-group">
         <button class='btn' ng-class="{'btn-primary':showDevice==false}" ng-click="toggleModelDevice()">Models</button>
         <button class='btn' ng-class="{'btn-primary':showDevice==true}" ng-click="toggleModelDevice()">Devices</button>
+    </div -->
+    <div class="tabbable">
+      <ul class="nav nav-tabs nav-tabs-narrow">
+        <li class="active"><a href="javascript:void(0)" data-toggle="tab" ng-click="toggleModelDevice()">Models</a></li>
+        <li><a href="javascript:void(0)" data-toggle="tab" ng-click="toggleModelDevice()">Devices</a></li>
+      </ul>
     </div>
 
     <table class="table table-bordered table-hover" ng-init="reverse=false">
@@ -66,12 +72,11 @@
 
   </fieldset>
 
-  <hr>
-    <div class="control-group">
-      <div class="controls">
-        <input type='submit' name='submit' value='Create' class='btn btn-primary' ng-click="submitTask()" ng-disabled="newTaskForm.$invalid">
-        <input type='button' value='Cancel' class='btn btn-warning' ng-click="cancelTask()">
-      </div>
+  <div class="control-group">
+    <div class="controls">
+      <input type='submit' name='submit' value='Create' class='btn btn-primary' ng-click="submitTask()" ng-disabled="newTaskForm.$invalid">
+      <input type='button' value='Cancel' class='btn btn-warning' ng-click="cancelTask()">
+    </div>
   </div>
 
 </form>
