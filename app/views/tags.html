@@ -1,17 +1,22 @@
-<p>There are {{tags.length}} Tag(s).</p>
-<button class='btn btn-primary' ng-click="create()">New Tag</button>
-
-<div class='create_tag' style="display:none">
-  <select type='text' ng-model='taglevel'>
-     <option value="system">system</option>
-     <option value="user">user</option>
-  </select>
-  <br>
-  <input type='text' ng-model='tagname' placeholder="New Tag Name"><br>
-  <button class='btn' ng-click="cancel()">Cancel</button>
-  <button class='btn btn-primary' ng-click="createtag()">Create</button>
+<div class="row-fluid">
+  <button class='btn btn-primary pull-right' ng-click="create()">New Tag</button>
 </div>
-<hr>
+
+<div class="row-fluid">
+  <div class='create_tag pull-right' style="display:none; margin-top:10px;">
+    <select type='text' ng-model='taglevel'>
+       <option value="system">system</option>
+       <option value="user">user</option>
+    </select>
+    <br>
+    <input type='text' ng-model='tagname' placeholder="New Tag Name"><br>
+    <button class='btn' ng-click="cancel()">Cancel</button>
+    <button class='btn btn-primary' ng-click="createtag()">Create</button>
+  </div>
+</div>
+
+<br>
+
 <table class="table table-bordered table-hover">
   <thead>
     <tr>

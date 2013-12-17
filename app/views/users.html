@@ -1,13 +1,15 @@
-<p>There are {{users.length}} Account(s).</p>
-<button class='btn btn-primary' ng-click="create()">New Account</button>
-
-<div class='create_user' style="display:none">
-  <label>Email</label><input type='text' ng-model='user_email' placeholder="New Account"><br>
-  <label>Password</label><input type='text' ng-model='user_password'><br>
-  <button class='btn' ng-click="cancel()">Cancel</button>
-  <button class='btn btn-primary' ng-click="createuser()">Create</button>
+<div class="row-fluid">
+  <button class='btn btn-primary pull-right' ng-click="create()">New Account</button>
 </div>
-<hr>
+<div class="row-fluid">
+  <div class='create_user pull-right' style="display:none">
+    <label>Email</label><input type='text' ng-model='user_email' placeholder="New Account"><br>
+    <label>Password</label><input type='text' ng-model='user_password'><br>
+    <button class='btn' ng-click="cancel()">Cancel</button>
+    <button class='btn btn-primary' ng-click="createuser()">Create</button>
+  </div>
+</div>
+<br>
 
 <table class="table table-bordered table-hover">
   <thead>

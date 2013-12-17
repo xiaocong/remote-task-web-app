@@ -58,9 +58,21 @@ tr.clickable:hover {
   background-color: #DDDDDD;
 }
 
+.breadcrumb > li > .divider {
+  color: #888888
+}
+
 .p_job {
     margin: 5px 1px 1px 1px;
     border-bottom: 1px dashed #DDD;
+}
+
+.nav-tabs-narrow {
+  margin-bottom: 1px;
+}
+
+.nav-tabs > .active > a {
+  font-weight: bold;  
 }
 
 /* Sub table */

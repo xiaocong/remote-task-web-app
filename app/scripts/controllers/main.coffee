@@ -1,5 +1,10 @@
 'use strict'
 
+AUTO_UPDATE = true
+_UPDATE_INTERVAL = 5000
+scheduleRefresh = (func, interval) ->
+  setTimeout(func, if interval? then interval else _UPDATE_INTERVAL) if AUTO_UPDATE is true
+
 # Agular module definition begins here.
 angular.module('angApp')
   # Inject authService & naviService at the first place to ensure all listeners work well.
@@ -62,6 +67,18 @@ angular.module('angApp')
       setTaskStatus(newTask)
       $scope.dataset.tasks[i] = newTask for t, i in $scope.dataset.tasks when t.id is newTask.id
       return
+    hasActiveTask = (tasks) ->
+      return false if not tasks?
+      return true for t in tasks when t._active is true
+    retrieveTasks = () ->
+      return if $scope.$$destroyed is true
+      $http.get("api/tasks?project=#{ $scope.pid }&access_token=#{ authService.getToken() }")
+        .success (data) ->
+          $scope.dataset = data
+          initData($scope.dataset)
+          # Don't have to update data automatically when all tasks are finished.
+          return if not hasActiveTask($scope.dataset.tasks)
+          scheduleRefresh(retrieveTasks)
     $scope.getProductInfo = (job) ->
       return "- / -" if not job.device_filter.product?
       brand = if job.device_filter.product.manufacturer? then job.device_filter.product.manufacturer else "-"
@@ -86,6 +103,7 @@ angular.module('angApp')
       $http.post("api/tasks/#{ task.id }/restart?access_token=#{ authService.getToken() }")
         .success (data) ->
           updateTask(data)
+          scheduleRefresh(retrieveTasks)
         .error (data, status, headers, config) ->
           result = data
           return
@@ -106,11 +124,8 @@ angular.module('angApp')
       return
     $scope.activeFilter = true
     id = $scope.pid = $routeParams.id or ""
-    $http.get("api/tasks?project="+id+"&access_token=" + authService.getToken()).success (data) ->
-      $scope.dataset = data
-      initData($scope.dataset)
-      return
-    $http.get("api/projects/"+id+"?access_token=" + authService.getToken()).success (data) ->
+    retrieveTasks()
+    $http.get("api/projects/#{ id }?access_token=#{ authService.getToken() }").success (data) ->
       $scope.group_users = data.users
       return
     return
@@ -321,12 +336,25 @@ angular.module('angApp')
     return
 
   .controller 'JobsCtrl', ($rootScope, $routeParams, $scope, $http, authService, naviService) ->
+    hasActiveJob = (jobs) ->
+      return false if not jobs?
+      return true for j in jobs when not (j.status is "finished" or j.status is "cancelled")
     updateJob = (job) ->
       $rootScope.task.jobs[job.no] = job
+    retrieveJobs = () ->
+      return if $scope.$$destroyed is true
+      $http.get("api/tasks/#{ $routeParams.tid }?access_token=#{ authService.getToken() }")
+        .success (data, status) ->
+          $rootScope.task = data
+          naviService.onDataChanged()
+          # Don't have to update data automatically when all jobs are finished.
+          return if not hasActiveJob($rootScope.task.jobs)
+          scheduleRefresh(retrieveJobs)
     $scope.restart = (job) ->
       $http.post("api/tasks/#{ $rootScope.task.id }/jobs/#{ job.no }/restart", { access_token: authService.getToken() })
         .success (data) ->
           updateJob(data)
+          scheduleRefresh(retrieveJobs)
         .error (data, status) ->
           result = data
           return
@@ -344,6 +372,7 @@ angular.module('angApp')
       $http.post("api/tasks/#{ rootScope.id }/restart?access_token=#{ authService.getToken() }")
         .success (data) ->
           $rootScope.task = data
+          scheduleRefresh(retrieveJobs)
         .error (data, status) ->
           result = data
           return
@@ -355,9 +384,7 @@ angular.module('angApp')
           result = data
           return
     $rootScope.task = {}
-    $http.get("api/tasks/#{ $routeParams.tid }?access_token=#{ authService.getToken() }").success (data) ->
-      $rootScope.task = data
-      naviService.onDataChanged()
+    retrieveJobs()
     return
 
   .controller 'AddTaskCtrl3', ($scope, $http, $location, authService) ->
