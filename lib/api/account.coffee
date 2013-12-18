@@ -4,8 +4,8 @@ bcrypt = require 'bcrypt'
 
 exports = module.exports =
   get: (req, res) ->
-    user = {}
-    user[k] = v for k, v of req.user when k isnt "password"
+    user = JSON.parse(JSON.stringify(req.user))
+    delete user.password
     res.json user
 
   update: (req, res) ->
@@ -14,6 +14,6 @@ exports = module.exports =
     req.user.name = req.param("name") or req.user.name
     req.user.save (err) ->
       return next(err) if err?
-      user = {}
-      user[k] = v for k, v of req.user when k isnt "password"
+      user = JSON.parse(JSON.stringify(req.user))
+      delete user.password
       res.json user

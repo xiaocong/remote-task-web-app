@@ -1,6 +1,6 @@
 'use strict'
 
-describe 'Controller: MainCtrl', () ->
+describe 'Controller: SampleCtrl', () ->
 
   # load the controller's module
   beforeEach module 'angApp'
@@ -14,7 +14,7 @@ describe 'Controller: MainCtrl', () ->
     $httpBackend = _$httpBackend_
     $httpBackend.expectGET('/api/awesomeThings').respond ['HTML5 Boilerplate', 'AngularJS', 'Karma', 'Express']
     scope = $rootScope.$new()
-    MainCtrl = $controller 'MainCtrl', {
+    MainCtrl = $controller 'SampleCtrl', {
       $scope: scope
     }
 

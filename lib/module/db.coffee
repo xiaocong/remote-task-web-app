@@ -10,4 +10,5 @@ exports = module.exports = (url, cb) ->
     db.load "./db_schema", (err)->
 
     db.sync ->
+      require("./db_init")(db)
       cb(null, db) if cb?

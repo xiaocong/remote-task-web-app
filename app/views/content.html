@@ -1,0 +1,60 @@
+<div >
+    <div class="navbar navbar-inverse navbar-fixed-top" ng-controller="NaviCtrl">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="/">Home</a>
+          <div class="nav-collapse collapse pull-right" ng-show="auth.isLogin()">
+            <ul class="nav navbar-nav navbar-right">
+              <li class="dropdown">
+                <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown">Projects
+                <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  <li><a href="javascript:void(0)" ng-repeat="project in projects" ng-click="projectdetail(project.id)">
+                    {{project.name}}</a></li>
+                </ul>
+              </li>
+              <li class="dropdown">
+                <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown">{{auth.getUserName()}}
+                <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  <li ng-show="auth.isAdmin()"><a href="javascript:void(0)" ng-click="managetags()">Tags</a></li>
+                  <li ng-show="auth.isAdmin()"><a href="javascript:void(0)" ng-click="managedevices()">Devices</a></li>
+                  <li ng-show="auth.isAdmin()"><a href="javascript:void(0)" ng-click="manageusers()">Users</a></li>
+                  <li ng-show="auth.isAdmin()" class="divider"></li>
+                  <li><a href="javascript:void(0)" ng-click="auth.logout()">Logout</a></li>
+                </ul>
+              </li>
+           </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <ul class="breadcrumb">
+          <li ng-repeat="b in naviService.getAll()">
+            <span ng-switch on="b.last">
+              <a ng-switch-when="true">{{b.name}}</a>
+              <a ng-switch-default href="{{b.path}}">{{b.name}}</a>
+            </span>
+            <span class="divider" ng-show="!b.last">&gt;</span>
+          </li>
+        </ul>
+      </div>
+
+      <div ng-view="">
+      </div><!--another row-->
+      <hr>
+
+      <footer align="center">
+        <p>&copy; Borqs smartAT 2013</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+</div>

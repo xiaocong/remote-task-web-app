@@ -1,0 +1,26 @@
+<p>There are {{zks.length}} workstation(s) running.
+</p>
+
+<table class="table table-bordered table-hover">
+  <tr>
+    <th>Workstation</th>
+    <th>Device</th>
+    <th>Job</th>
+    <th>StartTime</th>
+    <th>Operation</th>
+  </tr>
+  <tr ng-repeat='wk in zks' ng-class="{true:'success', false:''}[wk.api.status=='up']">
+    <td>{{wk.ip}}<br>{{wk.mac}}</td>
+    <td><a href="devices/{{wk.mac}}-{{wk.api.devices.android[0].adb.serial}}">{{wk.api.devices.android[0].adb.serial}}</a></td>
+    <td>ID: {{wk.job.id}} <br> Repo: {{wk.job.repo}}</td>
+    <td>{{wk.job.starttime}}</td>
+    <td>
+      <div ng-switch on="wk.job.status">
+        <button ng-switch-when="running">Stop</button>
+        <button ng-switch-when="pending">Start</button>
+        <div ng-switch-default></div>
+      </div>
+    </td>
+  </tr>
+</table>
+

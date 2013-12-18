@@ -15,7 +15,8 @@
     "request": "~2.27.0",
     "winston": "~0.7.2",
     "bcrypt": "~0.7.7",
-    "node-uuid": "~1.4.1"
+    "node-uuid": "~1.4.1",
+    "ejs": "~0.8.5"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
@@ -59,6 +60,8 @@
     "node": ">=0.8.0"
   },
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt build",
+    "start": "grunt build && ./node_modules/.bin/coffee server.coffee",
+    "schedular": "grunt build && ./node_modules/.bin/coffee schedular.coffee"
   }
 }

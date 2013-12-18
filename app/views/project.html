@@ -1,0 +1,60 @@
+<div class="row-fluid">
+  <div style="float:right">
+      <button class='btn btn-primary' ng-click="addtask()"><i class="icon-edit icon-white"></i> Create Task</button>
+      <button class='btn btn-primary' ng-click="cfgusers()"><i class="icon-user icon-white"></i> Members</button>
+  </div>
+</div>
+
+<div class="row-fluid">
+  <!-- div class="control-group">
+    <button class='btn' ng-class="{'btn-primary':activeFilter==true}" ng-click="activeFilter=true">Active</button>
+    <button class='btn' ng-class="{'btn-primary':activeFilter==false}" ng-click="activeFilter=false">Finished</button>
+  </div -->
+  <div class="tabbable">
+    <ul class="nav nav-tabs nav-tabs-narrow">
+      <li class="active"><a href="javascript:void(0)" data-toggle="tab" ng-click="activeFilter=true">Active</a></li>
+      <li><a href="javascript:void(0)" data-toggle="tab" ng-click="activeFilter=false">Finished</a></li>
+    </ul>
+  </div>
+
+  <table class="table table-bordered table-hover">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Time</th>
+        <th>Creator</th>
+        <th>Repo</th>
+        <th>Description</th>
+        <th>Operation</th>
+      </tr>
+    </thead>
+    <tbody ng-repeat='task in dataset.tasks | filter:statusFilter'>
+      <tr class="success clickable"  ng-click="viewTask($event, task)">
+        <td><a href="javascript:void(0)" ng-click="task.hidden = !task.hidden">{{task.name}}</a></td>
+        <td>{{task.created_at | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
+        <td>{{task.creator.email}}</td>
+        <td>{{task.jobs[0].repo_url}}</td>
+        <td>{{task.description}}</td>
+        <td>
+          <button name="operation" class="btn btn-primary" ng-show="!activeFilter" ng-click="restart(task)">Restart</button>
+          <button name="operation" class="btn btn-danger" ng-show="activeFilter" ng-click="cancel(task)">Cancel</button>
+        </td>
+      </tr>
+      <!-- tr ng-class="{hide:task.hidden==true}" ng-init="task.hidden=true">
+        <td></td>
+        <td colspan="4">
+          <! - - Embedded table - ->
+          <table class="subtable">
+            <tr ng-repeat="job in task.jobs">
+              <td>Job-{{job.no}}</td>
+              <td>{{getWorkstation(job)}}</td>
+              <td>{{getProductInfo(job)}}</td>
+              <td>{{getSerial(job)}}</td>
+              <td>{{job.status}}</td>
+            </tr>
+          </table>
+      </tr -->
+    </tbody>
+  </table>
+  <br>
+</div>

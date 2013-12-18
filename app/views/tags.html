@@ -1,0 +1,37 @@
+<div class="row-fluid">
+  <button class='btn btn-primary pull-right' ng-click="create()">New Tag</button>
+</div>
+
+<div class="row-fluid">
+  <div class='create_tag pull-right' style="display:none; margin-top:10px;">
+    <select type='text' ng-model='taglevel'>
+       <option value="system">system</option>
+       <option value="user">user</option>
+    </select>
+    <br>
+    <input type='text' ng-model='tagname' placeholder="New Tag Name"><br>
+    <button class='btn' ng-click="cancel()">Cancel</button>
+    <button class='btn btn-primary' ng-click="createtag()">Create</button>
+  </div>
+</div>
+
+<br>
+
+<table class="table table-bordered table-hover">
+  <thead>
+    <tr>
+      <th width="%20">Level</th>
+      <th width="%40">Type</th>
+      <th width="%40">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat='tag in tags'>
+      <td>{{tagsplit(tag, 0)}}</td>
+      <td>{{tagsplit(tag, 1)}}</td>
+      <td>{{tagsplit(tag, 2)}}</td>
+    </tr>
+  </tbody>
+</table>
+
+<br>

@@ -1,0 +1,29 @@
+<form class="form-horizontal" novalidation>
+  <fieldset ng-show="showLogin()">
+    <legend>Login</legend>
+
+    <div class="control-group">
+      <label class="control-label">Name</label>
+      <div class="controls">
+        <input type="text" name='userid' placeholder='Name' ng-model="loginForm.email">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label">Password</label>
+      <div class="controls">
+        <input name='password' type="password" placeholder='Password' ng-model="loginForm.password">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <div class="controls">
+        <input type="button" value='Login' class='btn btn-primary' ng-click="login()">
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset ng-show="!showLogin()">
+    <legend>You have already logged in.</legend>
+  </fieldset>
+</form>

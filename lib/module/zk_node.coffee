@@ -80,7 +80,8 @@ exports = module.exports = (zookeeper_url, path) ->
 
   client.once "connected", ->
     logger.info "Connected to ZooKeeper."
-    listChildren client, path
+    client.mkdirp path, (err) -> # make sure the path is created
+      listChildren client, path
 
   client.connect()
 
