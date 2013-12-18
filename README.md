@@ -1,5 +1,7 @@
 # Remote Task Web App
 
+[![build](https://api.travis-ci.org/xiaocong/remote-task-web-app.png?branch=master)](https://travis-ci.org/xiaocong/remote-task-web-app)
+
 # Development
 
 - Install grunt-cl and bower tools

@@ -60,6 +60,8 @@
     "node": ">=0.8.0"
   },
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt build",
+    "start": "grunt build && ./node_modules/.bin/coffee server.coffee",
+    "schedular": "grunt build && ./node_modules/.bin/coffee schedular.coffee"
   }
 }
