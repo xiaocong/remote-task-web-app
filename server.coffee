@@ -1,8 +1,10 @@
 "use strict"
 
-express = require("express")
 http = require("http")
 path = require("path")
+
+express = require("express")
+passport = require("passport")
 
 logger = require("./lib/logger")
 api = require("./lib/api")
@@ -24,13 +26,10 @@ app.use express.cookieParser()
 app.use express.bodyParser()
 app.use express.methodOverride()
 
-app.use app.router
-
 # development only
 if "development" is app.get("env")
   app.use express.static(path.join(__dirname, ".tmp"))
   app.use express.static(path.join(__dirname, "app"))
-  app.use (req, res, next) -> res.sendfile path.join(__dirname, "app/index.html")
   app.use express.errorHandler()
   app.set 'views', path.join(__dirname, "app")
 
@@ -38,12 +37,22 @@ if "development" is app.get("env")
 else
   app.use express.favicon(path.join(__dirname, "public/favicon.ico"))
   app.use express.static(path.join(__dirname, "public"))
-  app.use (req, res, next) -> res.sendfile path.join(__dirname, "public/index.html")
   app.set 'views', path.join(__dirname, "public")
 
 app.use (err, req, res, next) ->
   logger.error "#{err}"
   next(err)
+
+app.use express.cookieSession(
+  secret: process.env.COOKIE_SECRET || "f67a2c22-a2f8-4eef-8e8f-a18d07d304f7"
+)
+app.use passport.initialize()
+app.use passport.session()
+passport.use api.auth.localStrategy
+passport.serializeUser api.auth.serializeUser
+passport.deserializeUser api.auth.deserializeUser
+
+app.use app.router # api router
 
 app.param "workstation", param.workstation
 app.param "device", param.device
@@ -67,7 +76,9 @@ app.get "/api/workstations", api.auth.auth_admin, api.workstations.get
 app.get "/api/workstations/:workstation", api.auth.auth_admin, api.workstations.get
 app.all "/api/workstations/:workstation/api/*", api.auth.auth_admin, api.workstations.api
 
-app.post "/api/auth/get_access_token", api.auth.get_access_token
+app.post "/api/auth/get_access_token", api.auth.login
+app.post "/api/auth/login", api.auth.login
+app.post "/api/auth/logout", api.auth.auth, api.auth.logout
 app.get "/api/account", api.auth.auth, api.account.get
 app.post "/api/account", api.auth.auth, api.account.update
 
@@ -105,6 +116,7 @@ app.post "/api/users/:id", api.auth.auth_admin, api.users.update
 app.all "/api/*", (req, res) -> res.json 404, error: "API Not Found."
 
 app.get '/views/*', routes.views
+app.get '/*', (req, res) -> res.redirect "/"
 
 http.createServer(app).listen app.get("port"), ->
   console.log "Express server listening on port #{app.get('port')} in #{app.get('env')} mode."
