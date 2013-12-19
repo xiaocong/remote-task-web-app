@@ -5,26 +5,28 @@ _ = require("underscore")
 projects = require("./projects")
 passport = require('passport')
 LocalStrategy = require('passport-local').Strategy
+BearerStrategy = require('passport-http-bearer').Strategy
 logger = require("../logger")
 
 auth = (req, res, next) ->
-  return next() if req.user
+  if req.user
+    next()
+  else
+    passport.authenticate('bearer', session: false)(req, res, next)
 
-  token_fieldname = "access_token"
-  token = req.query[token_fieldname] or req.get("x-#{token_fieldname}") or req.body[token_fieldname] or req.cookies[token_fieldname]
-  return res.json 401, error: "access token needed." if not token
-
-  req.db.models.user_token.find {access_token: token}, (err, tokens) ->
-    return res.json(401, error: "Invalid access token.") if err or tokens.length is 0
-    req.db.models.user.get tokens[0].user_id, (err, user) ->
-      req.user = user
-      next(err)
-
-auth_admin = (req, res, next) ->
+authAdmin = (req, res, next) ->
   if "system:role:admin" in req.user.tags
     next()
   else
-    res.json 403, error: "Admin permission needed." 
+    res.json(403, error: "Admin permission needed.")
+
+findUserByToken = (token, done) ->
+  db = require("../module").db()
+  db.models.user_token.find {access_token: token}, (err, tokens) ->
+    return done(err) if err
+    return done(null, false) if tokens.length is 0
+    db.models.user.get tokens[0].user_id, (err, user) ->
+      done null, user
 
 exports = module.exports =
   auth: auth
@@ -36,7 +38,7 @@ exports = module.exports =
       res.json(404, error: "Project not found.")
   ]
 
-  auth_task: (req, res, next) ->
+  authTask: (req, res, next) ->
     req.user.getProjects {id: req.task.project_id}, (err, projects) ->
       return next(err) if err
       if projects.length > 0
@@ -44,7 +46,7 @@ exports = module.exports =
       else
         res.json 403, error: "No permission to access the task."
 
-  auth_admin: [auth, auth_admin]
+  authAdmin: [auth, authAdmin]
 
   login: (req, res, next) ->
     passport.authenticate("local", (err, user) ->
@@ -60,6 +62,13 @@ exports = module.exports =
   logout: (req, res) ->
     req.logout()
     res.send 200
+
+  serializeUser: (user, done) -> # serialize user id to session cookies
+    done null, user.id
+
+  deserializeUser: (id, done) -> # deserialize user info via session cookies
+    require("../module").db().models.user.get id, (err, user) ->
+      done err, user
 
   localStrategy: new LocalStrategy { # local authentication strategy
       usernameField: "email"
@@ -84,10 +93,4 @@ exports = module.exports =
         else
           done null, false, error: "Invalid username or password."
 
-  serializeUser: (user, done) -> # serialize user id to session cookies
-    done null, user.id
-
-  deserializeUser: (id, done) -> # deserialize user info via session cookies
-    db = require("../module").db()
-    db.models.user.get id, (err, user) ->
-      done err, user
+  bearerStagtegy: new BearerStrategy findUserByToken

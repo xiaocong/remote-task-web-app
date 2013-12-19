@@ -49,6 +49,7 @@ app.use express.cookieSession(
 app.use passport.initialize()
 app.use passport.session()
 passport.use api.auth.localStrategy
+passport.use api.auth.bearerStagtegy
 passport.serializeUser api.auth.serializeUser
 passport.deserializeUser api.auth.deserializeUser
 
@@ -61,20 +62,20 @@ app.param "job", param.job
 
 app.get "/api/awesomeThings", api.awesomeThings
 
-app.get "/api/devices", api.auth.auth_admin, api.devices.list
-app.get "/api/devices/:device", api.auth.auth_admin, api.devices.get
-app.post "/api/devices/:device/tag/:tag", api.auth.auth_admin, api.devices.tag_device
-app.post "/api/devices/:device/untag/:tag", api.auth.auth_admin, api.devices.untag_device
-app.delete "/api/devices/:device/tag/:tag", api.auth.auth_admin, api.devices.untag_device
-app.get "/api/devices/:device/screenshot", api.auth.auth_admin, api.devices.screenshot
+app.get "/api/devices", api.auth.authAdmin, api.devices.list
+app.get "/api/devices/:device", api.auth.authAdmin, api.devices.get
+app.post "/api/devices/:device/tag/:tag", api.auth.authAdmin, api.devices.tag_device
+app.post "/api/devices/:device/untag/:tag", api.auth.authAdmin, api.devices.untag_device
+app.delete "/api/devices/:device/tag/:tag", api.auth.authAdmin, api.devices.untag_device
+app.get "/api/devices/:device/screenshot", api.auth.authAdmin, api.devices.screenshot
 
-app.get "/api/jobs", api.auth.auth_admin, api.jobs.list
-app.get "/api/jobs/:job", api.auth.auth_admin, api.jobs.get
-app.post "/api/jobs/:job/cancel", api.auth.auth_admin, api.jobs.cancel
+app.get "/api/jobs", api.auth.authAdmin, api.jobs.list
+app.get "/api/jobs/:job", api.auth.authAdmin, api.jobs.get
+app.post "/api/jobs/:job/cancel", api.auth.authAdmin, api.jobs.cancel
 
-app.get "/api/workstations", api.auth.auth_admin, api.workstations.get
-app.get "/api/workstations/:workstation", api.auth.auth_admin, api.workstations.get
-app.all "/api/workstations/:workstation/api/*", api.auth.auth_admin, api.workstations.api
+app.get "/api/workstations", api.auth.authAdmin, api.workstations.get
+app.get "/api/workstations/:workstation", api.auth.authAdmin, api.workstations.get
+app.all "/api/workstations/:workstation/api/*", api.auth.authAdmin, api.workstations.api
 
 app.post "/api/auth/get_access_token", api.auth.login
 app.post "/api/auth/login", api.auth.login
@@ -92,26 +93,26 @@ app.get "/api/projects/:project/devices/:device", api.auth.auth, api.auth.auth_p
 
 app.post "/api/tasks", api.auth.auth, api.auth.auth_project, api.tasks.add
 app.get "/api/tasks", api.auth.auth, api.projects.param, api.tasks.list
-app.get "/api/tasks/:task", api.auth.auth, api.auth.auth_task, api.tasks.get
-app.delete "/api/tasks/:task", api.auth.auth, api.auth.auth_task, api.tasks.remove
-app.post "/api/tasks/:task/cancel", api.auth.auth, api.auth.auth_task, api.tasks.cancel
-app.post "/api/tasks/:task/restart", api.auth.auth, api.auth.auth_task, api.tasks.restart
-app.post "/api/tasks/:task/jobs", api.auth.auth, api.auth.auth_task, api.tasks.add_job
-app.post "/api/tasks/:task/jobs/:no", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.update_job
-app.post "/api/tasks/:task/jobs/:no/cancel", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.cancel_job
-app.post "/api/tasks/:task/jobs/:no/restart", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.restart_job
-app.get "/api/tasks/:task/jobs/:no/stream", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.job_output
-app.get "/api/tasks/:task/jobs/:no/files/*", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.job_files
-app.get "/api/tasks/:task/jobs/:no/screenshot", api.auth.auth, api.auth.auth_task, api.tasks.param_job_no, api.tasks.job_screenshot
+app.get "/api/tasks/:task", api.auth.auth, api.auth.authTask, api.tasks.get
+app.delete "/api/tasks/:task", api.auth.auth, api.auth.authTask, api.tasks.remove
+app.post "/api/tasks/:task/cancel", api.auth.auth, api.auth.authTask, api.tasks.cancel
+app.post "/api/tasks/:task/restart", api.auth.auth, api.auth.authTask, api.tasks.restart
+app.post "/api/tasks/:task/jobs", api.auth.auth, api.auth.authTask, api.tasks.add_job
+app.post "/api/tasks/:task/jobs/:no", api.auth.auth, api.auth.authTask, api.tasks.param_job_no, api.tasks.update_job
+app.post "/api/tasks/:task/jobs/:no/cancel", api.auth.auth, api.auth.authTask, api.tasks.param_job_no, api.tasks.cancel_job
+app.post "/api/tasks/:task/jobs/:no/restart", api.auth.auth, api.auth.authTask, api.tasks.param_job_no, api.tasks.restart_job
+app.get "/api/tasks/:task/jobs/:no/stream", api.auth.auth, api.auth.authTask, api.tasks.param_job_no, api.tasks.job_output
+app.get "/api/tasks/:task/jobs/:no/files/*", api.auth.auth, api.auth.authTask, api.tasks.param_job_no, api.tasks.job_files
+app.get "/api/tasks/:task/jobs/:no/screenshot", api.auth.auth, api.auth.authTask, api.tasks.param_job_no, api.tasks.job_screenshot
 
-app.get "/api/tags", api.auth.auth_admin, api.tags.get
-app.post "/api/tags/:tag", api.auth.auth_admin, api.tags.add
-app.post "/api/tags", api.auth.auth_admin, api.tags.add
+app.get "/api/tags", api.auth.authAdmin, api.tags.get
+app.post "/api/tags/:tag", api.auth.authAdmin, api.tags.add
+app.post "/api/tags", api.auth.authAdmin, api.tags.add
 
-app.post "/api/users", api.auth.auth_admin, api.users.add
-app.get "/api/users", api.auth.auth_admin, api.users.list
-app.get "/api/users/:id", api.auth.auth_admin, api.users.get
-app.post "/api/users/:id", api.auth.auth_admin, api.users.update
+app.post "/api/users", api.auth.authAdmin, api.users.add
+app.get "/api/users", api.auth.authAdmin, api.users.list
+app.get "/api/users/:id", api.auth.authAdmin, api.users.get
+app.post "/api/users/:id", api.auth.authAdmin, api.users.update
 
 app.all "/api/*", (req, res) -> res.json 404, error: "API Not Found."
 

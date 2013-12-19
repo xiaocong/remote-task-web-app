@@ -18,7 +18,8 @@
     "node-uuid": "~1.4.1",
     "ejs": "~0.8.5",
     "passport": "~0.1.17",
-    "passport-local": "~0.1.6"
+    "passport-local": "~0.1.6",
+    "passport-http-bearer": "~1.0.1"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
