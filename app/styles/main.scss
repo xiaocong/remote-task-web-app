@@ -62,6 +62,11 @@ tr.clickable:hover {
   color: #888888
 }
 
+.breadcrumb a.inactive {
+  color: #005580;
+  text-decoration: none;
+}
+
 .p_job {
     margin: 5px 1px 1px 1px;
     border-bottom: 1px dashed #DDD;

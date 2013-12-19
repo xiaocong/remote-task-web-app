@@ -95,7 +95,7 @@ angular.module('services.authService', [])
     # Start to authenticate here.
     auth.getAuthCookie()
     auth.logout() if not auth.isLogin()
-
+    $rootScope.auth = auth
     return auth
   ])
 
@@ -135,6 +135,7 @@ angular.module('services.naviService', ['services.authService'])
       mgttags: "Tags"
       mgtusers: "Users"
       login: "Login"
+      addaccount: "New Account"
 
     getTokenValue = (key, id) ->
       return "TODO" if not TokenMap[key]?

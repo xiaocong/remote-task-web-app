@@ -1,0 +1,61 @@
+
+<div class="container-fluid">
+  <div class="row-fluid">
+    <div class="span6">
+      <form class="form-horizontal css-form">
+        <fieldset>
+          <div class="control-group">
+            <label class="control-label">Name</label>
+            <div class="controls">
+              <input type="text" name='name' placeholder='User Name' ng-model="newUserForm.name" required>
+            </div>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Email</label>
+            <div class="controls">
+              <input type="text" name='name' placeholder='Email' ng-model="newUserForm.email" required>
+            </div>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Password</label>
+            <div class="controls">
+              <input type="text" name='name' placeholder='Password' ng-model="newUserForm.password" required>
+            </div>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Priority</label>
+            <div class="controls">
+              <select ng-model="newUserForm.priority">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+          </div>
+          <!-- div class="control-group">
+            <div class="controls">
+              <input type='submit' name='submit' value='Create' class='btn btn-primary' ng-click="submitTask()" ng-disabled="newUserForm.$invalid">
+              <input type='button' value='Cancel' class='btn btn-warning' ng-click="cancelTask()">
+            </div>
+          </div -->
+        </fieldset>
+      </form>
+    </div>
+    <div class="span4">
+      <div class="control-group">
+        <label class="control-label">Available Tags</label>
+      </div>
+      <select multiple="multiple" size="7" ng-model="newUserForm.tags">
+        <option ng-repeat="t in tags">{{t}}</option>
+      </select>
+    </div>
+  </div>
+  <div>
+    <p class="text-center">
+    <input type='submit' name='submit' value='Create' class='btn btn-primary' ng-click="create()" ng-disabled="newUserForm.$invalid">
+    <input type='button' value='Cancel' class='btn btn-warning' ng-click="cancel()">
+    </p>
+  </div>
+</div>
