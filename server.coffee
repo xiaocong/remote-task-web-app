@@ -116,7 +116,8 @@ app.post "/api/users/:id", api.auth.auth_admin, api.users.update
 app.all "/api/*", (req, res) -> res.json 404, error: "API Not Found."
 
 app.get '/views/*', routes.views
-app.get '/*', (req, res) -> res.redirect "/"
+app.get '/*', (req, res) ->
+  res.sendfile path.join(__dirname, "#{if 'development' is app.get('env') then 'app' else 'public'}/index.html")
 
 http.createServer(app).listen app.get("port"), ->
   console.log "Express server listening on port #{app.get('port')} in #{app.get('env')} mode."
