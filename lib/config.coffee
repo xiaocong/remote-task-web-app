@@ -5,3 +5,6 @@ exports = module.exports =
   redis_url: process.env.REDIS_URL or "redis://localhost:6379/0"
   zk_url: process.env.ZK_URL or "localhost:2181"
   zk_path: process.env.ZK_PATH or "/remote/alive/workstation"
+  baidu:
+  	clientID: process.env.BAIDU_CLIENT_ID or "TCu2xNrEdauk8xc1z71chcen"
+  	clientSecret: process.env.BAIDU_CLIENT_SECRET or "AcoVYA0lAGaEYfvoFjnXOFCT6f7TnKPH"

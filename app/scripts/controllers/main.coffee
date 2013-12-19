@@ -160,7 +160,7 @@ angular.module('angApp')
     id = $scope.pid = $routeParams.id or ""
     $scope.showusers()
 
-  .controller 'LoginCtrl', ($rootScope, $scope, $http, $location, authService) ->
+  .controller 'LoginCtrl', ($rootScope, $scope, $http, $location, $window, authService) ->
     $scope.loginForm = {}
     $scope.showMessage = false
     $scope.promptMessage = ""
@@ -199,6 +199,8 @@ angular.module('angApp')
       return
     $scope.showLogin = () ->
       return not authService.isLogin()
+    $scope.baiduLogin = ->
+      $window.location.href = '/api/auth/baidu'
     return
 
   .controller 'TagMgtCtrl', ($rootScope, $scope, $http, authService) ->

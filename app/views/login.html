@@ -22,7 +22,9 @@
       </div>
     </div>
   </fieldset>
-
+  <fieldset ng-show="showLogin()">
+    <a href="#" ng-click="baiduLogin()">Baidu Login</a>
+  </fieldset>
   <fieldset ng-show="!showLogin()">
     <legend>You have already logged in.</legend>
   </fieldset>

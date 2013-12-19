@@ -84,11 +84,17 @@ exports = module.exports = (db, cb) ->
     priority: {type: "number", rational: false, required: true, defaultValue: 1}
     tags:
       type: "stringArray"
+    provider:
+      type: "text"
+      defaultValue: "local"
+      required: true
+    provider_profile: Object
+    provider_token: Object
   ,
     timestamp: true
     cache: false
     validations:
-      email: [orm.enforce.unique("email already taken!"), orm.enforce.security.username(expr: ///^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$///)]
+      email: orm.enforce.unique scope: ["provider"], "email already taken!"
       priority: orm.enforce.ranges.number(1, 10)
     methods:
       compare: (password) ->

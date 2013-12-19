@@ -2,10 +2,12 @@
 
 uuid = require('node-uuid')
 _ = require("underscore")
-projects = require("./projects")
 passport = require('passport')
 LocalStrategy = require('passport-local').Strategy
 BearerStrategy = require('passport-http-bearer').Strategy
+BaiduStrategy = require('passport-baidu').Strategy
+config = require("../config")
+projects = require("./projects")
 logger = require("../logger")
 
 auth = (req, res, next) ->
@@ -27,6 +29,22 @@ findUserByToken = (token, done) ->
     return done(null, false) if tokens.length is 0
     db.models.user.get tokens[0].user_id, (err, user) ->
       done null, user
+
+findOrCreateUser = (options, done) ->
+  db = require("../module").db()
+  email = "#{options.id}@provider.#{options.provider}.com"
+  db.models.user.find {email: email, provider: options.provider}, (err, users) ->
+    return done err if err
+    return done(err, users[0]) if users.length > 0
+    db.models.user.create {
+        email: email
+        password: ""
+        name: options.profile.username
+        tags: ["system:role:guest"]
+        provider: options.provider
+        provider_profile: options.profile
+        provider_token: options.token
+      }, done
 
 exports = module.exports =
   auth: auth
@@ -76,7 +94,7 @@ exports = module.exports =
     }
     , (email, password, done) ->
       db = require("../module").db()
-      db.models.user.find {email: email}, (err, users) ->
+      db.models.user.find {email: email, provider: "local"}, (err, users) ->
         return done(err) if err
         user = users[0]
         if user?.compare(password)
@@ -93,4 +111,19 @@ exports = module.exports =
         else
           done null, false, error: "Invalid username or password."
 
-  bearerStagtegy: new BearerStrategy findUserByToken
+  bearerStrategy: new BearerStrategy findUserByToken
+
+  baiduStrategy: new BaiduStrategy {
+      clientID: config.baidu.clientID
+      clientSecret: config.baidu.clientSecret
+      callbackURL: "http://localhost:#{process.env.PORT or 3000}/api/auth/baidu/callback"
+    }, (accessToken, refreshToken, profile, done) ->
+      logger.info "accessToken: #{accessToken}, profile: #{JSON.stringify profile}"
+      findOrCreateUser {
+          id: profile.id
+          provider: profile.provider
+          token:
+            accessToken: accessToken
+            refreshToken: refreshToken
+          profile: profile
+        }, done
