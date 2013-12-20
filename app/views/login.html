@@ -23,7 +23,9 @@
     </div>
   </fieldset>
   <fieldset ng-show="showLogin()">
-    <a href="#" ng-click="baiduLogin()">Baidu Login</a>
+    <div class="btn-group">
+      <a href="#" class="btn" data-ng-click="baiduLogin()"><span class="icon icon-search" /> Baidu</a>
+    </div>
   </fieldset>
   <fieldset ng-show="!showLogin()">
     <legend>You have already logged in.</legend>
