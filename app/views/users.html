@@ -14,11 +14,11 @@
 <table class="table table-bordered table-hover">
   <thead>
     <tr>
-      <th>id</th>
-      <th>email</th>
-      <th>username</th>
-      <th>priority</th>
-      <th>tags</th>
+      <th>ID</th>
+      <th>Email</th>
+      <th>User Name</th>
+      <th>Priority</th>
+      <th with="50%">Tags</th>
     </tr>
   </thead>
   <tbody>
@@ -28,22 +28,15 @@
     <td>{{user.name}}</td>
     <td>{{user.priority}}</td>
     <td>
-      <ul class="subtable">
-        <li ng-repeat="tag in user.tags">{{tag}}
-          <a href="javascript:void(0)" ng-click="remove_usertag(user.id, user.tags, tag)">[x]</a>
-        </li>
-      </ul>
-      <a href="javascript:void(0)" ng-click="showaddtag(user.id)">[+Tag]</a>
-      <div class='add_tag{{user.id}}' style="display:none">
-        <select ng-model="seltag[user.id]">
-          <option ng-repeat="tag in tags" value="{{tag}}">{{tag}}</option>
-        </select>
-        <a class='btn btn-small' href="javascript:void(0)" ng-click="hideaddtag(user.id)">Cancel</a>
-        <a class='btn btn-small btn-primary' href="javascript:void(0)" ng-click="add_usertag(user.id, user.tags)">Ok</a>
-      </div>
+      <bootstrap-tagsinput
+        ng-model="user.tags" 
+        ng-user="user"
+        placeholder="Add"
+        updatetag="updateTag" tryUpdate="tryRemove"
+        typeahead-source="queryTags"
+        tagclass="getTagClass">
+      </bootstrap-tagsinput>
     </td>
   </tr>
   </tbody>
 </table>
-
-<br>

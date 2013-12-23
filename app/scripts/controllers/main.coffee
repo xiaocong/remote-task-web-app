@@ -224,7 +224,7 @@ angular.module('angApp')
       str.split(':')[idx]
     return
 
-  .controller 'UserMgtCtrl', ($rootScope, $scope, $http, $window, authService) ->
+  .controller 'UserMgtCtrl', ($rootScope, $scope, $http, $window, $location, authService) ->
     $scope.seltag = {}
     $http.get("api/users?access_token=" + authService.getToken()).success (data) ->
       $scope.users = data
@@ -233,7 +233,8 @@ angular.module('angApp')
     $http.get("api/tags?access_token=" + authService.getToken()).success (data) ->
       $scope.tags = data
     $scope.create = () ->
-      $('.create_user').slideToggle()
+      $location.url "mgtusers/addaccount"
+      #$('.create_user').slideToggle()
       return
     $scope.cancel = () ->
       $('.create_user').slideUp()
@@ -270,7 +271,42 @@ angular.module('angApp')
       $http.post("api/users/"+id+"?access_token=" + authService.getToken(), data).success (data) ->
         return
       return
+    $scope.getTagClass = (str) ->
+      return "badge badge-info" if str.indexOf('user') is 0
+      return "badge badge-important" if str.indexOf('system') is 0
+    $scope.queryTags = (query) ->
+      return $scope.tags
+    $scope.tryUpdate = (uid, tags, callback) ->
+      # TODO: Update UI based on HTTP POST result.
+      return
+    $scope.updateTag = (uid, tags) ->
+      # TODO: invalidation
+      $http.post("api/users/#{ uid }}", {tags: tags, access_token: authService.getToken()})
+        .success (data) ->
+          return
+        .error (data, status) ->
+          # TODO: Don't have to refresh all users.
+          $location.url "mgtusers"
+          return
     return
+
+  .controller 'AddUserCtrl', ($scope, $http, $location, authService) ->
+    $scope.tags = []
+    $scope.newUserForm = {}
+    $http.get("api/tags?access_token=#{ authService.getToken() }")
+      .success (data) ->
+        $scope.tags = data
+    validate = () ->
+      return false if (not $scope.newUserForm.name?) or (not $scope.newUserForm.email?) or (not $scope.newUserForm.password?) or (not $scope.newUserForm.priority?)
+      return false if not $scope.newUserForm.tags?.length > 0
+      return true
+    $scope.create = () ->
+      return if not validate()
+      $http.post("api/users?access_token=#{ authService.getToken() }", $scope.newUserForm)
+        .success (data) ->
+          $location.url "mgtusers"
+    $scope.cancel = () ->
+      $location.url "mgtusers"
 
   .controller 'WksCtrl', ($rootScope, $scope, $http, authService) ->
     $http.get("api/workstations?access_token=" + authService.getToken()).success (data) ->

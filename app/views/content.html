@@ -1,4 +1,4 @@
-<div >
+<div>
     <div class="navbar navbar-inverse navbar-fixed-top" ng-controller="NaviCtrl">
       <div class="navbar-inner">
         <div class="container-fluid">
@@ -36,11 +36,11 @@
     </div>
 
     <div class="container-fluid">
-      <div class="row-fluid">
+      <div class="row-fluid" ng-show="auth.isLogin()">
         <ul class="breadcrumb">
           <li ng-repeat="b in naviService.getAll()">
             <span ng-switch on="b.last">
-              <a ng-switch-when="true">{{b.name}}</a>
+              <a ng-switch-when="true" class="inactive" >{{b.name}}</a>
               <a ng-switch-default href="{{b.path}}">{{b.name}}</a>
             </span>
             <span class="divider" ng-show="!b.last">&gt;</span>
@@ -50,10 +50,11 @@
 
       <div ng-view="">
       </div><!--another row-->
+      <br>
       <hr>
 
       <footer align="center">
-        <p>&copy; Borqs smartAT 2013</p>
+        <p class="text-center">&copy; Borqs smartAT 2013</p>
       </footer>
 
     </div><!--/.fluid-container-->

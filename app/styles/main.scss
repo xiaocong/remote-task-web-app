@@ -2,6 +2,7 @@ $iconSpritePath: "../images/glyphicons-halflings.png";
 $iconWhiteSpritePath: "../images/glyphicons-halflings-white.png";
 
 @import "bootstrap-sass/lib/bootstrap";
+@import "../styles/bootstrap-tagsinput";
 
 /* Put your CSS here */
 html, body {
@@ -60,6 +61,11 @@ tr.clickable:hover {
 
 .breadcrumb > li > .divider {
   color: #888888
+}
+
+.breadcrumb a.inactive {
+  color: #005580;
+  text-decoration: none;
 }
 
 .p_job {

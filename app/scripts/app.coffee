@@ -4,7 +4,7 @@ angular.module('angApp', [
   'ngCookies',
   'ngResource',
   'ngSanitize', 
-  'http-auth-interceptor', 'services.authService', 'services.naviService'
+  'http-auth-interceptor', 'services.authService', 'services.naviService', 'bootstrap-tagsinput'
 ])
   .config ['$routeProvider', '$locationProvider', ($routeProvider, $locationProvider) ->
     $routeProvider
@@ -38,6 +38,9 @@ angular.module('angApp', [
       .when '/projects/:id/tasks/:tid',
         templateUrl: 'views/jobs.html'
         controller: 'JobsCtrl'
+      .when '/mgtusers/addaccount',
+        templateUrl: 'views/addaccount.html'
+        controller: 'AddUserCtrl'
       .when '/projects/:id/users',
         templateUrl: 'views/groupusers.html'
         controller: 'GroupUserCtrl'
