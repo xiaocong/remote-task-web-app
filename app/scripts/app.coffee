@@ -4,7 +4,7 @@ angular.module('angApp', [
   'ngCookies',
   'ngResource',
   'ngSanitize', 
-  'http-auth-interceptor', 'services.authService', 'services.naviService'
+  'http-auth-interceptor', 'services.authService', 'services.naviService', 'bootstrap-tagsinput'
 ])
   .config ['$routeProvider', '$locationProvider', ($routeProvider, $locationProvider) ->
     $routeProvider

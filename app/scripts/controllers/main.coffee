@@ -271,6 +271,23 @@ angular.module('angApp')
       $http.post("api/users/"+id+"?access_token=" + authService.getToken(), data).success (data) ->
         return
       return
+    $scope.getTagClass = (str) ->
+      return "badge badge-info" if str.indexOf('user') is 0
+      return "badge badge-important" if str.indexOf('system') is 0
+    $scope.queryTags = (query) ->
+      return $scope.tags
+    $scope.tryUpdate = (uid, tags, callback) ->
+      # TODO: Update UI based on HTTP POST result.
+      return
+    $scope.updateTag = (uid, tags) ->
+      # TODO: invalidation
+      $http.post("api/users/#{ uid }}", {tags: tags, access_token: authService.getToken()})
+        .success (data) ->
+          return
+        .error (data, status) ->
+          # TODO: Don't have to refresh all users.
+          $location.url "mgtusers"
+          return
     return
 
   .controller 'AddUserCtrl', ($scope, $http, $location, authService) ->
