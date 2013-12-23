@@ -22,13 +22,13 @@ angular.module('angApp')
     $rootScope.naviService = naviService
     $scope.auth = authService
     $rootScope.manageusers = () ->
-      $location.path "/mgtusers"
+      $location.path "/admin/users"
       return
     $rootScope.managetags = () ->
-      $location.path "/mgttags"
+      $location.path "/admin/tags"
       return
     $rootScope.managedevices = () ->
-      $location.path "/mgtdevices"
+      $location.path "/admin/devices"
       return
     $rootScope.projectdetail = (id) ->
       $location.path "/projects/"+id

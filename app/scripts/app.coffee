@@ -17,13 +17,13 @@ angular.module('angApp', [
       .when '/projects/:id',
         templateUrl: 'views/project.html'
         controller: 'ProjectCtrl'
-      .when '/mgttags',
+      .when '/admin/tags',
         templateUrl: 'views/tags.html'
         controller: 'TagMgtCtrl'
-      .when '/mgtusers',
+      .when '/admin/users',
         templateUrl: 'views/users.html'
         controller: 'UserMgtCtrl'
-      .when '/mgtdevices',
+      .when '/admin/devices',
         templateUrl: 'views/devicemgt.html'
         controller: 'DeviceMgtCtrl'        
       .when '/workstations',
