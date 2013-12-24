@@ -277,7 +277,7 @@
             self.add(this.map[text]);
           },
           matcher: function (text) {
-            return true;
+            return true; // Hack: always show the full options.
             return (text.toLowerCase().indexOf(this.query.trim().toLowerCase()) !== -1);
           },
           sorter: function (texts) {
@@ -292,6 +292,17 @@
 
       self.$container.on('click', $.proxy(function(event) {
         self.$input.focus();
+      }, self));
+      // Hack: clear the space.
+      self.$input.on('blur', $.proxy(function(event) {
+        self.$input.val("");
+      }, self));
+      // Hack: trigger a keyup event and insert a space, so that the menu will popup on a click.
+      self.$input.on('click', $.proxy(function(event) {
+        var e = $.Event("keyup");
+        e.keyCode = 32; e.which = 32;
+        self.$input.val(" ");
+        self.$input.trigger(e);
       }, self));
 
       self.$container.on('keydown', 'input', $.proxy(function(event) {
