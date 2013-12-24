@@ -1,9 +1,9 @@
 .bootstrap-tagsinput {
-  background-color: #fff;
-  border: 1px solid #ccc;
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  background-color: #ffff;
+  /*border: 1px solid #ccc;*/
+  /*box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);*/
   display: inline-block;
-  padding: 4px 6px;
+  /*padding: 4px 6px;*/
   margin-bottom: 0px;
   color: #555;
   vertical-align: middle;
@@ -20,6 +20,9 @@
   margin: 0;
   width: auto !important;
   max-width: inherit;
+}
+.bootstrap-tagsinput input:hover {
+  cursor: pointer;
 }
 .bootstrap-tagsinput input:focus {
   border: none;
@@ -42,4 +45,8 @@
 }
 .bootstrap-tagsinput .tag [data-role="remove"]:hover:active {
   box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+}
+
+.bootstrap-tagsinput .badge {
+  border-radius: 4px; 
 }

@@ -135,7 +135,8 @@ angular.module('services.naviService', ['services.authService'])
       mgttags: "Tags"
       mgtusers: "Users"
       login: "Login"
-      addaccount: "New Account"
+      addaccount: "Create User"
+      admin: ""
 
     getTokenValue = (key, id) ->
       return "TODO" if not TokenMap[key]?
@@ -158,6 +159,7 @@ angular.module('services.naviService', ['services.authService'])
           label = getTokenValue(tokens[ii])
           path = tokens.slice(0, ii+1).join("/")
         ii++
+        continue if label.length is 0
         item = 
           name: label
           path: path

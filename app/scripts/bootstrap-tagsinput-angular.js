@@ -17,7 +17,7 @@ angular.module('bootstrap-tagsinput', [])
     restrict: 'EA',
     scope: {
       model: '=ngModel',
-      user: '=ngUser'
+      extra: '=ngExtra'
     },
     template: '<select multiple></select>',
     replace: false,
@@ -30,7 +30,7 @@ angular.module('bootstrap-tagsinput', [])
         select.attr("placeholder", attrs.placeholder)
 
         var aa = scope.$parent[attrs.uid];
-        var updateFunction = angular.isFunction(scope.$parent[attrs.updatetag]) ? scope.$parent[attrs.updatetag] : function(uid, tags) { return };
+        var updateFunction = angular.isFunction(scope.$parent[attrs.updatetag]) ? scope.$parent[attrs.updatetag] : function(tag, add, extra) { return };
         //var tryUpdate : angular.isFunction(scope.$parent[attrs.tryupdate]) ? scope.$parent[attrs.tryupdate] : function(item) { return attrs.tryupdate; }
 
         select.tagsinput({
@@ -49,7 +49,7 @@ angular.module('bootstrap-tagsinput', [])
         select.on('itemAdded', function(event) {
           if (scope.model.indexOf(event.item) === -1) {
             scope.model.push(event.item);
-            updateFunction(scope.user.id, scope.model);
+            updateFunction(event.item, true, scope.extra);
           }
         });
 
@@ -57,7 +57,7 @@ angular.module('bootstrap-tagsinput', [])
           var idx = scope.model.indexOf(event.item);
           if (idx !== -1) {
             scope.model.splice(idx, 1);
-            updateFunction(scope.user.id, scope.model);
+            updateFunction(event.item, false, scope.extra);
           }
         });
 

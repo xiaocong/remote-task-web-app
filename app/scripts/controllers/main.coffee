@@ -225,63 +225,28 @@ angular.module('angApp')
     return
 
   .controller 'UserMgtCtrl', ($rootScope, $scope, $http, $window, $location, authService) ->
-    $scope.seltag = {}
     $http.get("api/users?access_token=" + authService.getToken()).success (data) ->
       $scope.users = data
-      angular.forEach data, (o, i)->
-        $scope.seltag[o.id] = ""
     $http.get("api/tags?access_token=" + authService.getToken()).success (data) ->
       $scope.tags = data
     $scope.create = () ->
       $location.url "mgtusers/addaccount"
       #$('.create_user').slideToggle()
       return
-    $scope.cancel = () ->
-      $('.create_user').slideUp()
-      return
-    $scope.createuser = () ->
-      vdata =
-        email: $scope.user_email
-        password: $scope.user_password
-      $http.post("api/users/?access_token=" + authService.getToken(), vdata).success (data) ->
-        if data.error
-          console.log data.error
-        else
-          $scope.users.push data
-          $('.create_user').slideUp()
-        return
-      return
-    $scope.showaddtag = (id) ->
-      $('.add_tag' + id).slideToggle()
-      return
-    $scope.hideaddtag = (id) ->
-      $('.add_tag' + id).slideUp()
-      return
-    $scope.add_usertag = (id, vtags) ->
-      vtags.push $scope.seltag[id]
-      data =
-        tags: vtags
-      $http.post("api/users/"+id+"?access_token=" + authService.getToken(), data).success (data) ->
-        return
-      return
-    $scope.remove_usertag = (id, vtags, tag) ->
-      vtags.pop $scope.tagname
-      data =
-        tags: vtags
-      $http.post("api/users/"+id+"?access_token=" + authService.getToken(), data).success (data) ->
-        return
-      return
-    $scope.getTagClass = (str) ->
-      return "badge badge-info" if str.indexOf('user') is 0
-      return "badge badge-important" if str.indexOf('system') is 0
+    $scope.getTagClass = (tag) ->
+      key = tag.split(":")[0]
+      switch key
+        when "system" then return "badge badge-important"
+        when "user" then return "badge badge-info"
     $scope.queryTags = (query) ->
       return $scope.tags
     $scope.tryUpdate = (uid, tags, callback) ->
       # TODO: Update UI based on HTTP POST result.
       return
-    $scope.updateTag = (uid, tags) ->
+    $scope.updateTag = (tag, isAdd, user) ->
       # TODO: invalidation
-      $http.post("api/users/#{ uid }}", {tags: tags, access_token: authService.getToken()})
+      action = if isAdd is true then "tag" else "untag"
+      $http.post("api/users/#{ user.id }}", {tags: tags, access_token: authService.getToken()})
         .success (data) ->
           return
         .error (data, status) ->
@@ -313,35 +278,32 @@ angular.module('angApp')
       $scope.zks = data
     return
 
-  .controller 'DeviceMgtCtrl', ($rootScope, $scope, $http, authService) ->
+  .controller 'DeviceMgtCtrl', ($rootScope, $scope, $http, $location, authService) ->
     $scope.my_filter = {}
-    $scope.seltag = {}
     $http.get("api/devices?access_token=" + authService.getToken()).success (data) ->
       $scope.devices = data
-      angular.forEach data, (o, i)->
-        $scope.seltag[o.id] = ""
       return
     $http.get("api/tags?access_token=" + authService.getToken()).success (data) ->
       $scope.tags = data
-    $scope.showaddtag = (id) ->
-      $('.add_tag' + id).slideToggle()
-      return
-    $scope.hideaddtag = (id) ->
-      $('.add_tag' + id).slideUp()
-      return
-    $scope.add_devicetag = (id, tags) ->
-      vtag = $scope.seltag[id]
-      $http.post("api/devices/"+id+"/tag/"+vtag+"?access_token=" + authService.getToken(), {}).success (data) ->
-        tags.push vtag
-        return
-      return
-    $scope.remove_devicetag = (id, tags, vtag) ->
-      $http.post("api/devices/"+id+"/untag/"+vtag+"?access_token=" + authService.getToken(), {}).success (data) ->
-        tags.pop vtag
-        return
-      return
     $scope.getWkName = (device) ->
       return if device.workstation.name? then device.workstation.name else device.workstation.mac
+    $scope.getTagClass = (tag) ->
+      key = tag.split(":")[0]
+      switch key
+        when "system" then return "badge badge-important"
+        when "user" then return "badge badge-info"
+    $scope.queryTags = (query) ->
+      return $scope.tags
+    $scope.updateTag = (tag, isAdd, device) ->
+      # TODO: invalidation
+      action = if isAdd is true then "tag" else "untag"
+      $http.post("api/devices/#{ device.id }/#{ action }/#{ tag }?access_token=#{ authService.getToken() }")
+        .success (data) ->
+          return
+        .error (data, status) ->
+          # TODO: Don't have to refresh all users.
+          $location.url "mgtdevices"
+          return
     return
 
   .controller 'DevicesCtrl', ($scope, $http) ->
