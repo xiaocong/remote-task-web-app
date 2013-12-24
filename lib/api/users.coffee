@@ -42,6 +42,26 @@ exports = module.exports =
         return next(err) if err?
         res.json dup_user_info(user)
 
+  tag: (req, res, next) ->
+    id = req.params.id
+    tag = req.params.tag
+    req.db.models.user.get id, (err, user) ->
+      return next(err) if err
+      user["tags"].push(tag)
+      user.save (err) ->
+        return next(err) if err
+        res.json dup_user_info(user)
+
+  untag: (req, res, next) ->
+    id = req.params.id
+    tag = req.params.tag
+    req.db.models.user.get id, (err, user) ->
+      return next(err) if err
+      user["tags"] = _.filter(user["tags"], (t) -> t isnt tag)
+      user.save (err) ->
+        return next(err) if err
+        res.json dup_user_info(user)
+
   reset_password: (req, res, next) ->
     id = req.params.id
     password = req.param("password")
