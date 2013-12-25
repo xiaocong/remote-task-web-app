@@ -42,21 +42,21 @@ angular.module('angApp')
       $('.create_project').slideUp()
       return
     $scope.deleteproject = (id) ->
-      $http.get("api/projects/"+id+"/remove?access_token=" + authService.getToken()).success (data) ->
+      $http.get("api/projects/#{ id }/remove").success (data) ->
         return
       return
     $scope.createproject = () ->
       data =
         name:$scope.newproject
         creator_id: authService.getUserId()
-      $http.post("api/projects?access_token=" + authService.getToken(), data).success (data) ->
-        $rootScope.projects.push {"name": data.name, "id": data.id, "creator_id": data.creator_id}
+      $http.post("api/projects", data).success (data) ->
+        $rootScope.projects.push data
         $('.create_project').slideUp()
         return
       return
     return
 
-  .controller 'ProjectCtrl', ($rootScope, $routeParams, $scope, $http, $location, authService) ->
+  .controller 'ProjectCtrl', ($rootScope, $routeParams, $scope, $http, $location) ->
     setTaskStatus = (task) ->
       task._active = false
       for j in task.jobs
@@ -72,7 +72,7 @@ angular.module('angApp')
       return true for t in tasks when t._active is true
     retrieveTasks = () ->
       return if $scope.$$destroyed is true
-      $http.get("api/tasks?project=#{ $scope.pid }&access_token=#{ authService.getToken() }")
+      $http.get("api/tasks?project=#{ $scope.pid }")
         .success (data) ->
           $scope.dataset = data
           initData($scope.dataset)
@@ -100,7 +100,7 @@ angular.module('angApp')
       return "-" if not job.device_filter.serial?
       job.device_filter.serial
     $scope.restart = (task) ->
-      $http.post("api/tasks/#{ task.id }/restart?access_token=#{ authService.getToken() }")
+      $http.post("api/tasks/#{ task.id }/restart")
         .success (data) ->
           updateTask(data)
           scheduleRefresh(retrieveTasks)
@@ -108,7 +108,7 @@ angular.module('angApp')
           result = data
           return
     $scope.cancel = (task) ->
-      $http.post("api/tasks/#{ task.id }/cancel?access_token=#{ authService.getToken() }")
+      $http.post("api/tasks/#{ task.id }/cancel")
         .success (data) ->
           updateTask(data)
         .error (data, status, headers, config) ->
@@ -125,14 +125,14 @@ angular.module('angApp')
     $scope.activeFilter = true
     id = $scope.pid = $routeParams.id or ""
     retrieveTasks()
-    $http.get("api/projects/#{ id }?access_token=#{ authService.getToken() }").success (data) ->
+    $http.get("api/projects/#{ id }").success (data) ->
       $scope.group_users = data.users
       return
     return
 
-  .controller 'GroupUserCtrl', ($rootScope, $scope, $routeParams, $http, $cookies, $location, authService) ->
+  .controller 'GroupUserCtrl', ($rootScope, $scope, $routeParams, $http, $cookies, $location) ->
     $scope.showusers = () ->
-      $http.get("api/projects/"+id+"?access_token=" + authService.getToken()).success (data) ->
+      $http.get("api/projects/#{ id }").success (data) ->
         $scope.group_users = data.users
     $scope.showadd = () ->
       $('.add_user').slideToggle()
@@ -144,7 +144,7 @@ angular.module('angApp')
       id = $scope.pid
       data =
         email : mail
-      $http.post("api/projects/"+id+"/remove_user?access_token=" + authService.getToken(), data).success (data) ->
+      $http.post("api/projects/#{ id }/remove_user", data).success (data) ->
         $scope.group_users.pop mail
         return
       return      
@@ -152,7 +152,7 @@ angular.module('angApp')
       id = $scope.pid
       data =
         email : $scope.user_email
-      $http.post("api/projects/"+id+"/add_user?access_token=" + authService.getToken(), data).success (data) ->
+      $http.post("api/projects/#{ id }/add_user", data).success (data) ->
         $scope.showusers()
         return
       return
@@ -203,8 +203,8 @@ angular.module('angApp')
       $window.location.href = '/api/auth/baidu'
     return
 
-  .controller 'TagMgtCtrl', ($rootScope, $scope, $http, authService) ->
-    $http.get("api/tags?access_token=" + authService.getToken()).success (data) ->
+  .controller 'TagMgtCtrl', ($rootScope, $scope, $http) ->
+    $http.get("api/tags").success (data) ->
       $scope.tags = data
       return
     $scope.create = () ->
@@ -212,7 +212,7 @@ angular.module('angApp')
       return
     $scope.createtag = () ->
       stag = $scope.taglevel + ':' + $scope.tagname
-      $http.post("api/tags/"+stag+"?access_token=" + authService.getToken(), {}).success (data) ->
+      $http.post("api/tags/#{ stag }").success (data) ->
         $scope.tags.push stag
         $('.create_tag').slideUp()
         return
@@ -224,13 +224,13 @@ angular.module('angApp')
       str.split(':')[idx]
     return
 
-  .controller 'UserMgtCtrl', ($rootScope, $scope, $http, $window, $location, authService) ->
-    $http.get("api/users?access_token=" + authService.getToken()).success (data) ->
+  .controller 'UserMgtCtrl', ($rootScope, $scope, $http, $window, $location) ->
+    $http.get("api/users").success (data) ->
       $scope.users = data
-    $http.get("api/tags?access_token=" + authService.getToken()).success (data) ->
+    $http.get("api/tags").success (data) ->
       $scope.tags = data
     $scope.create = () ->
-      $location.url "mgtusers/addaccount"
+      $location.url "admin/users/create"
       #$('.create_user').slideToggle()
       return
     $scope.getTagClass = (tag) ->
@@ -246,19 +246,19 @@ angular.module('angApp')
     $scope.updateTag = (tag, isAdd, user) ->
       # TODO: invalidation
       action = if isAdd is true then "tag" else "untag"
-      $http.post("api/users/#{ user.id }}", {tags: tags, access_token: authService.getToken()})
+      $http.post("api/users/#{ user.id }/#{ action }/#{ tag }")
         .success (data) ->
           return
         .error (data, status) ->
           # TODO: Don't have to refresh all users.
-          $location.url "mgtusers"
+          $location.url "admin/users"
           return
     return
 
-  .controller 'AddUserCtrl', ($scope, $http, $location, authService) ->
+  .controller 'AddUserCtrl', ($scope, $http, $location) ->
     $scope.tags = []
     $scope.newUserForm = {}
-    $http.get("api/tags?access_token=#{ authService.getToken() }")
+    $http.get("api/tags")
       .success (data) ->
         $scope.tags = data
     validate = () ->
@@ -267,23 +267,23 @@ angular.module('angApp')
       return true
     $scope.create = () ->
       return if not validate()
-      $http.post("api/users?access_token=#{ authService.getToken() }", $scope.newUserForm)
+      $http.post("api/users", $scope.newUserForm)
         .success (data) ->
-          $location.url "mgtusers"
+          $location.url "admin/users"
     $scope.cancel = () ->
-      $location.url "mgtusers"
+      $location.url "admin/users"
 
-  .controller 'WksCtrl', ($rootScope, $scope, $http, authService) ->
-    $http.get("api/workstations?access_token=" + authService.getToken()).success (data) ->
+  .controller 'WksCtrl', ($rootScope, $scope, $http) ->
+    $http.get("api/workstations").success (data) ->
       $scope.zks = data
     return
 
-  .controller 'DeviceMgtCtrl', ($rootScope, $scope, $http, $location, authService) ->
+  .controller 'DeviceMgtCtrl', ($rootScope, $scope, $http, $location) ->
     $scope.my_filter = {}
-    $http.get("api/devices?access_token=" + authService.getToken()).success (data) ->
+    $http.get("api/devices").success (data) ->
       $scope.devices = data
       return
-    $http.get("api/tags?access_token=" + authService.getToken()).success (data) ->
+    $http.get("api/tags").success (data) ->
       $scope.tags = data
     $scope.getWkName = (device) ->
       return if device.workstation.name? then device.workstation.name else device.workstation.mac
@@ -297,12 +297,12 @@ angular.module('angApp')
     $scope.updateTag = (tag, isAdd, device) ->
       # TODO: invalidation
       action = if isAdd is true then "tag" else "untag"
-      $http.post("api/devices/#{ device.id }/#{ action }/#{ tag }?access_token=#{ authService.getToken() }")
+      $http.post("api/devices/#{ device.id }/#{ action }/#{ tag }")
         .success (data) ->
           return
         .error (data, status) ->
           # TODO: Don't have to refresh all users.
-          $location.url "mgtdevices"
+          $location.url "admin/devices"
           return
     return
 
@@ -335,7 +335,7 @@ angular.module('angApp')
       job.device_filter.serial
     return
 
-  .controller 'JobsCtrl', ($rootScope, $routeParams, $scope, $http, authService, naviService) ->
+  .controller 'JobsCtrl', ($rootScope, $routeParams, $scope, $http, naviService) ->
     hasActiveJob = (jobs) ->
       return false if not jobs?
       return true for j in jobs when not (j.status is "finished" or j.status is "cancelled")
@@ -343,7 +343,7 @@ angular.module('angApp')
       $rootScope.task.jobs[job.no] = job
     retrieveJobs = () ->
       return if $scope.$$destroyed is true
-      $http.get("api/tasks/#{ $routeParams.tid }?access_token=#{ authService.getToken() }")
+      $http.get("api/tasks/#{ $routeParams.tid }")
         .success (data, status) ->
           $rootScope.task = data
           naviService.onDataChanged()
@@ -351,7 +351,7 @@ angular.module('angApp')
           return if not hasActiveJob($rootScope.task.jobs)
           scheduleRefresh(retrieveJobs)
     $scope.restart = (job) ->
-      $http.post("api/tasks/#{ $rootScope.task.id }/jobs/#{ job.no }/restart", { access_token: authService.getToken() })
+      $http.post("api/tasks/#{ $rootScope.task.id }/jobs/#{ job.no }/restart")
         .success (data) ->
           updateJob(data)
           scheduleRefresh(retrieveJobs)
@@ -359,7 +359,7 @@ angular.module('angApp')
           result = data
           return
     $scope.cancel = (job) ->
-      $http.post("api/tasks/#{ $rootScope.task.id }/jobs/#{ job.no }/cancel", { access_token: authService.getToken() })
+      $http.post("api/tasks/#{ $rootScope.task.id }/jobs/#{ job.no }/cancel")
         .success (data) ->
           updateJob(data)
         .error (data, status) ->
@@ -369,7 +369,7 @@ angular.module('angApp')
       # TODO
       return
     $scope.restartAll = () ->
-      $http.post("api/tasks/#{ rootScope.id }/restart?access_token=#{ authService.getToken() }")
+      $http.post("api/tasks/#{ rootScope.id }/restart")
         .success (data) ->
           $rootScope.task = data
           scheduleRefresh(retrieveJobs)
@@ -377,7 +377,7 @@ angular.module('angApp')
           result = data
           return
     $scope.cancelAll = () ->
-      $http.post("api/tasks/#{ rootScope.id }/cancel?access_token=#{ authService.getToken() }")
+      $http.post("api/tasks/#{ rootScope.id }/cancel")
         .success (data) ->
           $rootScope.task = data
         .error (data, status) ->
@@ -387,7 +387,7 @@ angular.module('angApp')
     retrieveJobs()
     return
 
-  .controller 'AddTaskCtrl3', ($scope, $http, $location, authService) ->
+  .controller 'AddTaskCtrl3', ($scope, $http, $location) ->
     # Some initialization.
     $scope.newTaskForm = {}
     $scope.newTaskForm.jobs = []
@@ -421,7 +421,7 @@ angular.module('angApp')
       #$scope.deviceOptions.models = groupProductProperties("model")
       $scope.displayedOptions = ['android', 'tizen'] # fake data
 
-    $http.get("api/projects/"+prjid+"/devices?access_token=" + authService.getToken()).success (data) ->
+    $http.get("api/projects/"+prjid+"/devices").success (data) ->
       $scope.devices = data
       device._index = i for device, i in $scope.devices
       initDeviceOptions()
@@ -556,13 +556,13 @@ angular.module('angApp')
           job.no = i
           $scope.newTaskForm.jobs.push(job)
 
-      $http.post("api/tasks?project="+$scope.id+"&access_token=" + authService.getToken(), $scope.newTaskForm).success (data) ->
+      $http.post("api/tasks?project="+$scope.id, $scope.newTaskForm).success (data) ->
         $location.path "/projects/"+$scope.id
         return
       return
     return
 
-  .controller 'AddTaskCtrl2', ($routeParams, $scope, $http, $location, authService) ->
+  .controller 'AddTaskCtrl2', ($routeParams, $scope, $http, $location) ->
     # Some initialization.
     $scope.showDevice = false
     $scope.filterCondition = {_displayModel:true}
@@ -573,7 +573,7 @@ angular.module('angApp')
     # Retrieve the available devices first.
     $scope.devices = []
 
-    $http.get("api/projects/"+$scope.id+"/devices?access_token=" + authService.getToken()).success (data) ->
+    $http.get("api/projects/"+$scope.id+"/devices").success (data) ->
       $scope.devices = data
       displayedModels = {}
       #device._selected = false for device, i in $scope.devices
@@ -645,13 +645,13 @@ angular.module('angApp')
         job.no = iii++
         $scope.newTaskForm.jobs.push(job)
       # OK to submit it now.
-      $http.post("api/tasks?project="+$scope.id+"&access_token=" + authService.getToken(), $scope.newTaskForm).success (data) ->
+      $http.post("api/tasks?project="+$scope.id, $scope.newTaskForm).success (data) ->
         $location.path "/projects/"+$scope.id
         return
       return
     return
 
-  .controller 'AddTaskCtrl', ($rootScope, $scope, $routeParams, $http, $location, authService) ->
+  .controller 'AddTaskCtrl', ($rootScope, $scope, $routeParams, $http, $location) ->
     resort = () ->
       job.no = i for job, i in $scope.newTaskForm.jobs
       return
@@ -686,7 +686,7 @@ angular.module('angApp')
     # Retrieve the available devices first.
     $scope.devices = []
     $scope.manufacturers = $scope.models = []
-    $http.get("api/devices?access_token=" + authService.getToken()).success (data) ->
+    $http.get("api/devices").success (data) ->
       $scope.devices = data
       $scope.manufacturers = groupProductProperties("manufacturer")
       $scope.models = groupProductProperties("model")
@@ -711,7 +711,7 @@ angular.module('angApp')
           # delete _the_device
           delete job._the_device
 
-      $http.post("api/tasks?project="+$scope.id+"&access_token=" + authService.getToken(), $scope.newTaskForm).success (data) ->
+      $http.post("api/tasks?project="+$scope.id, $scope.newTaskForm).success (data) ->
         $location.path "/projects/"+$scope.id
         return;
       return

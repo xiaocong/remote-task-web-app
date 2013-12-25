@@ -40,7 +40,7 @@ angular.module('services.authService', [])
       gMY_TAGS = getCookie("smart_tags")
 
     auth.setAuthCookie = (id, name, tags, token) ->
-      setCookie("access_token", token, 30)
+      #setCookie("access_token", token, 30)
       setCookie("smart_name", name, 30)
       setCookie("smart_id", id, 30)
       setCookie("smart_tags", tags, 30)
@@ -79,7 +79,8 @@ angular.module('services.authService', [])
     auth.getUserName = () ->
       return gMY_NAME
     auth.getToken = () ->
-      return gMY_TOKEN
+      #return gMY_TOKEN
+      return ""
     auth.getUserId = () ->
       return gMY_ID
     auth.isAdmin = () ->
@@ -112,7 +113,7 @@ angular.module('services.naviService', ['services.authService'])
     $rootScope.initbasicinfo = () ->
       if not authService.isLogin()
         return
-      $http.get("api/projects?access_token=#{ authService.getToken() }").success (data) ->
+      $http.get("api/projects").success (data) ->
         $rootScope.projects = data
         # Update navi data 
         breadcrumbsService.onDataChanged()

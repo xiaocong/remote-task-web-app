@@ -38,7 +38,7 @@ angular.module('angApp', [
       .when '/projects/:id/tasks/:tid',
         templateUrl: 'views/jobs.html'
         controller: 'JobsCtrl'
-      .when '/mgtusers/addaccount',
+      .when '/admin/users/create',
         templateUrl: 'views/addaccount.html'
         controller: 'AddUserCtrl'
       .when '/projects/:id/users',
