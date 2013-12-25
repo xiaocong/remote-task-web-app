@@ -30,7 +30,8 @@ angular.module('angApp')
     $rootScope.managedevices = () ->
       $location.path "/admin/devices"
       return
-    $rootScope.projectdetail = (id) ->
+    $rootScope.projectdetail = ($event, id) ->
+      return if $event.target.name is "operation_btn"
       $location.path "/projects/"+id
       return
 
@@ -117,7 +118,7 @@ angular.module('angApp')
     $scope.statusFilter = (task) ->
       return (task._active is $scope.activeFilter)
     $scope.viewTask = ($event, task) ->
-      return if $event.target.name is "operation"
+      return if $event.target.name is "operation_btn"
       $location.path "/projects/" + $scope.pid + "/tasks/" + task.id
     initData = (data) ->
       setTaskStatus(t) for t in data.tasks

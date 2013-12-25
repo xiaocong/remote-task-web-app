@@ -28,29 +28,29 @@ angular.module('services.authService', [])
         c_value = unescape(c_value.substring(c_start,c_end));
       return c_value
 
-    gMY_TOKEN = ""
+    #gMY_TOKEN = ""
     gMY_NAME = ""
     gMY_ID = ""
     gMY_TAGS = ""
 
     auth.getAuthCookie = () ->
-      gMY_TOKEN = getCookie("access_token")
+      #gMY_TOKEN = getCookie("access_token")
       gMY_NAME = getCookie("smart_name")
       gMY_ID = parseInt(getCookie("smart_id"))
       gMY_TAGS = getCookie("smart_tags")
 
-    auth.setAuthCookie = (id, name, tags, token) ->
-      #setCookie("access_token", token, 30)
+    auth.setAuthCookie = (id, name, tags) ->
+      #setCookie("access_token", "", 30)
       setCookie("smart_name", name, 30)
       setCookie("smart_id", id, 30)
       setCookie("smart_tags", tags, 30)
 
     auth.resetAuthCookie = () ->
-      gMY_TOKEN = ""
+      #gMY_TOKEN = ""
       gMY_NAME = ""
       gMY_ID = ""
       gMY_TAGS = ""
-      auth.setAuthCookie("", "", "", "")
+      auth.setAuthCookie("", "", "")
 
     auth.login = (name, pwd) ->
       return if not name? or not pwd?
@@ -60,13 +60,11 @@ angular.module('services.authService', [])
         password: pwd
       $http.post("api/auth/get_access_token", data)
         .success (data) ->
-          gMY_TOKEN = data.access_token
+          #gMY_TOKEN = data.access_token
           gMY_ID = data.id
           gMY_NAME = data.email or data.name
           gMY_TAGS = data.tags
-          auth.setAuthCookie(gMY_ID, gMY_NAME, gMY_TAGS, gMY_TOKEN)
-          #$scope.showMessage = true
-          #$scope.promptMessage = "Done: " + data.access_token
+          auth.setAuthCookie(gMY_ID, gMY_NAME, gMY_TAGS)
           $rootScope.initbasicinfo()
           $location.path "/"
         .error (data, status, headers, config) ->
@@ -75,7 +73,7 @@ angular.module('services.authService', [])
         return
 
     auth.isLogin = () ->
-      return (gMY_TOKEN?.length > 0) and (gMY_NAME?.length > 0)
+      return (gMY_ID > 0) and (gMY_NAME?.length > 0)
     auth.getUserName = () ->
       return gMY_NAME
     auth.getToken = () ->
