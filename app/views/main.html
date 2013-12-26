@@ -23,7 +23,7 @@
 						<th></th>
 					</thead>
 				<tbody>
-					<tr class="clickable" ng-repeat='project in projects' ng-switch on='project.userrole' ng-click="projectdetail(project.id)">
+					<tr class="clickable" ng-repeat='project in projects' ng-switch on='project.userrole' ng-click="projectdetail($event, project.id)">
 					<td class='projecthover' style='width:500px;'>
 					    {{project.name}}
 					</td>
@@ -34,7 +34,7 @@
                     <td class='projecthover'>
 				    </td>
 				    <td class='projecthover'>
-                    <button style='margin-left:5px;' ng-click="deleteproject(project.id)"  type='button 'class='btn btn-mini btn-danger'>delete</button>
+                    <button name="operation_btn" style='margin-left:5px;' ng-click="deleteproject(project.id)"  type='button 'class='btn btn-mini btn-danger'>delete</button>
                     </td>
 				</tr>
 					</tbody>

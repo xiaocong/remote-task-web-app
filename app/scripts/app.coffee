@@ -38,6 +38,9 @@ angular.module('angApp', [
       .when '/projects/:id/tasks/:tid',
         templateUrl: 'views/jobs.html'
         controller: 'JobsCtrl'
+      .when '/projects/:id/tasks/:tid/jobs/:jid/stream',
+        templateUrl: 'views/stream.html'
+        controller: 'StreamCtrl'
       .when '/admin/users/create',
         templateUrl: 'views/addaccount.html'
         controller: 'AddUserCtrl'

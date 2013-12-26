@@ -14,7 +14,7 @@
                 <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown">Projects
                 <b class="caret"></b></a>
                 <ul class="dropdown-menu">
-                  <li><a href="javascript:void(0)" ng-repeat="project in projects" ng-click="projectdetail(project.id)">
+                  <li><a href="javascript:void(0)" ng-repeat="project in projects" ng-click="projectdetail($event, project.id)">
                     {{project.name}}</a></li>
                 </ul>
               </li>
