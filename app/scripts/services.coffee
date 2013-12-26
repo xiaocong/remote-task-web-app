@@ -61,6 +61,7 @@ angular.module('services.authService', [])
       $http.post("api/auth/get_access_token", data)
         .success (data) ->
           #gMY_TOKEN = data.access_token
+          console.log data.access_token
           gMY_ID = data.id
           gMY_NAME = data.email or data.name
           gMY_TAGS = data.tags
@@ -125,6 +126,7 @@ angular.module('services.naviService', ['services.authService'])
       "": "Home"
       projects: $rootScope.getProjectName
       tasks: $rootScope.getTaskName
+      jobs: ""
       members: "Members"
       users: "Users"
       devices: "Devices"
@@ -136,6 +138,7 @@ angular.module('services.naviService', ['services.authService'])
       login: "Login"
       addaccount: "Create User"
       admin: ""
+      stream: "Streaming"
 
     getTokenValue = (key, id) ->
       return "TODO" if not TokenMap[key]?

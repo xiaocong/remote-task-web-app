@@ -226,10 +226,12 @@ angular.module('angApp')
     return
 
   .controller 'UserMgtCtrl', ($rootScope, $scope, $http, $window, $location) ->
-    $http.get("api/users").success (data) ->
-      $scope.users = data
-    $http.get("api/tags").success (data) ->
-      $scope.tags = data
+    retrieveData = () ->
+      $http.get("api/users").success (data) ->
+        $scope.users = data
+      $http.get("api/tags").success (data) ->
+        $scope.tags = data
+    retrieveData()
     $scope.create = () ->
       $location.url "admin/users/create"
       #$('.create_user').slideToggle()
@@ -252,7 +254,7 @@ angular.module('angApp')
           return
         .error (data, status) ->
           # TODO: Don't have to refresh all users.
-          $location.url "admin/users"
+          retrieveData()
           return
     return
 
@@ -280,12 +282,14 @@ angular.module('angApp')
     return
 
   .controller 'DeviceMgtCtrl', ($rootScope, $scope, $http, $location) ->
-    $scope.my_filter = {}
-    $http.get("api/devices").success (data) ->
-      $scope.devices = data
-      return
-    $http.get("api/tags").success (data) ->
-      $scope.tags = data
+    retrieveData = () ->
+      $scope.my_filter = {}
+      $http.get("api/devices").success (data) ->
+        $scope.devices = data
+        return
+      $http.get("api/tags").success (data) ->
+        $scope.tags = data
+    retrieveData();
     $scope.getWkName = (device) ->
       return if device.workstation.name? then device.workstation.name else device.workstation.mac
     $scope.getTagClass = (tag) ->
@@ -302,8 +306,8 @@ angular.module('angApp')
         .success (data) ->
           return
         .error (data, status) ->
-          # TODO: Don't have to refresh all users.
-          $location.url "admin/devices"
+          # TODO: Don't have to refresh all data.
+          retrieveData()
           return
     return
 
@@ -336,7 +340,7 @@ angular.module('angApp')
       job.device_filter.serial
     return
 
-  .controller 'JobsCtrl', ($rootScope, $routeParams, $scope, $http, naviService) ->
+  .controller 'JobsCtrl', ($rootScope, $routeParams, $scope, $http, $location, naviService) ->
     hasActiveJob = (jobs) ->
       return false if not jobs?
       return true for j in jobs when not (j.status is "finished" or j.status is "cancelled")
@@ -367,7 +371,7 @@ angular.module('angApp')
           result = data
           return
     $scope.stream = (job) ->
-      # TODO
+      $location.url "projects/#{$routeParams.id}/tasks/#{$routeParams.tid}/jobs/#{job.no}/stream"
       return
     $scope.restartAll = () ->
       $http.post("api/tasks/#{ rootScope.id }/restart")
@@ -387,6 +391,23 @@ angular.module('angApp')
     $rootScope.task = {}
     retrieveJobs()
     return
+
+  .controller 'StreamCtrl', ($rootScope, $routeParams, $scope, $http, naviService) ->
+    oldData = ""
+    processStream = (data) ->
+      newData = data.substr(oldData.length, data.length)
+      oldData = data
+      #return if newData.trim().length <= 0
+      $("#streaming_output").append("<li>" + newData.replace(/\n/ig, "<br>") + "</li>")
+      # TODO: scroll-out
+      # TODO: close the xhr when destroyed.
+    openStream = () ->
+      xhr = new XMLHttpRequest()
+      xhr.open "GET", "api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/stream", true
+      xhr.onprogress = () ->
+        processStream(xhr.responseText)
+      xhr.send()
+    openStream()
 
   .controller 'AddTaskCtrl3', ($scope, $http, $location) ->
     # Some initialization.
