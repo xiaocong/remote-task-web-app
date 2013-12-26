@@ -108,3 +108,40 @@ table.table thead .sorting_asc {
 table.table thead .sorting_desc {
   background: url('../images/sort_desc.png') no-repeat center right;
 }
+
+/* console */
+.console {
+    background-color-11: rgba(0, 0, 0, 0.1);
+    background-color: #000000;
+    border: 2px groove #000000;
+    bottom: 0;
+    font-family: Monospace, "Courier New","Courier",sans-serif;
+    height: 525px;
+    position-111: absolute;
+    width-111: 100%;
+    color: #00FF1E;
+}
+.console ol, .console li, .console p {
+    margin: 0;
+    padding: 0;
+}
+.console ol {
+    height: 500px;
+    list-style-position: inside;
+    overflow: auto;
+    padding-left: 10px;
+}
+.console p {
+    padding-left: 15px;
+}
+.console .input {
+    display: inline-block;
+    width: 20px;
+}
+.blink {
+}
+.console .icaret {
+    background-color: #00FF1E;
+    color: #FFFFFF;
+    padding: 2px 4px;
+}
