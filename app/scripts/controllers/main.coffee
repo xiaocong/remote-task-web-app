@@ -393,20 +393,25 @@ angular.module('angApp')
     return
 
   .controller 'StreamCtrl', ($rootScope, $routeParams, $scope, $http, naviService) ->
-    oldData = ""
+    $scope.oldData = ""
+    $scope.xhr = null
     processStream = (data) ->
-      newData = data.substr(oldData.length, data.length)
-      oldData = data
+      newData = data.substr($scope.oldData.length)
+      $scope.oldData = data
       #return if newData.trim().length <= 0
-      $("#streaming_output").append("<li>" + newData.replace(/\n/ig, "<br>") + "</li>")
-      # TODO: scroll-out
-      # TODO: close the xhr when destroyed.
+      el = $("#streaming_output")
+      el.append("<li>" + newData.replace(/\n/ig, "<br>") + "</li>")
+      el[0].scrollTop = el[0].scrollHeight
     openStream = () ->
-      xhr = new XMLHttpRequest()
-      xhr.open "GET", "api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/stream", true
-      xhr.onprogress = () ->
-        processStream(xhr.responseText)
-      xhr.send()
+      $scope.xhr = new XMLHttpRequest()
+      $scope.xhr.open "GET", "api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/stream", true
+      $scope.xhr.onprogress = () ->
+        processStream($scope.xhr.responseText)
+      $scope.xhr.send()
+    # close the xhr when destroyed.
+    $scope.$on "$destroy", () ->
+      $scope.xhr.abort() if $scope.xhr?
+      return
     openStream()
 
   .controller 'AddTaskCtrl3', ($scope, $http, $location) ->
