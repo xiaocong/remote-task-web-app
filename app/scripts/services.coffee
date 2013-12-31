@@ -135,6 +135,7 @@ angular.module('services.naviService', ['services.authService'])
       mgtdevices: "Devices"
       mgttags: "Tags"
       mgtusers: "Users"
+      mgtwks: "Workstations"      
       login: "Login"
       addaccount: "Create User"
       admin: ""
