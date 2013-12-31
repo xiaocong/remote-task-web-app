@@ -30,6 +30,9 @@ angular.module('angApp')
     $rootScope.managedevices = () ->
       $location.path "/admin/devices"
       return
+    $rootScope.managewks = () ->
+      $location.path "/admin/workstations"
+      return      
     $rootScope.projectdetail = ($event, id) ->
       return if $event.target.name is "operation_btn"
       $location.path "/projects/"+id
@@ -276,9 +279,12 @@ angular.module('angApp')
     $scope.cancel = () ->
       $location.url "admin/users"
 
-  .controller 'WksCtrl', ($rootScope, $scope, $http) ->
-    $http.get("api/workstations").success (data) ->
-      $scope.zks = data
+  .controller 'WksMgtCtrl', ($rootScope, $scope, $http, $location) ->
+    retrieveData = () ->
+      $http.get("api/workstations").success (data) ->
+        $scope.zks = data
+        return
+    retrieveData();
     return
 
   .controller 'DeviceMgtCtrl', ($rootScope, $scope, $http, $location) ->
