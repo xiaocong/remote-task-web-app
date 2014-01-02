@@ -8,13 +8,13 @@ _ = require("underscore")
 module.exports =
   get: (req, res) ->
     device = req.device.toJSON()
-    device.jobs = req.zk.models.live_jobs.filter (job) -> job.get("status") is "started" and "#{job.get('device').workstation_mac}-#{job.get('device').serial}" is device.id
+    device.jobs = req.data.models.live_jobs.filter (job) -> job.get("status") is "started" and "#{job.get('device').workstation_mac}-#{job.get('device').serial}" is device.id
     res.json device
 
   list: (req, res) ->
-    devices = req.zk.models.devices.toJSON()
+    devices = req.data.models.devices.toJSON()
     devices.forEach (device) ->
-      device.jobs = req.zk.models.live_jobs.filter (job) -> job.get("status") is "started" and "#{job.get('device').workstation_mac}-#{job.get('device').serial}" is device.id
+      device.jobs = req.data.models.live_jobs.filter (job) -> job.get("status") is "started" and "#{job.get('device').workstation_mac}-#{job.get('device').serial}" is device.id
     res.json devices
 
   tag_device: (req, res, next) ->

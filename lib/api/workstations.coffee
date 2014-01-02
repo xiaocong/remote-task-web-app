@@ -9,7 +9,7 @@ module.exports =
     if req.workstation?
       res.json req.workstation.toJSON()
     else
-      res.json req.zk.models.workstations.toJSON()
+      res.json req.data.models.workstations.toJSON()
 
   api: (req, res) ->
     ws = req.workstation

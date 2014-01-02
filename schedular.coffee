@@ -1,20 +1,22 @@
 "use strict"
 
 dbmodule = require("./lib/module")
+logger = require("./lib/logger")
+
+CreateMode = require('node-zookeeper-client').CreateMode
 request = require("request")
 url = require("url")
-logger = require("./lib/logger")
 _ = require("underscore")
 Backbone = require ("backbone")
 
-dbmodule.initialize ->
-  zk = dbmodule.zk()
+start = ->
+  data = dbmodule.data()
   db = dbmodule.db()
   redis = dbmodule.redis()
 
-  devices = zk.models.devices
-  live_jobs = zk.models.live_jobs
-  zk_jobs = zk.models.jobs
+  devices = data.models.devices
+  live_jobs = data.models.live_jobs
+  zk_jobs = data.models.jobs
   events = _.extend {}, Backbone.Events
 
   schedule_count = 0
@@ -194,3 +196,17 @@ dbmodule.initialize ->
       msg.callback?()
 
   setInterval schedule, 60*1000
+
+dbmodule.initialize ->
+  data = dbmodule.data()
+  data.zk_client.mkdirp "/remote/alive/schedular", (err, path) ->
+    data.zk_client.create "/remote/alive/schedular/lock", CreateMode.EPHEMERAL, (err, path) ->
+      process.on "SIGINT", ->
+        data.zk_client.remove "/remote/alive/schedular/lock", (err) ->
+          logger.info "Schedular terminated!"
+          process.exit()
+      if err
+        logger.info "Another schedular may be running."
+        logger.info "Please make sure only one schedular is running or try it again later."
+        return process.exit(-1)
+      start()

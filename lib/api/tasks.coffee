@@ -78,7 +78,7 @@ exports = module.exports =
     page_count = Number(req.param("page_count")) or 16
     status = req.param("status") or "all"
     status = "all" if status not in ["living", "finished", "all"]
-    task_ids = _.uniq(req.zk.models.live_jobs.map((job) -> job.get("task_id")))
+    task_ids = _.uniq(req.data.models.live_jobs.map((job) -> job.get("task_id")))
     filter = {}
 
     listTasks = ->
@@ -115,8 +115,8 @@ exports = module.exports =
   remove: (req, res, next) ->
     id = req.task.id
     req.db.models.job.find({task_id: id, status: "started"}).each (job) ->
-    req.zk.models.live_jobs.forEach (job) ->
-      stop_job(job, req.zk.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
+    req.data.models.live_jobs.forEach (job) ->
+      stop_job(job, req.data.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
     req.task.remove (err) ->
       return next(err) if err?
       req.db.models.job.find(task_id: id).remove (err) ->
@@ -127,8 +127,8 @@ exports = module.exports =
 
   cancel: (req, res, next) ->
     id = req.task.id
-    req.zk.models.live_jobs.forEach (job) ->
-      stop_job(job, req.zk.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
+    req.data.models.live_jobs.forEach (job) ->
+      stop_job(job, req.data.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
     req.db.models.job.find({task_id: id, status: ["new", "started"]}).each((job) ->
       job.status = "cancelled"
     ).save (err) ->
@@ -138,8 +138,8 @@ exports = module.exports =
 
   restart: (req, res, next) ->
     id = req.task.id
-    req.zk.models.live_jobs.forEach (job) ->
-      stop_job(job, req.zk.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
+    req.data.models.live_jobs.forEach (job) ->
+      stop_job(job, req.data.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
     req.db.models.job.find({task_id: id}).each((job) ->
       job.status = "new"
     ).save (err) ->
@@ -205,7 +205,7 @@ exports = module.exports =
     job = req.job
     if job.status in ["cancelled", "finished"]
       return res.json job
-    stop_job(req.zk.models.live_jobs.get(job.id), req.zk.models.workstations)
+    stop_job(req.data.models.live_jobs.get(job.id), req.data.models.workstations)
     job.status = "cancelled"
     job.save (err) ->
       return next(err) if err?
@@ -217,7 +217,7 @@ exports = module.exports =
     job = req.job
     if job.status is "new"
       return res.json job
-    stop_job(req.zk.models.live_jobs.get(job.id), req.zk.models.workstations)
+    stop_job(req.data.models.live_jobs.get(job.id), req.data.models.workstations)
     job.status = "new"
     job.save (err) ->
       return next(err) if err?
@@ -231,7 +231,7 @@ exports = module.exports =
       return res.json 400, error: "No output."
     req.db.models.device.get job.device_id, (err, dev) ->
       return next(err) if err?
-      ws = req.zk.models.workstations.get(dev.workstation_mac)
+      ws = req.data.models.workstations.get(dev.workstation_mac)
       if ws?.get("api")?.status is "up"
         url_str = url.format(
           protocol: "http"
@@ -250,7 +250,7 @@ exports = module.exports =
       return res.json 400, error: "No files available."
     req.db.models.device.get job.device_id, (err, dev) ->
       return next(err) if err?
-      ws = req.zk.models.workstations.get(dev.workstation_mac)
+      ws = req.data.models.workstations.get(dev.workstation_mac)
       if ws?.get("api")?.status is "up"
         url_str = url.format(
           protocol: "http"
@@ -265,9 +265,9 @@ exports = module.exports =
 
   job_screenshot: [
     (req, res, next) ->
-      job = req.zk.models.jobs.find (job) -> Number(job.id) is req.job.id
+      job = req.data.models.jobs.find (job) -> Number(job.id) is req.job.id
       if job?
-        req.device = req.zk.models.devices.get "#{job.get('mac')}-#{job.get('serial')}"
+        req.device = req.data.models.devices.get "#{job.get('mac')}-#{job.get('serial')}"
         next()
       else
         res.json 403, error: "Forbidden on not running job."

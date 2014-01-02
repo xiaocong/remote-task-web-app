@@ -9,12 +9,12 @@ module.exports =
     res.json req.job
 
   list: (req, res) ->
-    res.json req.zk.models.live_jobs.toJSON()
+    res.json req.data.models.live_jobs.toJSON()
 
   cancel: (req, res, next) ->
-    job = req.zk.models.live_jobs.get(req.job.id)
+    job = req.data.models.live_jobs.get(req.job.id)
     if job?.get("status") in ["new", "started"]
-      tasks.kill_job_process(job, req.zk.models.workstations)
+      tasks.kill_job_process(job, req.data.models.workstations)
 
       req.job.status = 'cancelled'
       req.job.save (err) ->
