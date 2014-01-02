@@ -266,7 +266,10 @@ exports = module.exports =
           pathname: "/api/0/jobs/#{job.id}/files/#{req.params[0]}"
           query: req.query
         )
-        req.pipe(request(url_str)).pipe(res)
+        stream = req.pipe request(url_str)
+        stream.on "error", (err) -> res.end()
+        stream.on "data", (data) -> res.write data
+        stream.on "end", -> res.end()
       else
         res.json 404, error: "The device is disconnected."
 

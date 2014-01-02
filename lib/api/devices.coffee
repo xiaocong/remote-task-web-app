@@ -63,4 +63,7 @@ module.exports =
       pathname: "/api/0/devices/#{req.device.get('serial')}/screenshot"
       query: req.query
     )
-    req.pipe(request(url_str)).pipe(res)
+    stream = req.pipe request(url_str)
+    stream.on "error", (err) -> res.end()
+    stream.on "data", (data) -> res.write data
+    stream.on "end", -> res.end()
