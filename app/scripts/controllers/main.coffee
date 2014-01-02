@@ -399,15 +399,23 @@ angular.module('angApp')
     return
 
   .controller 'StreamCtrl', ($rootScope, $routeParams, $scope, $http, naviService) ->
+    $scope.MAX_CONSOLE_LN = 300
     $scope.oldData = ""
     $scope.xhr = null
+    $scope.consoleElement = $("#streaming_output")
     processStream = (data) ->
       newData = data.substr($scope.oldData.length)
       $scope.oldData = data
       #return if newData.trim().length <= 0
-      el = $("#streaming_output")
-      el.append("<li>" + newData.replace(/\n/ig, "<br>") + "</li>")
-      el[0].scrollTop = el[0].scrollHeight
+      $scope.consoleElement = $("#streaming_output") if not $scope.consoleElement?
+      $scope.consoleElement.append("<li>" + newData.replace(/\n/ig, "<br>") + "</li>")
+      $scope.consoleElement[0].scrollTop = $scope.consoleElement[0].scrollHeight
+      lis = $scope.consoleElement.children()
+      #console.log lis.length
+      if lis.length > $scope.MAX_CONSOLE_LN
+        $scope.consoleElement[0].removeChild(lis[0])
+        #console.log "removed"
+      return
     openStream = () ->
       $scope.xhr = new XMLHttpRequest()
       $scope.xhr.open "GET", "api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/stream", true
