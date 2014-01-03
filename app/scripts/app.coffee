@@ -29,6 +29,9 @@ angular.module('angApp', [
       .when '/admin/workstations',
         templateUrl: 'views/workstations.html'
         controller: 'WksMgtCtrl'
+      .when '/admin/mjobs',
+        templateUrl: 'views/adminjobs.html'
+        controller: 'JobMgtCtrl'
       .when '/devices',
         templateUrl: 'views/devices.html'
         controller: 'DevicesCtrl'

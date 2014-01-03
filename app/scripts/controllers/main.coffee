@@ -32,7 +32,10 @@ angular.module('angApp')
       return
     $rootScope.managewks = () ->
       $location.path "/admin/workstations"
-      return      
+      return
+    $rootScope.managejobs = () ->
+      $location.path "/admin/mjobs"
+      return
     $rootScope.projectdetail = ($event, id) ->
       return if $event.target.name is "operation_btn"
       $location.path "/projects/"+id
@@ -314,6 +317,33 @@ angular.module('angApp')
         .error (data, status) ->
           # TODO: Don't have to refresh all data.
           retrieveData()
+          return
+    return
+
+  .controller 'JobMgtCtrl', ($rootScope, $scope, $http, $location) ->
+    $scope.jobs = []
+    fetchData = () ->
+      $http.get("api/jobs")
+        .success (data) ->
+          now = new Date()
+          $scope.jobs = data
+          j._duration = parseInt((now - new Date(j.modified_at))/1000) for j in $scope.jobs
+          return
+    fetchData()
+    $scope.duration = (job) ->
+      dur = (new Date() - new Date(job.modified_at)) / 1000
+      return parseInt(dur / 3600) + ":" + parseInt(dur % 3600 / 60) + ":" + parseInt(dur %60)
+    $scope.cancel = (job) ->
+      $http.post("api/jobs/#{ job.id }/cancel")
+        .success (data) ->
+          # TODO: remove it locally.
+          for j, index in $scope.jobs
+            if j.id is job.id
+              $scope.jobs.splice(index, 1)
+              return
+          return
+        .error (data) ->
+          fetchData()
           return
     return
 
