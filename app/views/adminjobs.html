@@ -1,0 +1,26 @@
+
+<h4>Active Jobs</h4>
+
+<table class="table table-bordered table-hover">
+  <tr>
+    <th>Job ID</th>
+    <th>Task</th>
+    <th>Device</th>
+    <th>Start Time</th>
+    <th>Duraion</th>
+    <th>Status</th>
+    <th col="2">Operation</th>
+  </tr>
+  <tr ng-repeat="job in jobs | orderBy:'_duration':true" ng-class="{success:job.status=='running', error:job.status=='failed'}">
+    <td>{{job.id}}</td>
+    <td>{{job.task.name}}</td>
+    <td>{{job.device.workstation_mac}}:{{job.device.serial}}</td>
+    <td>{{job.modified_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+    <td>{{job._duration/3600 | number:0}}:{{job._duration%3600/60 | number:0}}:{{job._duration%60 | number:0}}</td>
+    <td>{{job.status}}</td>
+    <td>
+      <button class="btn btn-danger" ng-click="cancel(job)">Cancel</button>
+    </td>
+  </tr>
+</table>
+

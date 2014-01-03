@@ -23,9 +23,10 @@
                 <b class="caret"></b></a>
                 <ul class="dropdown-menu">
                   <li ng-show="auth.isAdmin()"><a href="javascript:void(0)" ng-click="managetags()">Tags</a></li>
-                  <li ng-show="auth.isAdmin()"><a href="javascript:void(0)" ng-click="managedevices()">Devices</a></li>
                   <li ng-show="auth.isAdmin()"><a href="javascript:void(0)" ng-click="manageusers()">Users</a></li>
                   <li ng-show="auth.isAdmin()"><a href="javascript:void(0)" ng-click="managewks()">Workstations</a></li>
+                  <li ng-show="auth.isAdmin()"><a href="javascript:void(0)" ng-click="managedevices()">Devices</a></li>
+                  <li ng-show="auth.isAdmin()"><a href="javascript:void(0)" ng-click="managejobs()">Jobs</a></li>
                   <li ng-show="auth.isAdmin()" class="divider"></li>
                   <li><a href="javascript:void(0)" ng-click="auth.logout()">Logout</a></li>
                 </ul>
