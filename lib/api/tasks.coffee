@@ -283,3 +283,53 @@ exports = module.exports =
         res.json 403, error: "Forbidden on not running job."
     devices.screenshot
   ]
+
+  job_result: (req, res, next) ->
+    job = req.job
+    if job.status is "new" or not job.device_id
+      return res.json 404, error: "Result unavailable."
+    req.db.models.device.get job.device_id, (err, dev) ->
+      return next(err) if err?
+      ws = req.data.models.workstations.get(dev.workstation_mac)
+      if ws?.get("api")?.status is "up"
+        url_str = url.format(
+          protocol: "http"
+          hostname: ws.get("ip")
+          port: ws.get("api").port
+          pathname: "/api/0/jobs/#{job.id}/files/workspace/result.txt"
+        )
+        stream = request(url_str)
+        remaining = ""
+        results = []
+        stream.on "data", (data) ->
+          remaining += data
+          lines = remaining.split "\n"
+          logger.info JSON.stringify(lines)
+          for line in lines[...-1]
+            try
+              results.push JSON.parse(line)
+            catch error
+              logger.error "Error during parsing result: #{error}"
+          remaining = lines[lines.length-1] or ""
+        stream.on "error", (err) ->
+          next err
+        stream.on "end", ->
+          try
+            results.push JSON.parse(remaining)
+          catch error
+            logger.error "Error during parsing result: #{error}"
+          summary = {pass: 0, fail: 0, error: 0, start_at: null, end_at: null, results: results}
+          path = "#{req.path[...-6]}files/workspace/"
+          _.each results, (r) ->
+            switch r.result.toLowerCase()
+              when "pass", "passed", "p" then summary.pass += 1
+              when "fail", "failed", "failure", "f" then summary.fail += 1
+              when "error", "e" then summary.error += 1
+            r[t] = new Date r[t] for t in ["start_at", "end_at"]
+            summary.start_at = r.start_at if summary.start_at is null or summary.start_at > r.start_at
+            summary.end_at = r.end_at if summary.end_at is null or summary.end_at < r.end_at
+            r[p] = "#{path}#{r[p]}" for p in ["screenshot_at_failure", "expect", "log"] when p of r
+          summary.total = summary.pass + summary.fail + summary.error
+          res.json summary
+      else
+        res.json 404, error: "The device is disconnected."
