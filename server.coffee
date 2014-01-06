@@ -107,6 +107,7 @@ app.post "/api/tasks/:task/jobs/:no/restart", api.auth.auth, api.auth.authTask, 
 app.get "/api/tasks/:task/jobs/:no/stream", api.auth.auth, api.auth.authTask, api.tasks.param_job_no, api.tasks.job_output
 app.get "/api/tasks/:task/jobs/:no/files/*", api.auth.auth, api.auth.authTask, api.tasks.param_job_no, api.tasks.job_files
 app.get "/api/tasks/:task/jobs/:no/screenshot", api.auth.auth, api.auth.authTask, api.tasks.param_job_no, api.tasks.job_screenshot
+app.get "/api/tasks/:task/jobs/:no/result", api.auth.auth, api.auth.authTask, api.tasks.param_job_no, api.tasks.job_result
 
 app.get "/api/tags", api.auth.authAdmin, api.tags.get
 app.post "/api/tags/:tag", api.auth.authAdmin, api.tags.add
