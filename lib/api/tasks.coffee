@@ -318,6 +318,18 @@ exports = module.exports =
             results.push JSON.parse(remaining)
           catch error
             logger.error "Error during parsing result: #{error}"
-          res.json results
+          summary = {pass: 0, fail: 0, error: 0, start_at: null, end_at: null, results: results}
+          path = "#{req.path[...-6]}files/workspace/"
+          _.each results, (r) ->
+            switch r.result.toLowerCase()
+              when "pass", "passed", "p" then summary.pass += 1
+              when "fail", "failed", "failure", "f" then summary.fail += 1
+              when "error", "e" then summary.error += 1
+            r[t] = new Date r[t] for t in ["start_at", "end_at"]
+            summary.start_at = r.start_at if summary.start_at is null or summary.start_at > r.start_at
+            summary.end_at = r.end_at if summary.end_at is null or summary.end_at < r.end_at
+            r[p] = "#{path}#{r[p]}" for p in ["screenshot_at_failure", "expect", "log"] when p of r
+          summary.total = summary.pass + summary.fail + summary.error
+          res.json summary
       else
         res.json 404, error: "The device is disconnected."

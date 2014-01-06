@@ -197,6 +197,14 @@
             ]
         }
 
+- Tag a user (admin permission)
+
+        POST /api/users/:id/tag/:tag?access_token=:access_token
+
+- Untag a user (admin permission)
+
+        POST /api/users/:id/tag/:tag?access_token=:access_token
+
 ## Tags
 
 - Add (admin permission)
@@ -1764,5 +1772,62 @@
 
     - It's same as device screenshoot API, but this API doesn't need admin permission.
     - It can only work on running job. For not running job, it returns 403 Forbidden.
+
+- Get test results of a job in case it has.
+
+        GET /api/tasks/:task/jobs/:no/result?access_token=:access_token
+
+    Notes:
+
+    - It parses the content in file `$JOB_ID/$WORKSPACE/result.txt`. If the file doesn't exist, it returns an error.
+
+    Examples:
+
+        $ http http://localhost:9000/api/tasks/4/jobs/0/result access_token==1177c620-694c-11e3-877d-013bcec48b5e
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 1260
+        Content-Type: application/json; charset=utf-8
+        Date: Mon, 06 Jan 2014 05:33:30 GMT
+        ETag: "-1664147239"
+        Set-Cookie: connect.sess=s%3Aj%3A%7B%22passport%22%3A%7B%7D%7D.uDnQVi2orSN6V9TG3bFicsfJ7L2cyqxNxsiAqplvrrQ; Path=/; HttpOnly
+        X-Powered-By: Express
+
+        {
+            "end_at": "2013-01-08T07:06:37.000Z", 
+            "error": 1, 
+            "fail": 1, 
+            "pass": 1, 
+            "results": [
+                {
+                    "end_at": "2013-01-08T06:05:36.000Z", 
+                    "name": "class.method", 
+                    "result": "pass", 
+                    "start_at": "2013-01-08T06:05:36.000Z"
+                }, 
+                {
+                    "end_at": "2013-01-08T07:06:37.000Z", 
+                    "expect": "/api/tasks/4/jobs/0/files/workspace/path_to_expect/expect.png", 
+                    "log": "/api/tasks/4/jobs/0/files/workspace/path_to_whenfailure/log.zip", 
+                    "name": "class.method", 
+                    "result": "fail", 
+                    "screenshot_at_failure": "/api/tasks/4/jobs/0/files/workspace/path_to_whenfailure/failure.png", 
+                    "start_at": "2013-01-08T06:05:36.000Z", 
+                    "trace": "traceinfo"
+                }, 
+                {
+                    "end_at": "2013-01-08T07:06:37.000Z", 
+                    "expect": "/api/tasks/4/jobs/0/files/workspace/path_to_expect/expect.png", 
+                    "log": "/api/tasks/4/jobs/0/files/workspace/path_to_log/log.zip", 
+                    "name": "class.method", 
+                    "result": "error", 
+                    "screenshot_at_failure": "/api/tasks/4/jobs/0/files/workspace/path_to_error/failure.png", 
+                    "start_at": "2013-01-08T06:05:36.000Z", 
+                    "trace": "traceinfo"
+                }
+            ], 
+            "start_at": "2013-01-08T06:05:36.000Z", 
+            "total": 3
+        }
 
 [httpie]: https://github.com/jkbr/httpie
