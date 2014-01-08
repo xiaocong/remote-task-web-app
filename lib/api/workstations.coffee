@@ -21,9 +21,6 @@ module.exports =
         pathname: "#{ws.get("api").path}/#{req.params[0]}"
         query: req.query
       )
-      stream = req.pipe request(url_str)
-      stream.on "error", (err) -> res.end()
-      stream.on "data", (data) -> res.write data
-      stream.on "end", -> res.end()
+      req.pipe(request(url_str)).pipe res
     else
       res.json 500, error: "The workstation is invalid or down!"
