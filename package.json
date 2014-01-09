@@ -20,7 +20,8 @@
     "passport": "~0.1.17",
     "passport-local": "~0.1.6",
     "passport-http-bearer": "~1.0.1",
-    "passport-baidu": "0.0.1"
+    "passport-baidu": "0.0.1",
+    "forever": "~0.10.11"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
@@ -66,6 +67,6 @@
   "scripts": {
     "test": "grunt build",
     "start": "grunt build && ./node_modules/.bin/coffee server.coffee",
-    "schedular": "grunt build && ./node_modules/.bin/coffee schedular.coffee"
+    "schedular": "./node_modules/.bin/coffee schedular.coffee"
   }
 }
