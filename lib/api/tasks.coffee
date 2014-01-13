@@ -297,20 +297,21 @@ exports = module.exports =
         stream.on "data", (data) ->
           remaining += data
           lines = remaining.split "\n"
-          logger.info JSON.stringify(lines)
           for line in lines[...-1]
             try
               results.push JSON.parse(line)
             catch error
               logger.error "Error during parsing result: #{error}"
+              logger.error "#{line}"
           remaining = lines[lines.length-1] or ""
         stream.on "error", (err) ->
           next err
         stream.on "end", ->
           try
-            results.push JSON.parse(remaining)
+            results.push JSON.parse(remaining) if remaining
           catch error
             logger.error "Error during parsing result: #{error}"
+            logger.error "#{remaining}"
           summary = {pass: 0, fail: 0, error: 0, start_at: null, end_at: null, results: results}
           path = "#{req.path[...-6]}files/workspace/"
           _.each results, (r) ->
@@ -321,7 +322,7 @@ exports = module.exports =
             r[t] = new Date r[t] for t in ["start_at", "end_at"]
             summary.start_at = r.start_at if summary.start_at is null or summary.start_at > r.start_at
             summary.end_at = r.end_at if summary.end_at is null or summary.end_at < r.end_at
-            r[p] = "#{path}#{r[p]}" for p in ["screenshot_at_failure", "expect", "log"] when p of r
+            r[p] = "#{path}#{r[p]}" for p in ["screenshot_at_failure", "expect", "log"] when r[p]?
           summary.total = summary.pass + summary.fail + summary.error
           res.json summary
       else
