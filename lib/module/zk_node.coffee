@@ -44,6 +44,7 @@ exports = module.exports = (zookeeper_url, path, cb) ->
         "id": job.job_id
         "mac": ws.get "mac"
         "ip": ws.get "ip"
+        "uname": ws.get "uname"
         "port": ws.get("api").port
         "job_id": job.job_id
         "started_at": job.started_at
@@ -63,6 +64,7 @@ exports = module.exports = (zookeeper_url, path, cb) ->
         "workstation":
           "mac": ws.get "mac"
           "ip": ws.get "ip"
+          "uname": ws.get "uname"
           "port": ws.get("api").port
         "serial": device.adb.serial
         "platform": "android"
