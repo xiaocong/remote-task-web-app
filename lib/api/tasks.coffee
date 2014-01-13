@@ -240,7 +240,10 @@ exports = module.exports =
           pathname: "/api/0/jobs/#{job.id}/stream"
           query: req.query
         )
-        req.pipe(request {url: url_str, timeout: 1000*300}).pipe res
+        request({url: url_str, timeout: 1000*300}).on("error", (error) ->
+          logger.error "**ERROR**: #{error}"
+          res.end error
+        ).pipe res
       else
         res.json 404, error: "The workstation is disconnected."
 
@@ -259,7 +262,7 @@ exports = module.exports =
           pathname: "/api/0/jobs/#{job.id}/files/#{req.params[0]}"
           query: req.query
         )
-        req.pipe(request(url_str)).pipe res
+        request(url_str).pipe res
       else
         res.json 404, error: "The device is disconnected."
 
