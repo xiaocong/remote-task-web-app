@@ -9,7 +9,7 @@ module.exports =
     if req.workstation?
       res.json req.workstation.toJSON()
     else
-      res.json req.zk.models.workstations.toJSON()
+      res.json req.data.models.workstations.toJSON()
 
   api: (req, res) ->
     ws = req.workstation
@@ -21,6 +21,6 @@ module.exports =
         pathname: "#{ws.get("api").path}/#{req.params[0]}"
         query: req.query
       )
-      req.pipe(request(url_str)).pipe(res)
+      req.pipe(request(url_str)).pipe res
     else
       res.json 500, error: "The workstation is invalid or down!"

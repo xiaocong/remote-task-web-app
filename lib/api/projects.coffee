@@ -100,5 +100,5 @@ exports = module.exports =
       res.json 403, error: "No permission to access the device."
 
   list_devices: (req, res) ->
-    res.json req.zk.models.devices.filter (device) ->
+    res.json req.data.models.devices.filter (device) ->
       _.every req.project.tagList(), (tag) -> tag in device.get("tags")

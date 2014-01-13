@@ -78,7 +78,7 @@ exports = module.exports =
     page_count = Number(req.param("page_count")) or 16
     status = req.param("status") or "all"
     status = "all" if status not in ["living", "finished", "all"]
-    task_ids = _.uniq(req.zk.models.live_jobs.map((job) -> job.get("task_id")))
+    task_ids = _.uniq(req.data.models.live_jobs.map((job) -> job.get("task_id")))
     filter = {}
 
     listTasks = ->
@@ -115,8 +115,8 @@ exports = module.exports =
   remove: (req, res, next) ->
     id = req.task.id
     req.db.models.job.find({task_id: id, status: "started"}).each (job) ->
-    req.zk.models.live_jobs.forEach (job) ->
-      stop_job(job, req.zk.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
+    req.data.models.live_jobs.forEach (job) ->
+      stop_job(job, req.data.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
     req.task.remove (err) ->
       return next(err) if err?
       req.db.models.job.find(task_id: id).remove (err) ->
@@ -127,8 +127,8 @@ exports = module.exports =
 
   cancel: (req, res, next) ->
     id = req.task.id
-    req.zk.models.live_jobs.forEach (job) ->
-      stop_job(job, req.zk.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
+    req.data.models.live_jobs.forEach (job) ->
+      stop_job(job, req.data.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
     req.db.models.job.find({task_id: id, status: ["new", "started"]}).each((job) ->
       job.status = "cancelled"
     ).save (err) ->
@@ -138,8 +138,8 @@ exports = module.exports =
 
   restart: (req, res, next) ->
     id = req.task.id
-    req.zk.models.live_jobs.forEach (job) ->
-      stop_job(job, req.zk.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
+    req.data.models.live_jobs.forEach (job) ->
+      stop_job(job, req.data.models.workstations) if job.get("status") is "started" and job.get("task_id") is id
     req.db.models.job.find({task_id: id}).each((job) ->
       job.status = "new"
     ).save (err) ->
@@ -205,7 +205,7 @@ exports = module.exports =
     job = req.job
     if job.status in ["cancelled", "finished"]
       return res.json job
-    stop_job(req.zk.models.live_jobs.get(job.id), req.zk.models.workstations)
+    stop_job(req.data.models.live_jobs.get(job.id), req.data.models.workstations)
     job.status = "cancelled"
     job.save (err) ->
       return next(err) if err?
@@ -217,7 +217,7 @@ exports = module.exports =
     job = req.job
     if job.status is "new"
       return res.json job
-    stop_job(req.zk.models.live_jobs.get(job.id), req.zk.models.workstations)
+    stop_job(req.data.models.live_jobs.get(job.id), req.data.models.workstations)
     job.status = "new"
     job.save (err) ->
       return next(err) if err?
@@ -231,7 +231,7 @@ exports = module.exports =
       return res.json 400, error: "No output."
     req.db.models.device.get job.device_id, (err, dev) ->
       return next(err) if err?
-      ws = req.zk.models.workstations.get(dev.workstation_mac)
+      ws = req.data.models.workstations.get(dev.workstation_mac)
       if ws?.get("api")?.status is "up"
         url_str = url.format(
           protocol: "http"
@@ -240,7 +240,10 @@ exports = module.exports =
           pathname: "/api/0/jobs/#{job.id}/stream"
           query: req.query
         )
-        req.pipe(request(url_str)).pipe(res)
+        request({url: url_str, timeout: 1000*300}).on("error", (error) ->
+          logger.error "**ERROR**: #{error}"
+          res.end error
+        ).pipe res
       else
         res.json 404, error: "The workstation is disconnected."
 
@@ -250,7 +253,7 @@ exports = module.exports =
       return res.json 400, error: "No files available."
     req.db.models.device.get job.device_id, (err, dev) ->
       return next(err) if err?
-      ws = req.zk.models.workstations.get(dev.workstation_mac)
+      ws = req.data.models.workstations.get(dev.workstation_mac)
       if ws?.get("api")?.status is "up"
         url_str = url.format(
           protocol: "http"
@@ -259,17 +262,67 @@ exports = module.exports =
           pathname: "/api/0/jobs/#{job.id}/files/#{req.params[0]}"
           query: req.query
         )
-        req.pipe(request(url_str)).pipe(res)
+        request(url_str).pipe res
       else
         res.json 404, error: "The device is disconnected."
 
   job_screenshot: [
     (req, res, next) ->
-      job = req.zk.models.jobs.find (job) -> Number(job.id) is req.job.id
+      job = req.data.models.jobs.find (job) -> Number(job.id) is req.job.id
       if job?
-        req.device = req.zk.models.devices.get "#{job.get('mac')}-#{job.get('serial')}"
+        req.device = req.data.models.devices.get "#{job.get('mac')}-#{job.get('serial')}"
         next()
       else
         res.json 403, error: "Forbidden on not running job."
     devices.screenshot
   ]
+
+  job_result: (req, res, next) ->
+    job = req.job
+    if job.status is "new" or not job.device_id
+      return res.json 404, error: "Result unavailable."
+    req.db.models.device.get job.device_id, (err, dev) ->
+      return next(err) if err?
+      ws = req.data.models.workstations.get(dev.workstation_mac)
+      if ws?.get("api")?.status is "up"
+        url_str = url.format(
+          protocol: "http"
+          hostname: ws.get("ip")
+          port: ws.get("api").port
+          pathname: "/api/0/jobs/#{job.id}/files/workspace/result.txt"
+        )
+        stream = request(url_str)
+        remaining = ""
+        results = []
+        stream.on "data", (data) ->
+          remaining += data
+          lines = remaining.split "\n"
+          logger.info JSON.stringify(lines)
+          for line in lines[...-1]
+            try
+              results.push JSON.parse(line)
+            catch error
+              logger.error "Error during parsing result: #{error}"
+          remaining = lines[lines.length-1] or ""
+        stream.on "error", (err) ->
+          next err
+        stream.on "end", ->
+          try
+            results.push JSON.parse(remaining)
+          catch error
+            logger.error "Error during parsing result: #{error}"
+          summary = {pass: 0, fail: 0, error: 0, start_at: null, end_at: null, results: results}
+          path = "#{req.path[...-6]}files/workspace/"
+          _.each results, (r) ->
+            switch r.result.toLowerCase()
+              when "pass", "passed", "p" then summary.pass += 1
+              when "fail", "failed", "failure", "f" then summary.fail += 1
+              when "error", "e" then summary.error += 1
+            r[t] = new Date r[t] for t in ["start_at", "end_at"]
+            summary.start_at = r.start_at if summary.start_at is null or summary.start_at > r.start_at
+            summary.end_at = r.end_at if summary.end_at is null or summary.end_at < r.end_at
+            r[p] = "#{path}#{r[p]}" for p in ["screenshot_at_failure", "expect", "log"] when p of r
+          summary.total = summary.pass + summary.fail + summary.error
+          res.json summary
+      else
+        res.json 404, error: "The device is disconnected."

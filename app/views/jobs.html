@@ -25,13 +25,15 @@
     <td>
       <div ng-switch on="job.status">
         <div ng-switch-when="finished">
+          <button class="btn btn-primary" ng-click="stream(job)">Stream</button>
           <button class="btn btn-primary" ng-click="restart(job)">Restart</button>
         </div>
         <div ng-switch-when="cancelled">
+          <button class="btn btn-primary" ng-click="stream(job)">Stream</button>
           <button class="btn btn-primary" ng-click="restart(job)">Restart</button>
         </div>
         <div ng-switch-default> <!-- new/started/running -->
-          <button class="btn btn-info" ng-click="stream(job)">Stream</button>
+          <button class="btn btn-info" ng-click="stream(job)" ng-disabled="job.status != 'started'">Stream</button>
           <button class="btn btn-danger" ng-click="cancel(job)">Cancel</button>
         </div>
       </div>

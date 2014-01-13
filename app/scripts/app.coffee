@@ -4,7 +4,7 @@ angular.module('angApp', [
   'ngCookies',
   'ngResource',
   'ngSanitize', 
-  'http-auth-interceptor', 'services.authService', 'services.naviService'
+  'http-auth-interceptor', 'services.authService', 'services.naviService', 'bootstrap-tagsinput'
 ])
   .config ['$routeProvider', '$locationProvider', ($routeProvider, $locationProvider) ->
     $routeProvider
@@ -17,18 +17,21 @@ angular.module('angApp', [
       .when '/projects/:id',
         templateUrl: 'views/project.html'
         controller: 'ProjectCtrl'
-      .when '/mgttags',
+      .when '/admin/tags',
         templateUrl: 'views/tags.html'
         controller: 'TagMgtCtrl'
-      .when '/mgtusers',
+      .when '/admin/users',
         templateUrl: 'views/users.html'
         controller: 'UserMgtCtrl'
-      .when '/mgtdevices',
+      .when '/admin/devices',
         templateUrl: 'views/devicemgt.html'
         controller: 'DeviceMgtCtrl'        
-      .when '/workstations',
+      .when '/admin/workstations',
         templateUrl: 'views/workstations.html'
-        controller: 'WksCtrl'
+        controller: 'WksMgtCtrl'
+      .when '/admin/mjobs',
+        templateUrl: 'views/adminjobs.html'
+        controller: 'JobMgtCtrl'
       .when '/devices',
         templateUrl: 'views/devices.html'
         controller: 'DevicesCtrl'
@@ -38,6 +41,12 @@ angular.module('angApp', [
       .when '/projects/:id/tasks/:tid',
         templateUrl: 'views/jobs.html'
         controller: 'JobsCtrl'
+      .when '/projects/:id/tasks/:tid/jobs/:jid/stream',
+        templateUrl: 'views/stream.html'
+        controller: 'StreamCtrl'
+      .when '/admin/users/create',
+        templateUrl: 'views/addaccount.html'
+        controller: 'AddUserCtrl'
       .when '/projects/:id/users',
         templateUrl: 'views/groupusers.html'
         controller: 'GroupUserCtrl'

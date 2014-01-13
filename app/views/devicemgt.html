@@ -1,7 +1,3 @@
-<!-- p>
-  <button class="btn btn-primary" ng-click="my_filter={}">All</button>
-  <button class="btn btn-primary" ng-click="my_filter={idle:true}">Idle</button>
-</p -->
 
 <div class="tabbable">
   <ul class="nav nav-tabs nav-tabs-narrow">
@@ -18,8 +14,7 @@
       <th>Brand</th>
       <th>Product</th>
       <th>SN</th>
-      <th>Job ID</th>
-      <th>Tags</th>
+      <th width="30%">Tags</th>
     </tr>
   </thead>
   <tbody>
@@ -29,21 +24,15 @@
       <td>{{device.product.brand}}</td>
       <td>{{device.product.model}}</td>
       <td>{{device.serial}}</td>
-      <td>{{device.job_id}}</td>
     <td>
-      <ul class="subtable">
-        <li ng-repeat="tag in device.tags">
-          {{tag}}<a href="javascript:void(0)" ng-click="remove_devicetag(device.id, device.tags, tag)">[x]</a>
-        </li>
-      </ul>
-      <a href="javascript:void(0)" ng-click="showaddtag(device.serial)">[+Tag]</a>
-      <div class='add_tag{{device.serial}}' style="display:none">
-        <select ng-model="seltag[device.id]">
-            <option ng-repeat="tag in tags" value="{{tag}}">{{tag}}</option>
-        </select>
-        <input type="button" class='btn btn-small' ng-click="hideaddtag(device.serial)" value="Cancel">
-        <input type="button" class='btn btn-small btn-primary' ng-click="add_devicetag(device.id, device.tags)" value="Ok">
-      </div>
+      <bootstrap-tagsinput
+        ng-model="device.tags" 
+        ng-extra="device"
+        placeholder="+"
+        updatetag="updateTag" tryUpdate="tryRemove"
+        typeahead-source="queryTags"
+        tagclass="getTagClass">
+      </bootstrap-tagsinput>
     </td>
     </tr>
   </tbody>

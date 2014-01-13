@@ -6,7 +6,7 @@ _ = require "underscore"
 logger = require "../logger"
 
 
-exports = module.exports = (zookeeper_url, path) ->
+exports = module.exports = (zookeeper_url, path, cb) ->
   client = zookeeper.createClient zookeeper_url
 
   workstations = new Backbone.Collection
@@ -44,6 +44,7 @@ exports = module.exports = (zookeeper_url, path) ->
         "id": job.job_id
         "mac": ws.get "mac"
         "ip": ws.get "ip"
+        "uname": ws.get "uname"
         "port": ws.get("api").port
         "job_id": job.job_id
         "started_at": job.started_at
@@ -63,6 +64,7 @@ exports = module.exports = (zookeeper_url, path) ->
         "workstation":
           "mac": ws.get "mac"
           "ip": ws.get "ip"
+          "uname": ws.get "uname"
           "port": ws.get("api").port
         "serial": device.adb.serial
         "platform": "android"
@@ -83,10 +85,13 @@ exports = module.exports = (zookeeper_url, path) ->
     client.mkdirp path, (err) -> # make sure the path is created
       listChildren client, path
 
+    cb(
+      "client": client
+      "models":
+        "workstations": workstations
+        "jobs": jobs
+        "devices": devices
+    )
+
   client.connect()
 
-  "client": -> client
-  "models":
-    "workstations": workstations
-    "jobs": jobs
-    "devices": devices

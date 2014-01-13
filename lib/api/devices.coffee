@@ -8,13 +8,13 @@ _ = require("underscore")
 module.exports =
   get: (req, res) ->
     device = req.device.toJSON()
-    device.jobs = req.zk.models.live_jobs.filter (job) -> job.get("status") is "started" and "#{job.get('device').workstation_mac}-#{job.get('device').serial}" is device.id
+    device.jobs = req.data.models.live_jobs.filter (job) -> job.get("status") is "started" and "#{job.get('device').workstation_mac}-#{job.get('device').serial}" is device.id
     res.json device
 
   list: (req, res) ->
-    devices = req.zk.models.devices.toJSON()
+    devices = req.data.models.devices.toJSON()
     devices.forEach (device) ->
-      device.jobs = req.zk.models.live_jobs.filter (job) -> job.get("status") is "started" and "#{job.get('device').workstation_mac}-#{job.get('device').serial}" is device.id
+      device.jobs = req.data.models.live_jobs.filter (job) -> job.get("status") is "started" and "#{job.get('device').workstation_mac}-#{job.get('device').serial}" is device.id
     res.json devices
 
   tag_device: (req, res, next) ->
@@ -24,25 +24,17 @@ module.exports =
       data = {workstation_mac: req.device.get("workstation").mac, serial: req.device.get("serial")}
 
       req.db.models.device.find data, (err, devices) ->
-        return next(err) if err?
+        return next(err) if err or devices.length is 0
 
         device = devices[0]
-        addTags = ->
-          if _.some(device.tags, (t) -> t.tag is tags[0].tag)
-            res.json 500, error: "The device already has the tag!"
-          else
-            device.addTags tags, (err) ->
-              return next(err) if err?
-              res.send 200
-              req.redis.publish "db.device.tag", JSON.stringify(method: "add", device: device.id, tags: tags)
-
-        if device?
-          addTags()
+        if _.some(device.tags, (t) -> t.tag is tags[0].tag)
+          res.json 500, error: "The device already has the tag!"
         else
-          req.db.models.device.create [data], (err, devices) ->
+          device.addTags tags, (err) ->
             return next(err) if err?
-            device = devices[0]
-            addTags()
+            res.send 200
+            req.redis.publish "db.device.tag", JSON.stringify(method: "add", device: device.id, tags: tags)
+
 
   untag_device: (req, res, next) ->
     if "system:role:admin" is req.param("tag")
@@ -71,4 +63,4 @@ module.exports =
       pathname: "/api/0/devices/#{req.device.get('serial')}/screenshot"
       query: req.query
     )
-    req.pipe(request(url_str)).pipe(res)
+    req.pipe(request(url_str)).pipe res

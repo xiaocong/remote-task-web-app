@@ -2,6 +2,7 @@ $iconSpritePath: "../images/glyphicons-halflings.png";
 $iconWhiteSpritePath: "../images/glyphicons-halflings-white.png";
 
 @import "bootstrap-sass/lib/bootstrap";
+@import "../styles/bootstrap-tagsinput";
 
 /* Put your CSS here */
 html, body {
@@ -62,6 +63,11 @@ tr.clickable:hover {
   color: #888888
 }
 
+.breadcrumb a.inactive {
+  color: #005580;
+  text-decoration: none;
+}
+
 .p_job {
     margin: 5px 1px 1px 1px;
     border-bottom: 1px dashed #DDD;
@@ -101,4 +107,42 @@ table.table thead .sorting_asc {
 }
 table.table thead .sorting_desc {
   background: url('../images/sort_desc.png') no-repeat center right;
+}
+
+/* console */
+.console {
+    background-color-11: rgba(0, 0, 0, 0.1);
+    background-color: #000000;
+    border: 2px groove #000000;
+    bottom: 0;
+    font-family: Monospace, "Courier New","Courier",sans-serif;
+    height: 525px;
+    position-111: absolute;
+    width-111: 100%;
+    color: #00FF1E;
+}
+.console ol, .console li, .console p {
+    margin: 0;
+    padding: 0;
+}
+.console ol {
+    height: 500px;
+    list-style-position: inside;
+    overflow: auto;
+    padding-left: 10px;
+    list-style: none;
+}
+.console p {
+    padding-left: 15px;
+}
+.console .input {
+    display: inline-block;
+    width: 20px;
+}
+.blink {
+}
+.console .icaret {
+    background-color: #00FF1E;
+    color: #FFFFFF;
+    padding: 2px 4px;
 }
