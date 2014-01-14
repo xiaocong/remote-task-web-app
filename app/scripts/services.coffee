@@ -141,6 +141,7 @@ angular.module('services.naviService', ['services.authService'])
       admin: ""
       stream: "Streaming"
       mjobs: "Jobs"
+      result: "Result"
 
     getTokenValue = (key, id) ->
       return "TODO" if not TokenMap[key]?
