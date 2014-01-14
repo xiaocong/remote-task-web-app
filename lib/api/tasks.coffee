@@ -353,6 +353,7 @@ exports = module.exports =
         stream.on "end", ->
           parse_line remaining
           summary.total = summary.pass + summary.fail + summary.error
+          summary.job = req.job
           res.json summary
       else
         res.json 404, error: "The device is disconnected."
