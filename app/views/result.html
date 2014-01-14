@@ -1,0 +1,44 @@
+
+<div class="row-fluid">
+  <div class="pull-right">
+      <button class='btn btn-primary' ng-click="refresh()">Refresh</button>
+  </div>
+</div>
+<h4>{{task.name}}</h4>
+
+<table class="table table-bordered table-hover">
+  <tr>
+    <th>Total</th>
+    <th>Passed</th>
+    <th>Failed</th>
+    <th>Error</th>
+    <th>Start Time</th>
+    <th>End Time</th>
+  </tr>
+  <tr class="info">
+    <td>{{result.total}}</td>
+    <td>{{result.pass}}</td>
+    <td>{{result.fail}}</td>
+    <td>{{result.error}}</td>
+    <td>{{result.start_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+    <td>{{result.end_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+  </tr>
+</table>
+
+<table class="table table-bordered table-hover">
+  <tr>
+    <th>Name</th>
+    <th>Start Time</th>
+    <th>End Time</th>
+    <th>Logs</th>
+    <th>Screenshot</th>
+  </tr>
+  <tr ng-repeat='ret in result.results' ng-class="{warning:ret.result=='fail', error:ret.result=='error'}">
+    <td>{{ret.name}}</td>
+    <td>{{ret.start_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+    <td>{{ret.end_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+    <td><a href="{{ret.log}}" target="_blank">View Log</a></td>
+    <td><a href="{{ret.screenshot_at_failure}}" target="_blank">View Screenshot</td>
+  </tr>
+</table>
+

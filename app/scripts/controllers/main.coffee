@@ -424,11 +424,15 @@ angular.module('angApp')
         .error (data, status) ->
           result = data
           return
+    $scope.viewResult = ($event, job) ->
+      return if $event.target.name is "operation_btn"
+      $location.path "projects/#{$routeParams.id}/tasks/#{$routeParams.tid}/jobs/#{job.no}/result"
+      return
     $rootScope.task = {}
     retrieveJobs()
     return
 
-  .controller 'StreamCtrl', ($rootScope, $routeParams, $scope, $http, naviService) ->
+  .controller 'StreamCtrl', ($rootScope, $routeParams, $scope, $http) ->
     $scope.MAX_CONSOLE_LN = 300
     $scope.oldData = ""
     $scope.xhr = null
@@ -457,6 +461,18 @@ angular.module('angApp')
       $scope.xhr.abort() if $scope.xhr?
       return
     openStream()
+
+  .controller 'ResultCtrl', ($rootScope, $routeParams, $scope, $http) ->
+    $scope.result = {}
+    retrieveData = () ->
+      $http.get("api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/result?r=error,fail")
+        .success (data) ->
+          $scope.result = data
+          return
+    $scope.refresh = () ->
+      retrieveData()
+      return
+    retrieveData()
 
   .controller 'AddTaskCtrl3', ($scope, $http, $location) ->
     # Some initialization.
