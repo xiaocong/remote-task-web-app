@@ -245,8 +245,8 @@ exports = module.exports =
           logger.error "**ERROR**: #{error}"
           res.end error
         ).pipe res
-        res.on "end", ->
-          stream.abort()
+        res.on "close", ->  # client abort
+          stream.abort()  # close request to ws
       else
         res.json 404, error: "The workstation is disconnected."
 
