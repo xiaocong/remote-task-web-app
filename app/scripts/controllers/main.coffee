@@ -124,7 +124,9 @@ angular.module('angApp')
     $scope.statusFilter = (task) ->
       return (task._active is $scope.activeFilter)
     $scope.viewTask = ($event, task) ->
-      return if $event.target.name is "operation_btn"
+      target = if $event.target.tagName is "I" then $event.target.parentNode else $event.target
+      return if target.name is "operation_btn"
+      #return if $event.target.name is "operation_btn"
       $location.path "/projects/" + $scope.pid + "/tasks/" + task.id
     initData = (data) ->
       setTaskStatus(t) for t in data.tasks
@@ -425,7 +427,8 @@ angular.module('angApp')
           result = data
           return
     $scope.viewResult = ($event, job) ->
-      return if $event.target.name is "operation_btn"
+      target = if $event.target.tagName is "I" then $event.target.parentNode else $event.target
+      return if target.name is "operation_btn"
       $location.path "projects/#{$routeParams.id}/tasks/#{$routeParams.tid}/jobs/#{job.no}/result"
       return
     $rootScope.task = {}
@@ -462,12 +465,15 @@ angular.module('angApp')
       return
     openStream()
 
-  .controller 'ResultCtrl', ($rootScope, $routeParams, $scope, $http) ->
+  .controller 'ResultCtrl', ($rootScope, $routeParams, $scope, $http, naviService) ->
     $scope.result = {}
     retrieveData = () ->
       $http.get("api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/result?r=error,fail")
         .success (data) ->
           $scope.result = data
+          # Set task info in $rootScope to ensure breadcum works fine.
+          $rootScope.task = $scope.result.job.task
+          naviService.onDataChanged()
           return
     $scope.refresh = () ->
       retrieveData()
@@ -649,7 +655,7 @@ angular.module('angApp')
       return
     return
 
-  .controller 'AddTaskCtrl2', ($routeParams, $scope, $http, $location) ->
+  .controller 'AddTaskCtrl', ($routeParams, $scope, $http, $location) ->
     # Some initialization.
     $scope.showDevice = false
     $scope.filterCondition = {_displayModel:true}
@@ -726,6 +732,9 @@ angular.module('angApp')
             manufacturer: d.product.manufacturer
             model: d.product.model
         else # selected by device.
+          job.device_filter.product =
+            manufacturer: d.product.manufacturer
+            model: d.product.model
           tokens = d.id.split("-")
           job.device_filter.mac = tokens[0]
           job.device_filter.serial = tokens[1]
@@ -737,70 +746,3 @@ angular.module('angApp')
         return
       return
     return
-
-  .controller 'AddTaskCtrl', ($rootScope, $scope, $routeParams, $http, $location) ->
-    resort = () ->
-      job.no = i for job, i in $scope.newTaskForm.jobs
-      return
-    createJob = () ->
-      job = {}
-      job.no = $scope.newTaskForm.jobs.length
-      job.repo_url = $scope.newTaskForm.repo_url
-      $scope.newTaskForm.jobs.push(job)
-      job
-    removeJob = (index) ->
-      return if index >= $scope.newTaskForm.jobs.length
-      $scope.newTaskForm.jobs.splice(index, 1)
-      resort()
-      return
-    # TODO: Use underscore.js
-    groupProductProperties = (key) ->
-      result = []
-      return result if $scope.devices.length is 0
-      for d in $scope.devices
-        #if d.product.hasOwnProperty(key) and d.product.
-        if not d.product[key]?
-          continue
-        if result.indexOf(d.product[key]) == -1
-          result.push(d.product[key])
-      return result
-
-    # Some initialization.
-    $scope.newTaskForm = {}
-    $scope.newTaskForm.jobs = []
-    #createJob()
-    $scope.id = $routeParams.id or ""
-    # Retrieve the available devices first.
-    $scope.devices = []
-    $scope.manufacturers = $scope.models = []
-    $http.get("api/devices").success (data) ->
-      $scope.devices = data
-      $scope.manufacturers = groupProductProperties("manufacturer")
-      $scope.models = groupProductProperties("model")
-
-    # Triggered when user clicks the button to add a job in a task.
-    $scope.newJob = () ->
-      createJob()
-
-    # Triggered when user clicks the button to remove an existing job in a task.
-    $scope.deleteJob = (index) ->
-      removeJob(index)
-
-    $scope.submitTask = () ->
-      # split the device ID into mac and SN.
-      for job in $scope.newTaskForm.jobs
-        if job._the_device? and job._the_device.id?
-          tokens = job._the_device.id.split("-")
-          if tokens.length == 2
-            job.device_filter = {}
-            job.device_filter.mac = tokens[0]
-            job.device_filter.serial = tokens[1]
-          # delete _the_device
-          delete job._the_device
-
-      $http.post("api/tasks?project="+$scope.id, $scope.newTaskForm).success (data) ->
-        $location.path "/projects/"+$scope.id
-        return;
-      return
-    return
-

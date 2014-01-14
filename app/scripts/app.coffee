@@ -58,7 +58,7 @@ angular.module('angApp', [
         controller: 'AddTaskCtrl3'
       .when '/projects/:id/addtask',
         templateUrl: 'views/addtask2.html'
-        controller: 'AddTaskCtrl2'
+        controller: 'AddTaskCtrl'
       .otherwise
         redirectTo: '/'
     $locationProvider.html5Mode true

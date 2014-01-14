@@ -36,8 +36,10 @@
         <td>{{task.jobs[0].repo_url}}</td>
         <td>{{task.description}}</td>
         <td>
-          <button name="operation_btn" class="btn btn-primary" ng-show="!activeFilter" ng-click="restart(task)">Restart</button>
-          <button name="operation_btn" class="btn btn-danger" ng-show="activeFilter" ng-click="cancel(task)">Cancel</button>
+          <!--button name="operation_btn" class="btn btn-primary" ng-show="!activeFilter" ng-click="restart(task)">Restart</button>
+          <button name="operation_btn" class="btn btn-danger" ng-show="activeFilter" ng-click="cancel(task)">Cancel</button-->
+          <a href="javascript:void(0)" class="btn btn-primary" ng-click="restart(task)" name="operation_btn" ng-show="!activeFilter"><i class="icon-repeat icon-white"></i></a>
+          <a href="javascript:void(0)" class="btn btn-danger" ng-click="cancel(task)" name="operation_btn" ng-show="activeFilter"><i class="icon-remove icon-white"></i></a>
         </td>
       </tr>
       <!-- tr ng-class="{hide:task.hidden==true}" ng-init="task.hidden=true">
