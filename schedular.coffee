@@ -82,7 +82,7 @@ start = ->
       tags = if filter.tags instanceof Array then filter.tags else [filter.tags]
       device_tags = device.get("tags") or []
       return false if device_tags.length is 0 or _.some(tags, (tag)-> tag not in device_tags)
-    return true    
+    return true
 
   assign_task = (device, job) ->
     logger.info "Assigning job #{job.id} to device #{device.id}."
