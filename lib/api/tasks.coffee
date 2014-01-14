@@ -71,6 +71,22 @@ exports = module.exports =
   get: (req, res, next) ->
     task = JSON.parse(JSON.stringify(req.task))
     delete task.creator.password
+    _.each task.jobs, (job) ->
+      filter = job.device_filter or {}
+      schedular =
+        available_device:
+          total: 0
+          idle: 0
+        has_exclusive: false
+        has_dependency: false
+      req.data.models.devices.filter((dev) ->
+        req.methods.match filter, dev
+      ).forEach (dev) ->
+        schedular.available_device.total += 1
+        schedular.available_device.idle += 1 if dev.get "idle"
+      schedular.has_exclusive = req.methods.has_exclusive job
+      schedular.has_dependency = req.methods.has_dependency job
+      job.schedular = schedular
     res.json task
 
   list: (req, res, next) ->
@@ -245,8 +261,8 @@ exports = module.exports =
           logger.error "**ERROR**: #{error}"
           res.end error
         ).pipe res
-        res.on "end", ->
-          stream.abort()
+        res.on "close", ->  # client abort
+          stream.abort()  # close request to ws
       else
         res.json 404, error: "The workstation is disconnected."
 
@@ -337,6 +353,7 @@ exports = module.exports =
         stream.on "end", ->
           parse_line remaining
           summary.total = summary.pass + summary.fail + summary.error
+          summary.job = req.job
           res.json summary
       else
         res.json 404, error: "The device is disconnected."

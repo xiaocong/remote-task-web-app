@@ -30,59 +30,13 @@ start = ->
     live_jobs.forEach (job) -> logger.debug "Job #{job.id}: status=#{job.get('status')}, locked=#{job.get('locked')}"
     devices.forEach (device) -> logger.debug "Device #{device.id}: idle=#{device.get('idle')}, locked=#{device.get('locked')}"
     [10..1].forEach (priority) -> live_jobs.filter((job) -> job.get("priority") is priority and job.get("status") is "new" and not job.get("locked")).forEach (job) ->
-      if has_exclusive(job) or has_dependency(job)
+      if dbmodule.methods.has_exclusive(job.toJSON()) or dbmodule.methods.has_dependency(job.toJSON())
         logger.debug "Job #{job.id} has #{job.get('r_type')} on #{JSON.stringify(job.get("r_job_nos"))}."
       else
         filter = job.get("device_filter") or {}
         device = devices.find (dev) ->
-          dev.get("idle") and not dev.get("locked") and match(filter, dev)
+          dev.get("idle") and not dev.get("locked") and dbmodule.methods.match(filter, dev)
         assign_task(device, job) if device?
-
-  has_exclusive = (job) ->
-    # return true if any exclusive job is in running or locked status
-    if job.get("r_type") isnt "exclusive" or job.get("r_job_nos").length is 0
-      false
-    else
-      live_jobs.filter((j) ->
-        j.get("task_id") is job.get("task_id") and j.get("no") in job.get("r_job_nos")
-      ).some((j) ->
-        j.get("status") is "new" and j.get("locked") or j.get("status") is "started"
-      )
-
-  has_dependency = (job) ->
-    # return true if any dependent job is in running or waiting status
-    if job.get("r_type") isnt "dependency" or job.get("r_job_nos").length is 0
-      false
-    else
-      live_jobs.some((j) ->
-        j.get("task_id") is job.get("task_id") and j.get("no") in job.get("r_job_nos")
-      )
-
-  match = (filter, device) ->
-    # filter: mac, platform, serial, product, build, locale, tags: [...]
-    # "workstation":
-    #   "mac": ws.get "mac"
-    #   "ip": ws.get "ip"
-    #   "port": ws.get("api").port
-    # "serial": device.adb.serial
-    # "platform": "android"
-    # "product": device.product
-    # "build": device.build
-    # "locale": device.locale
-    # "tags": [...]
-    return false if "mac" of filter and device.get("workstation").mac isnt filter.mac
-    return false if "serial" of filter and device.get("serial") isnt filter.serial
-    return false if "platform" of filter and device.get("platform") isnt filter.platform
-    return false if "product" of filter and _.some(filter.product, (v, p) -> v isnt device.get("product")[p])
-    return false if "locale" of filter and _.some(filter.locale, (v, p) -> v isnt device.get("locale")[p])
-    if "build" of filter
-      return false if _.some(filter.build, (v, p) -> p isnt "version" and v isnt device.get("build")[p])
-      return false if "version" of filter.build and _.some(filter.build.version, (v, p) -> v isnt device.get("build").version[p])
-    if "tags" of filter  # tags is mandatory for filter, if it's empty, then the match result is always false.
-      tags = if filter.tags instanceof Array then filter.tags else [filter.tags]
-      device_tags = device.get("tags") or []
-      return false if device_tags.length is 0 or _.some(tags, (tag)-> tag not in device_tags)
-    return true    
 
   assign_task = (device, job) ->
     logger.info "Assigning job #{job.id} to device #{device.id}."
