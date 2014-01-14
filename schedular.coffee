@@ -30,33 +30,13 @@ start = ->
     live_jobs.forEach (job) -> logger.debug "Job #{job.id}: status=#{job.get('status')}, locked=#{job.get('locked')}"
     devices.forEach (device) -> logger.debug "Device #{device.id}: idle=#{device.get('idle')}, locked=#{device.get('locked')}"
     [10..1].forEach (priority) -> live_jobs.filter((job) -> job.get("priority") is priority and job.get("status") is "new" and not job.get("locked")).forEach (job) ->
-      if has_exclusive(job) or has_dependency(job)
+      if dbmodule.methods.has_exclusive(job.toJSON()) or dbmodule.methods.has_dependency(job.toJSON())
         logger.debug "Job #{job.id} has #{job.get('r_type')} on #{JSON.stringify(job.get("r_job_nos"))}."
       else
         filter = job.get("device_filter") or {}
         device = devices.find (dev) ->
-          dev.get("idle") and not dev.get("locked") and dbmodule.match(filter, dev)
+          dev.get("idle") and not dev.get("locked") and dbmodule.methods.match(filter, dev)
         assign_task(device, job) if device?
-
-  has_exclusive = (job) ->
-    # return true if any exclusive job is in running or locked status
-    if job.get("r_type") isnt "exclusive" or job.get("r_job_nos").length is 0
-      false
-    else
-      live_jobs.filter((j) ->
-        j.get("task_id") is job.get("task_id") and j.get("no") in job.get("r_job_nos")
-      ).some((j) ->
-        j.get("status") is "new" and j.get("locked") or j.get("status") is "started"
-      )
-
-  has_dependency = (job) ->
-    # return true if any dependent job is in running or waiting status
-    if job.get("r_type") isnt "dependency" or job.get("r_job_nos").length is 0
-      false
-    else
-      live_jobs.some((j) ->
-        j.get("task_id") is job.get("task_id") and j.get("no") in job.get("r_job_nos")
-      )
 
   assign_task = (device, job) ->
     logger.info "Assigning job #{job.id} to device #{device.id}."

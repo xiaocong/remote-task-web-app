@@ -71,6 +71,22 @@ exports = module.exports =
   get: (req, res, next) ->
     task = JSON.parse(JSON.stringify(req.task))
     delete task.creator.password
+    _.each task.jobs, (job) ->
+      filter = job.device_filter or {}
+      schedular =
+        available_device:
+          total: 0
+          idle: 0
+        has_exclusive: false
+        has_dependency: false
+      req.data.models.devices.filter((dev) ->
+        req.methods.match filter, dev
+      ).forEach (dev) ->
+        schedular.available_device.total += 1
+        schedular.available_device.idle += 1 if dev.get "idle"
+      schedular.has_exclusive = req.methods.has_exclusive job
+      schedular.has_dependency = req.methods.has_dependency job
+      job.schedular = schedular
     res.json task
 
   list: (req, res, next) ->
