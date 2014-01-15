@@ -1,10 +1,27 @@
-<h4>Streaming Log</h4>
 
-<div class="console">
-  <ol id="streaming_output">
-  </ol>
-  <p>
-    <span class="input">&gt;</span>
-    <span class="icaret blink"><blink>&nbsp;</blink></span>
-  </p>
+<div class="row-fluid">
+  <div class="span2">
+
+    <h4>Screenshot</h4>
+    <p id="placeholder" class="text-center">
+      <img id="screenshot1" width="400" alt="new" class="hide">
+      <img id="screenshot2" width="400" alt="default" src="images/screenshot_default.jpg">
+    </p>
+    <p class="text-center">{{counter}}. {{time | date:'HH:mm:ss'}}</p>
+
+
+  </div>
+  <div class="span10">
+
+    <h4>Streaming Log</h4>
+    <div class="console">
+      <ol id="streaming_output">
+      </ol>
+      <p>
+        <span class="input">&gt;</span>
+        <span class="icaret blink"><blink>&nbsp;</blink></span>
+      </p>
+    </div>
+
+  </div>
 </div>
