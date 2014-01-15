@@ -21,14 +21,12 @@ module.exports = (robot) ->
 
   formatWorkstation = (ws) ->
     "#{ws.uname} - #{ws.ip} (#{ws.mac})"
-
   formatDevice = (dev) ->
-    "#{dev.product.brand} #{dev.product.model} (#{dev.platform} #{dev.build.version.release}) - #{dev.serial}, Attached on #{formatWorkstation(dev.workstation)}"
+    "#{dev.product.brand} #{dev.product.model} (#{dev.platform} #{dev.build.version.release}) #{if dev.idle then 'IDLE' else 'BUSY'} - #{dev.serial}, Attached on #{formatWorkstation(dev.workstation)}"
   formatJob = (job) ->
     "#{job.id} - modified #{formatDuration(job.modified_at, new Date)}"
 
   formatDuration = (start, end) ->
-    console.log "#{start} - #{end}"
     diff = (end - start)/1000
     days = Math.floor(diff / 3600 / 24)
     hours = Math.floor((diff / 3600) % 24)
@@ -49,32 +47,32 @@ module.exports = (robot) ->
     robot.respond /(list|ls) (\w+)$/i, (msg) ->
       switch msg.match[2].trim()
         when "workstations", "workstation"
-          wss = data.models.workstations.map (ws) ->
-            "\t#{formatWorkstation(ws.toJSON())}"
-          msg.send "Workstations(#{wss.length}):\n#{wss.join('\n')}"
+          msg.send "Workstations(#{data.models.workstations.length}):"
+          data.models.workstations.forEach (ws) ->
+            msg.send "  *  #{formatWorkstation(ws.toJSON())}"
         when "devices", "device"
-          ds = data.models.devices.map (dev) ->
-            "\t#{formatDevice(dev.toJSON())}"
-          msg.send "Devices(#{ds.length}):\n#{ds.join('\n')}"
+          msg.send "Devices(#{data.models.devices.length}):"
+          data.models.devices.forEach (dev) ->
+            msg.send "  *  #{formatDevice(dev.toJSON())}"
         when "jobs", "job"
-          getJobs = (status) ->
-            data.models.live_jobs.filter((job) ->job.get("status") is status).map (job) ->
-              "\t#{formatJob(job.toJSON())}"
-          newJobs = getJobs "new"
-          runningJobs = getJobs "started"
-          msg .send "Pending Jobs(#{newJobs.length}):\n#{newJobs.join('\n') or '\tNone'}\nRunning Jobs(#{runningJobs.length}):\n#{runningJobs.join('\n') or '\tNone'}"
+          showJobs = (status) ->
+            jobs = data.models.live_jobs.filter((job) ->job.get("status") is status)
+            msg.send "#{if status is 'new' then 'Pending' else 'Running'} Jobs(#{jobs.length}):"
+            jobs.forEach (job) ->
+              msg.send "  *  #{formatJob(job.toJSON())}"
+          showJobs status for status in ["new", "started"]
 
     data.models.workstations.on "add", (ws) ->
       announce "Workstation Connected: #{formatWorkstation(ws.toJSON())}"
 
     data.models.workstations.on "remove", (ws) ->
-      announce "Workstation Disconnected: #{formatWorkstation(ws.toJSON())}"
+      announce "**WARNING**\nWorkstation Disconnected: #{formatWorkstation(ws.toJSON())}"
 
     data.models.devices.on "add", (dev) ->
       announce "Device Attached: #{formatDevice(dev.toJSON())}"
 
     data.models.devices.on "remove", (dev) ->
-      announce "Device Detached: #{formatDevice(dev.toJSON())}"
+      announce "**WARNING**\nDevice Detached: #{formatDevice(dev.toJSON())}"
 
     data.models.live_jobs.on "add", (job) ->
       if job.get("status") is "new"
