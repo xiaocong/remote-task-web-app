@@ -435,7 +435,7 @@ angular.module('angApp')
     retrieveJobs()
     return
 
-  .controller 'StreamCtrl', ($rootScope, $routeParams, $scope, $http) ->
+  .controller 'StreamCtrl', ($rootScope, $routeParams, $scope, $http, $timeout) ->
     $scope.MAX_CONSOLE_LN = 300
     $scope.oldData = ""
     $scope.xhr = null
@@ -462,8 +462,75 @@ angular.module('angApp')
     # close the xhr when destroyed.
     $scope.$on "$destroy", () ->
       $scope.xhr.abort() if $scope.xhr?
+      # cancel the timeout service
+      $timeout.cancel(loadScreenshot);
+      return
+    $scope.counter = 0
+    $scope.time = new Date()
+    loadScreenshot = () ->
+      # Avoid any job after destroyed.
+      return if $scope.$$destroyed is true
+      $scope.counter++
+      $scope.time = new Date()
+      newImage = new Image()
+      newImage.src = "api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/screenshot?height=400&dummy=#{ $scope.counter % 10 }"
+      newImage.onload = () ->
+        el = $("#placeholder img")
+        el.first().replaceWith(newImage)
+        el.first().show()
+        el.last().hide()
+        return
+      $timeout(loadScreenshot, 4000)
       return
     openStream()
+    loadScreenshot()
+
+  .controller 'ScreenshotCtrl', ($rootScope, $routeParams, $scope, $http, $timeout) ->
+    $scope.counter = 0
+    $scope.time = new Date()
+    $scope.screenshotUrl = ""
+    retrieveData = () ->
+      $http.get("api/tasks/#{}/jobs/#{}/screenshot")
+        .success (data) ->
+          return
+    loadScreenshot = () ->
+      # Avoid any job after destroyed.
+      return if $scope.$$destroyed is true
+      $scope.counter++
+      $scope.time = new Date()
+      el = $("#placeholder img")
+      console.log "api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/screenshot?height=400"
+      img = $("<img />").attr("src", "api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/screenshot?height=400")
+        .error () ->
+          el.first().hide()
+          el.last().show()
+          return
+        .load (event) ->
+          el.first().replaceWith(img)
+          el.first().show()
+          el.last().hide()
+          return
+      $timeout(loadScreenshot, 4000)
+      return
+
+    loadScreenshot1 = () ->
+      # Avoid any job after destroyed.
+      return if $scope.$$destroyed is true
+      $scope.counter++
+      $scope.time = new Date()
+      newImage = new Image()
+      newImage.src = "api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/screenshot?height=400&dummy=#{ $scope.counter % 10 }"
+      newImage.onload = () ->
+        a = a + 1
+        el = $("#placeholder img")
+        el.first().replaceWith(newImage)
+        el.first().show()
+        el.last().hide()
+        return
+      $timeout(loadScreenshot1, 4000)
+      return
+    loadScreenshot1()
+    return
 
   .controller 'ResultCtrl', ($rootScope, $routeParams, $scope, $http, naviService) ->
     $scope.result = {}
