@@ -7,4 +7,4 @@ export HUBOT_HIPCHAT_ROOMS=38999_schedular-hubot@conf.hipchat.com
 export HUBOT_HIPCHAT_PASSWORD=I_am_a_hubot!
 export HUBUT_ANNOUNCE_ROOMS=38999_schedular-hubot@conf.hipchat.com
 
-npm install && node_modules/.bin/forever start -w --watchIgnore ".git/**/*" --watchIgnore "public/*" --watchIgnore "node_modules/*" --watchIgnore ".tmp/*" --watchIgnore "app/*" --watchIgnore "*.js"  -c node_modules/.bin/coffee node_modules/.bin/hubot
+npm install && node_modules/.bin/forever start -w --watchIgnore ".git/**/*" --watchIgnore "bin/**/*" --watchIgnore "public/**/*" --watchIgnore "node_modules/**/*" --watchIgnore ".tmp/**/*" --watchIgnore "app/**/*" --watchIgnore "**/*.js"  -c node_modules/.bin/coffee node_modules/.bin/hubot
