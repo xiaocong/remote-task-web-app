@@ -10,7 +10,9 @@
 dbmodule = require "../lib/module"
 
 rooms = process.env.HUBUT_ANNOUNCE_ROOMS?.split(",")
-process.exit() until rooms
+until rooms
+  robot.logger.error "HUBUT_ANNOUNCE_ROOMS is not set!"
+  process.exit()
 
 module.exports = (robot) ->
   announce = (msg) ->
