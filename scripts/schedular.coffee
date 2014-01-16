@@ -45,22 +45,26 @@ module.exports = (robot) ->
     data = dbmodule.data()
 
     robot.respond /(list|ls) (\w+)$/i, (msg) ->
+      messages = []
       switch msg.match[2].trim()
         when "workstations", "workstation"
-          msg.send "Workstations(#{data.models.workstations.length}):"
+          messages.push "Workstations(#{data.models.workstations.length}):"
           data.models.workstations.forEach (ws) ->
-            msg.send "  *  #{formatWorkstation(ws.toJSON())}"
+            messages.push "  *  #{formatWorkstation(ws.toJSON())}"
+          msg.send messages.join "\n"
         when "devices", "device"
-          msg.send "Devices(#{data.models.devices.length}):"
+          messages.push "Devices(#{data.models.devices.length}):"
           data.models.devices.forEach (dev) ->
-            msg.send "  *  #{formatDevice(dev.toJSON())}"
+            messages.push "  *  #{formatDevice(dev.toJSON())}"
+          msg.send messages.join "\n"
         when "jobs", "job"
           showJobs = (status) ->
             jobs = data.models.live_jobs.filter((job) ->job.get("status") is status)
-            msg.send "#{if status is 'new' then 'Pending' else 'Running'} Jobs(#{jobs.length}):"
+            messages.push "#{if status is 'new' then 'Pending' else 'Running'} Jobs(#{jobs.length}):"
             jobs.forEach (job) ->
-              msg.send "  *  #{formatJob(job.toJSON())}"
+              messages.push "  *  #{formatJob(job.toJSON())}"
           showJobs status for status in ["new", "started"]
+          msg.send messages.join "\n"
 
     data.models.workstations.on "add", (ws) ->
       announce "Workstation Connected: #{formatWorkstation(ws.toJSON())}"
