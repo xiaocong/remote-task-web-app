@@ -129,16 +129,23 @@ start = ->
   zk_jobs.on "remove", finish_job
 
   zk_jobs.on "add", (job) ->
-    # Due to async issue, job precess may be running but the job status in db is not started.
-    if not live_jobs.get(job.id) or (live_jobs.get(job.id).get("status") is "new" and not live_jobs.get(job.id).get("locked"))
-      url_str = url.format(
-        protocol: "http"
-        hostname: job.get("ip")
-        port: job.get("port")
-        pathname: "/api/0/jobs/#{job.id}/stop"
-      )
-      request.get url_str, (err, r, b) ->
-      logger.warn "Kill untracked job: #{job.id}"
+    # Due to async issue, job process may be running but the job status in db is not started.
+    # So we need to kill the untracked job.
+    # But unfortunatelly, when the schedular is started, the "add" event may be triggered before
+    # the live_jobs is retrieved from db, so we will have to delay some secondes to check if the
+    # job is really untracked.
+    setTimeout( ->
+        unless live_jobs.get(job.id)?.get("status") is "started"
+          url_str = url.format(
+            protocol: "http"
+            hostname: job.get("ip")
+            port: job.get("port")
+            pathname: "/api/0/jobs/#{job.id}/stop"
+          )
+          request.get url_str, (err, r, b) ->
+          logger.warn "Kill untracked job: #{job.id}"
+      , 10000
+    ) unless live_jobs.get(job.id)?.get("status") is "started"
 
   events.on "update:job", (msg) ->
     logger.debug "Find jobs #{JSON.stringify(msg.find)} and update to #{JSON.stringify(msg.update)}"
