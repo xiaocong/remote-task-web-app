@@ -22,7 +22,7 @@ module.exports = (robot) ->
   formatWorkstation = (ws) ->
     "#{ws.uname} - #{ws.ip} (#{ws.mac})"
   formatDevice = (dev) ->
-    "#{dev.product.brand} #{dev.product.model} (#{dev.platform} #{dev.build.version.release}) #{if dev.idle then 'IDLE' else 'BUSY'} - #{dev.serial}, Attached on #{formatWorkstation(dev.workstation)}"
+    "#{dev.serial} <#{if dev.idle then 'IDLE' else 'BUSY'}> - #{dev.product.brand} #{dev.product.model} (#{dev.platform} #{dev.build.version.release})"
   formatJob = (job) ->
     "#{job.id} - modified #{formatDuration(job.modified_at, new Date)}"
 
@@ -51,18 +51,29 @@ module.exports = (robot) ->
           messages.push "Workstations(#{data.models.workstations.length}):"
           data.models.workstations.forEach (ws) ->
             messages.push "  *  #{formatWorkstation(ws.toJSON())}"
+            data.models.devices.filter((dev) -> dev.get("workstation").mac is ws.get "mac").forEach (dev) ->
+              messages.push "       >  #{formatDevice(dev.toJSON())}"
+              data.models.jobs.filter((job) ->
+                (job.get("mac") is ws.get("mac")) and (job.get("serial") is dev.get("serial"))
+              ).forEach (job)->
+                messages.push "            +  Job #{job.id}"
           msg.send messages.join "\n"
         when "devices", "device"
           messages.push "Devices(#{data.models.devices.length}):"
           data.models.devices.forEach (dev) ->
-            messages.push "  *  #{formatDevice(dev.toJSON())}"
+            messages.push "  >  #{formatDevice(dev.toJSON())}"
+            messages.push "       *  #{formatWorkstation(dev.get "workstation")}"
+            data.models.jobs.filter((job) ->
+              (job.get("mac") is dev.get("workstation").mac) and (job.get("serial") is dev.get("serial"))
+            ).forEach (job)->
+              messages.push "       +  Job #{job.id}"
           msg.send messages.join "\n"
         when "jobs", "job"
           showJobs = (status) ->
             jobs = data.models.live_jobs.filter((job) ->job.get("status") is status)
             messages.push "#{if status is 'new' then 'Pending' else 'Running'} Jobs(#{jobs.length}):"
             jobs.forEach (job) ->
-              messages.push "  *  #{formatJob(job.toJSON())}"
+              messages.push "  +  #{formatJob(job.toJSON())}"
           showJobs status for status in ["new", "started"]
           msg.send messages.join "\n"
 
