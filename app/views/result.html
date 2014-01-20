@@ -36,7 +36,25 @@
     <td>{{ret.start_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
     <td>{{ret.end_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
     <td><a href="{{ret.log}}" target="_blank">View Log</a></td>
-    <td><a href="{{ret.screenshot_at_failure}}" target="_blank">View Screenshot</td>
+    <td><a href="javascript:void(0)" ng-click="viewScreenshot($index)">View Screenshot</a></td>
+    <!--td><a href="{{ret.screenshot_at_failure}}" target="_blank">View Screenshot</td-->
   </tr>
 </table>
 
+
+<div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h4 id="myLabel">Screenshot</h4>
+  </div>
+  <div class="modal-body modal-body-cus" id="img_holder">
+    <p class="text-center">
+      <img id="screenshot" alt="new">
+    </p>
+  </div>
+  <div class="modal-footer modal-footer-center">
+    <a id="prev_btn" href="javascript:void(0)" class="btn btn-primary" ng-click="step(-1)"><i class="icon-chevron-left icon-white"></i></a>
+    <a id="next_btn" href="javascript:void(0)" class="btn btn-primary" ng-click="step(1)"><i class="icon-chevron-right icon-white"></i></a>
+    <!--button id="prev_btn" class="btn btn-primary" ng-click="previous()">Prev</button>
+    <button id="next_btn" class="btn btn-primary" ng-click="next()">Next</button-->
+  </div>
