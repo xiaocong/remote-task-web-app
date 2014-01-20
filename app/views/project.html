@@ -25,6 +25,7 @@
         <th>Creator</th>
         <th>Repo</th>
         <th>Description</th>
+        <th>Active</th>
         <th>Operation</th>
       </tr>
     </thead>
@@ -35,6 +36,7 @@
         <td>{{task.creator.email}}</td>
         <td>{{task.jobs[0].repo_url}}</td>
         <td>{{task.description}}</td>
+        <td>{{task._actives}}/{{task.jobs.length}}</td>
         <td>
           <!--button name="operation_btn" class="btn btn-primary" ng-show="!activeFilter" ng-click="restart(task)">Restart</button>
           <button name="operation_btn" class="btn btn-danger" ng-show="activeFilter" ng-click="cancel(task)">Cancel</button-->

@@ -65,18 +65,20 @@ angular.module('angApp')
 
   .controller 'ProjectCtrl', ($rootScope, $routeParams, $scope, $http, $location) ->
     setTaskStatus = (task) ->
-      task._active = false
+      #task._active = false
       for j in task.jobs
+        task._actives = 0
         if j.status is "started" or j.status is "new"
-          task._active = true
-          return
+          #task._active = true
+          task._actives++
+      return
     updateTask = (newTask) ->
       setTaskStatus(newTask)
       $scope.dataset.tasks[i] = newTask for t, i in $scope.dataset.tasks when t.id is newTask.id
       return
     hasActiveTask = (tasks) ->
       return false if not tasks?
-      return true for t in tasks when t._active is true
+      return true for t in tasks when t._actives > 0
     retrieveTasks = () ->
       return if $scope.$$destroyed is true
       $http.get("api/tasks?project=#{ $scope.pid }")
@@ -122,7 +124,7 @@ angular.module('angApp')
           result = data
           return
     $scope.statusFilter = (task) ->
-      return (task._active is $scope.activeFilter)
+      return ((task._actives > 0) == $scope.activeFilter)
     $scope.viewTask = ($event, task) ->
       target = if $event.target.tagName is "I" then $event.target.parentNode else $event.target
       return if target.name is "operation_btn"
@@ -473,7 +475,7 @@ angular.module('angApp')
       $scope.counter++
       $scope.time = new Date()
       newImage = new Image()
-      newImage.src = "api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/screenshot?height=400&dummy=#{ $scope.counter % 10 }"
+      newImage.src = "api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/screenshot?height=250&dummy=#{ $scope.counter % 10 }"
       newImage.onload = () ->
         el = $("#placeholder img")
         el.first().replaceWith(newImage)
@@ -533,6 +535,7 @@ angular.module('angApp')
     return
 
   .controller 'ResultCtrl', ($rootScope, $routeParams, $scope, $http, naviService) ->
+    $scope.currentIndex = 0
     $scope.result = {}
     retrieveData = () ->
       $http.get("api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/result?r=error,fail")
@@ -544,6 +547,55 @@ angular.module('angApp')
           return
     $scope.refresh = () ->
       retrieveData()
+      return
+    $scope.viewScreenshot = ($index) ->
+      $scope.currentIndex = $index
+      $('#myModal').modal({'show'})
+      updateButton()
+      loadScreenshot()
+      return
+    $scope.step = (s) ->
+      return if $scope.currentIndex+s < 0 or $scope.currentIndex+s >= $scope.result.results.length
+      $scope.currentIndex += s
+      updateButton()
+      loadScreenshot()
+    $scope.previous = () ->
+      return if $scope.currentIndex is 0
+      $scope.currentIndex--
+      updateButton()
+      loadScreenshot()
+      return
+    $scope.next = () ->
+      return if $scope.currentIndex is ($scope.result.results.length - 1)
+      $scope.currentIndex++
+      updateButton()
+      loadScreenshot()
+      return
+    updateButton = () ->
+      prevBtn = $("#prev_btn")
+      nextBtn = $("#next_btn")
+      if $scope.currentIndex is 0
+        prevBtn.addClass("disabled")
+      else
+        prevBtn.removeClass("disabled")
+      return
+      if $scope.currentIndex is ($scope.result.results.length - 1)
+        nextBtn.addClass("disabled")
+      else
+        nextBtn.removeClass("disabled")
+      return
+    loadScreenshot = () ->
+      # Avoid any job after destroyed.
+      return if $scope.$$destroyed is true
+      #$scope.time = new Date()
+      $("#myLabel").text($scope.result.results[$scope.currentIndex].name)
+      newImage = new Image()
+      newImage.src = $scope.result.results[$scope.currentIndex].screenshot_at_failure
+      newImage.onload = () ->
+        el = $("#img_holder img")
+        el.replaceWith(newImage)
+        return
+      # TODO: Handle the failed case.
       return
     retrieveData()
 
