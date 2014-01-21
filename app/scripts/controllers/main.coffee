@@ -395,6 +395,18 @@ angular.module('angApp')
           # Don't have to update data automatically when all jobs are finished.
           return if not hasActiveJob($rootScope.task.jobs)
           scheduleRefresh(retrieveJobs)
+    $scope.getDevice = (job) ->
+      return "" if not job.device_filter.product?.manufacturer?.length > 0
+      return job.device_filter.product.manufacturer + " / " + job.device_filter.product.model
+    $scope.getIndicator = (job) ->
+      return "images/green-icon.png" if job.status is "new" or job.status is "started"
+      return "images/red-icon.png" if job.schedular.available_device.total is 0
+      if job.schedular.available_device.idle > 0
+        return "images/green-icon.png"
+      else
+        return "images/yellow-icon.png"
+      # TODO: when should we use gray?
+      return "images/gray-icon.png"
     $scope.restart = (job) ->
       $http.post("api/tasks/#{ $rootScope.task.id }/jobs/#{ job.no }/restart")
         .success (data) ->
