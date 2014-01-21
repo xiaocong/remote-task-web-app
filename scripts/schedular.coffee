@@ -54,7 +54,7 @@ module.exports = (robot) ->
             data.models.devices.filter((dev) -> dev.get("workstation").mac is ws.get "mac").forEach (dev) ->
               messages.push "       >  #{formatDevice(dev.toJSON())}"
               data.models.jobs.filter((job) ->
-                (job.get("mac") is ws.get("mac")) and (job.get("serial") is dev.get("serial"))
+                (job.get("workstation").mac is ws.get("mac")) and (job.get("serial") is dev.get("serial"))
               ).forEach (job)->
                 messages.push "            +  Job #{job.id}"
           msg.send messages.join "\n"
@@ -64,7 +64,7 @@ module.exports = (robot) ->
             messages.push "  >  #{formatDevice(dev.toJSON())}"
             messages.push "       *  #{formatWorkstation(dev.get "workstation")}"
             data.models.jobs.filter((job) ->
-              (job.get("mac") is dev.get("workstation").mac) and (job.get("serial") is dev.get("serial"))
+              (job.get("workstation").mac is dev.get("workstation").mac) and (job.get("serial") is dev.get("serial"))
             ).forEach (job)->
               messages.push "       +  Job #{job.id}"
           msg.send messages.join "\n"

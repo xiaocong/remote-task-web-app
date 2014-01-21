@@ -18,7 +18,7 @@ module.exports =
         protocol: "http"
         hostname: ws.get("ip")
         port: ws.get("api").port
-        pathname: "#{ws.get("api").path}/#{req.params[0]}"
+        pathname: "#{ws.get('api').path}/#{req.params[0]}"
         query: req.query
       )
       req.pipe(request(url_str)).pipe res

@@ -13,7 +13,7 @@ stop_job = (job, workstations)->
       protocol: "http"
       hostname: ws.get("ip")
       port: ws.get("api").port
-      pathname: "/api/0/jobs/#{job.id}/stop"
+      pathname: "#{ws.get('api').path}/0/jobs/#{job.id}/stop"
     )
     request.get(url_str, (e, r, body)->)
     logger.info "Stop running job:#{job.id}."
@@ -253,7 +253,7 @@ exports = module.exports =
           protocol: "http"
           hostname: ws.get("ip")
           port: ws.get("api").port
-          pathname: "/api/0/jobs/#{job.id}/stream"
+          pathname: "#{ws.get('api').path}/0/jobs/#{job.id}/stream"
           query: req.query
         )
         stream = request({url: url_str, timeout: 1000*300})
@@ -278,7 +278,7 @@ exports = module.exports =
           protocol: "http"
           hostname: ws.get("ip")
           port: ws.get("api").port
-          pathname: "/api/0/jobs/#{job.id}/files/#{req.params[0]}"
+          pathname: "#{ws.get('api').path}/0/jobs/#{job.id}/files/#{req.params[0]}"
           query: req.query
         )
         request(url_str).pipe res
@@ -289,7 +289,7 @@ exports = module.exports =
     (req, res, next) ->
       job = req.data.models.jobs.find (job) -> Number(job.id) is req.job.id
       if job?
-        req.device = req.data.models.devices.get "#{job.get('mac')}-#{job.get('serial')}"
+        req.device = req.data.models.devices.get "#{job.get('workstation').mac}-#{job.get('serial')}"
         next()
       else
         res.json 403, error: "Forbidden on not running job."
@@ -308,7 +308,7 @@ exports = module.exports =
           protocol: "http"
           hostname: ws.get("ip")
           port: ws.get("api").port
-          pathname: "/api/0/jobs/#{job.id}/files/workspace/result.txt"
+          pathname: "#{ws.get('api').path}/0/jobs/#{job.id}/files/workspace/result.txt"
         )
         stream = request(url_str)
         remaining = ""
