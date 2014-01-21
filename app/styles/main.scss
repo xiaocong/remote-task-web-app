@@ -146,3 +146,19 @@ table.table thead .sorting_desc {
     color: #FFFFFF;
     padding: 2px 4px;
 }
+
+/* screenshot dialog */
+.modal-footer-center {
+  text-align: center
+}
+.modal-body img {
+  width: 250px;
+  border: 2px groove #D9EDF7;
+}
+.modal-body-cus {
+  max-height: 450px;
+}
+.modal-header {
+  background-color: #D9EDF7;
+  border-radius: 6px 6px 0 0;
+}
