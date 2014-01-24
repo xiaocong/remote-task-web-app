@@ -390,7 +390,9 @@ angular.module('angApp')
       return if $scope.$$destroyed is true
       $http.get("api/tasks/#{ $routeParams.tid }")
         .success (data, status) ->
+          now = new Date()
           $rootScope.task = data
+          j._duration = parseInt((now - new Date(j.modified_at))/1000) for j in $scope.task.jobs
           naviService.onDataChanged()
           # Don't have to update data automatically when all jobs are finished.
           return if not hasActiveJob($rootScope.task.jobs)
