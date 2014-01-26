@@ -259,7 +259,7 @@ exports = module.exports =
         stream = request({url: url_str, timeout: 1000*300})
         stream.on("error", (error) ->
           logger.error "**ERROR**: #{error}"
-          res.end error
+          res.end error.toString()
         ).pipe res
         res.on "close", ->  # client abort
           stream.abort()  # close request to ws
@@ -282,7 +282,7 @@ exports = module.exports =
           query: req.query
         )
         request(url_str).on('error', (err) ->
-          res.end(err)
+          res.end()
         ).pipe res
       else
         res.json 404, error: "The device is disconnected."
