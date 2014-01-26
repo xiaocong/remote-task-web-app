@@ -42,10 +42,12 @@ exports = module.exports = (zookeeper_url, path, cb) ->
     .map (ws) ->
       _.map ws.get("api").jobs, (job) ->
         "id": job.job_id
-        "mac": ws.get "mac"
-        "ip": ws.get "ip"
-        "uname": ws.get "uname"
-        "port": ws.get("api").port
+        "workstation":
+          "mac": ws.get "mac"
+          "ip": ws.get "ip"
+          "uname": ws.get "uname"
+          "port": ws.get("api").port
+          "path": ws.get("api").path
         "job_id": job.job_id
         "started_at": job.started_at
         "exclusive": job.exclusive ? true
@@ -66,6 +68,7 @@ exports = module.exports = (zookeeper_url, path, cb) ->
           "ip": ws.get "ip"
           "uname": ws.get "uname"
           "port": ws.get("api").port
+          "path": ws.get("api").path
         "serial": device.adb.serial
         "platform": "android"
         "product": device.product
@@ -74,7 +77,7 @@ exports = module.exports = (zookeeper_url, path, cb) ->
 
     all_devices = _.map _.flatten(ws_devices, true), (device) ->
       device.idle = not _.some(all_jobs, (job) ->
-        "#{job.mac}-#{job.serial}" is device.id and job.platform is device.platform and job.exclusive
+        "#{job.workstation.mac}-#{job.serial}" is device.id and job.platform is device.platform and job.exclusive
       )
       device
 

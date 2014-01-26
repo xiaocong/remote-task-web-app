@@ -22,7 +22,7 @@ module.exports = (robot) ->
   formatWorkstation = (ws) ->
     "#{ws.uname} - #{ws.ip} (#{ws.mac})"
   formatDevice = (dev) ->
-    "#{dev.serial} <#{if dev.idle then 'IDLE' else 'BUSY'}> - #{dev.product.brand} #{dev.product.model} (#{dev.platform} #{dev.build.version.release})"
+    "#{dev.product.brand} #{dev.product.model} (#{dev.platform} #{dev.build.version.release}) <#{if dev.idle then 'IDLE' else 'BUSY'}> - #{dev.serial}"
   formatJob = (job) ->
     "#{job.id} - modified #{formatDuration(job.modified_at, new Date)}"
 
@@ -54,7 +54,7 @@ module.exports = (robot) ->
             data.models.devices.filter((dev) -> dev.get("workstation").mac is ws.get "mac").forEach (dev) ->
               messages.push "       >  #{formatDevice(dev.toJSON())}"
               data.models.jobs.filter((job) ->
-                (job.get("mac") is ws.get("mac")) and (job.get("serial") is dev.get("serial"))
+                (job.get("workstation").mac is ws.get("mac")) and (job.get("serial") is dev.get("serial"))
               ).forEach (job)->
                 messages.push "            +  Job #{job.id}"
           msg.send messages.join "\n"
@@ -64,7 +64,7 @@ module.exports = (robot) ->
             messages.push "  >  #{formatDevice(dev.toJSON())}"
             messages.push "       *  #{formatWorkstation(dev.get "workstation")}"
             data.models.jobs.filter((job) ->
-              (job.get("mac") is dev.get("workstation").mac) and (job.get("serial") is dev.get("serial"))
+              (job.get("workstation").mac is dev.get("workstation").mac) and (job.get("serial") is dev.get("serial"))
             ).forEach (job)->
               messages.push "       +  Job #{job.id}"
           msg.send messages.join "\n"

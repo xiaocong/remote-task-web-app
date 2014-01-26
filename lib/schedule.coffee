@@ -46,7 +46,7 @@ start = ->
       protocol: "http"
       hostname: device.get("workstation").ip
       port: device.get("workstation").port
-      pathname: "/api/0/jobs/#{job.id}"
+      pathname: "#{device.get('workstation').path}/0/jobs/#{job.id}"
     )
     body =
       env: job.get("environ")
@@ -77,8 +77,7 @@ start = ->
 
   finish_job = (event) ->
     id = event.id
-    hostname = event.get("ip")
-    port = event.get("port")
+    ws = event.get("workstation")
     logger.info "Job #{id} finished."
 
     events.trigger("update:job",
@@ -88,9 +87,9 @@ start = ->
         return logger.error("Error during saving job as finished: #{err}") if err?
         url_str = url.format(
           protocol: "http"
-          hostname: hostname
-          port: port
-          pathname: "/api/0/jobs/#{id}"
+          hostname: ws.ip
+          port: ws.port
+          pathname: "#{ws.path}/0/jobs/#{id}"
         )
         request.get url_str, (err, r, b) ->
           return logger.error("Error when retrieving job result from workstation: #{err}") if err?
@@ -136,11 +135,12 @@ start = ->
     # job is really untracked.
     setTimeout( ->
         unless live_jobs.get(job.id)?.get("status") is "started"
+          ws = job.get("workstation")
           url_str = url.format(
             protocol: "http"
-            hostname: job.get("ip")
-            port: job.get("port")
-            pathname: "/api/0/jobs/#{job.id}/stop"
+            hostname: ws.ip
+            port: ws.port
+            pathname: "#{ws.path}/0/jobs/#{job.id}/stop"
           )
           request.get url_str, (err, r, b) ->
           logger.warn "Kill untracked job: #{job.id}"

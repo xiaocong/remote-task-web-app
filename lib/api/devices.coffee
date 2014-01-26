@@ -56,11 +56,12 @@ module.exports =
           res.send 200
 
   screenshot: (req, res) ->
+    ws = req.device.get("workstation")
     url_str = url.format(
       protocol: "http"
-      hostname: req.device.get("workstation").ip
-      port: req.device.get("workstation").port
-      pathname: "/api/0/devices/#{req.device.get('serial')}/screenshot"
+      hostname: ws.ip
+      port: ws.port
+      pathname: "#{ws.path}/0/devices/#{req.device.get('serial')}/screenshot"
       query: req.query
     )
     req.pipe(request(url_str)).pipe res
