@@ -22,7 +22,7 @@ module.exports = (robot) ->
   formatWorkstation = (ws) ->
     "#{ws.uname} - #{ws.ip} (#{ws.mac})"
   formatDevice = (dev) ->
-    "#{dev.serial} <#{if dev.idle then 'IDLE' else 'BUSY'}> - #{dev.product.brand} #{dev.product.model} (#{dev.platform} #{dev.build.version.release})"
+    "#{dev.product.brand} #{dev.product.model} (#{dev.platform} #{dev.build.version.release}) <#{if dev.idle then 'IDLE' else 'BUSY'}> - #{dev.serial}"
   formatJob = (job) ->
     "#{job.id} - modified #{formatDuration(job.modified_at, new Date)}"
 
