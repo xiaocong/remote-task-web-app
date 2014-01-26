@@ -64,4 +64,6 @@ module.exports =
       pathname: "#{ws.path}/0/devices/#{req.device.get('serial')}/screenshot"
       query: req.query
     )
-    req.pipe(request(url_str)).pipe res
+    req.pipe(request(url_str)).on('error', (err) ->
+      res.end()
+    ).pipe res

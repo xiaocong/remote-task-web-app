@@ -281,7 +281,9 @@ exports = module.exports =
           pathname: "#{ws.get('api').path}/0/jobs/#{job.id}/files/#{req.params[0]}"
           query: req.query
         )
-        request(url_str).pipe res
+        request(url_str).on('error', (err) ->
+          res.end(err)
+        ).pipe res
       else
         res.json 404, error: "The device is disconnected."
 
