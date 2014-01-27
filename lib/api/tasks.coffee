@@ -356,6 +356,15 @@ exports = module.exports =
           parse_line remaining
           summary.total = summary.pass + summary.fail + summary.error
           summary.job = req.job
+
+          page = Number(req.param("page"))
+          page_count = Number(req.param("page_count")) or 100
+
+          if page >= 0 and page_count > 0
+            summary.page = page
+            summary.page_count = page_count
+            summary.pages = Math.ceil(summary.results.length / page_count)
+            summary.results = summary.results[page*page_count...(page+1)*page_count]
           res.json summary
       else
         res.json 404, error: "The device is disconnected."
