@@ -551,15 +551,70 @@ angular.module('angApp')
   .controller 'ResultCtrl', ($rootScope, $routeParams, $scope, $http, naviService) ->
     $scope.currentIndex = 0
     $scope.result = {}
+    #TODO: Rewrite pageControl as a widget.
+    $scope.pageControl = {}
     retrieveData = () ->
-      $http.get("api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/result?r=error,fail")
+      #$http.get("api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/result?r=error,fail")
+      $http.get("api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/result?r=#{ $scope.pageControl.filter }&page_count=#{$scope.pageControl.pageSize}&page=#{$scope.pageControl.pageIndex}")
         .success (data) ->
           $scope.result = data
+          $scope.pageControl.pageCount = $scope.result.pages
+          $scope.pageControl.pageIndex = $scope.result.page
+          $scope.pageControl.update()
           # Set task info in $rootScope to ensure breadcum works fine.
           $rootScope.task = $scope.result.job.task
           naviService.onDataChanged()
           return
+    init = () ->
+      $scope.pageControl.MAX_PAGES = 5
+      $scope.pageControl.filter = "error"
+      $scope.pageControl.pageSize = 10
+      $scope.pageControl.pageIndex = 0
+      $scope.pageControl.pageCount = 0 # got from server
+      $scope.pageControl.pages = []
+      #$scope.pageControl.hasPrev = $scope.pageControl.hasNext = false
+      for i in [0..$scope.pageControl.MAX_PAGES-1]
+        $scope.pageControl.pages[i] = 
+          show: (i is 0)
+          index: i
+        #$scope.pageControl.pages[i].show = (i is 0)
+        #$scope.pageControl.pages[i].index = i
+      return
+    $scope.pageControl.prev = () ->
+      return if $scope.pageControl.pages[0].index <= 0
+      for i in [0..$scope.pageControl.MAX_PAGES-1]
+        $scope.pageControl.pages[i].index = $scope.pageControl.pages[i].index - $scope.pageControl.MAX_PAGES
+        $scope.pageControl.pages[i].show = ($scope.pageControl.pages[i].index < $scope.pageControl.pageCount)
+        $scope.pageControl.pages[i].disable = ($scope.pageControl.pages[i].index is $scope.pageControl.pageIndex)
+      #$scope.pageControl.hasPrev = $scope.pageControl.pages[0].index > 0
+      #$scope.pageControl.hasNext = true
+    $scope.pageControl.next = () ->
+      return if $scope.pageControl.pages[$scope.pageControl.MAX_PAGES-1].index >= $scope.pageControl.pageCount
+      for i in [0..$scope.pageControl.MAX_PAGES-1]
+        $scope.pageControl.pages[i].index += $scope.pageControl.MAX_PAGES
+        $scope.pageControl.pages[i].show = ($scope.pageControl.pages[i].index < $scope.pageControl.pageCount)
+        $scope.pageControl.pages[i].disable = ($scope.pageControl.pages[i].index is $scope.pageControl.pageIndex)
+      #$scope.pageControl.hasPrev = true
+      #$scope.pageControl.hasNext = $scope.pageControl.pages[$scope.pageControl.MAX_PAGES-1].index < $scope.pageControl.pageCount-1
+    $scope.pageControl.goto = (index) ->
+      $scope.pageControl.pageIndex = $scope.pageControl.pages[index].index
+      retrieveData()
+    $scope.pageControl.update = () ->
+      multiple = ($scope.pageControl.pageIndex / $scope.pageControl.MAX_PAGES) | 0
+      offset = $scope.pageControl.pageIndex % $scope.pageControl.MAX_PAGES
+      for i in [0..$scope.pageControl.MAX_PAGES-1]
+        $scope.pageControl.pages[i].index = multiple * $scope.pageControl.MAX_PAGES + i
+        $scope.pageControl.pages[i].show = ($scope.pageControl.pages[i].index < $scope.pageControl.pageCount)
+        $scope.pageControl.pages[i].disable = ($scope.pageControl.pages[i].index is $scope.pageControl.pageIndex)
+      #$scope.pageControl.hasPrev = $scope.pageControl.pages[0].index > 0
+      #$scope.pageControl.hasNext = $scope.pageControl.pages[$scope.pageControl.MAX_PAGES-1].index < $scope.pageControl.pageCount-1
+      return
+    $scope.goto = $scope.pageControl.goto
     $scope.refresh = () ->
+      retrieveData()
+      return
+    $scope.toggleFilter = () ->
+      $scope.pageControl.pageIndex = 0
       retrieveData()
       return
     $scope.viewScreenshot = ($index) ->
@@ -611,6 +666,7 @@ angular.module('angApp')
         return
       # TODO: Handle the failed case.
       return
+    init()
     retrieveData()
 
   .controller 'AddTaskCtrl3', ($scope, $http, $location) ->
