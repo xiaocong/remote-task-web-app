@@ -1777,9 +1777,11 @@
 
         GET /api/tasks/:task/jobs/:no/result?access_token=:access_token
 
-    Notes:
+    Notes
 
     - It parses the content in file `$JOB_ID/$WORKSPACE/result.txt`. If the file doesn't exist, it returns an error.
+    - You can pass query parameter `r` e.g. `r=fail,error` to filter the specified results.
+    - You can pass query parameters `page` and `page_count` to only return the result of the specified page.
 
     Examples:
 
