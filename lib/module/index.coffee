@@ -34,6 +34,8 @@ match = (filter, device) ->
   # "build": device.build
   # "locale": device.locale
   # "tags": [...]
+  keys = ['workstation', 'serial', 'platform', 'product', 'build', 'locale', 'tags']
+  return false if _.some(keys, (k) -> not device.get(k)?)
   return false if "mac" of filter and device.get("workstation").mac isnt filter.mac
   return false if "serial" of filter and device.get("serial") isnt filter.serial
   return false if "platform" of filter and device.get("platform") isnt filter.platform
