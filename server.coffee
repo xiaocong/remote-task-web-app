@@ -120,6 +120,8 @@ app.post "/api/users/:id", api.auth.authAdmin, api.users.update
 app.post "/api/users/:id/tag/:tag", api.auth.authAdmin, api.users.tag
 app.post "/api/users/:id/untag/:tag", api.auth.authAdmin, api.users.untag
 
+app.get "/api/repos", api.repos.list
+
 app.all "/api/*", (req, res) -> res.json 404, error: "API Not Found."
 
 app.get '/views/*', routes.views
