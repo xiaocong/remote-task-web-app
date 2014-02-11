@@ -60,6 +60,7 @@ exports = module.exports =
     req.user.getProjects {id: req.task.project_id}, (err, projects) ->
       return next(err) if err
       if projects.length > 0
+        req.project = projects[0]
         next()
       else
         res.json 403, error: "No permission to access the task."

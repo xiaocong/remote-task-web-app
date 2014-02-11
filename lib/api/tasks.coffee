@@ -38,15 +38,16 @@ exports = module.exports =
     jobs.forEach (job, index) ->
       for prop in properties when prop not of job and req.param(prop)?
         job[prop] = req.param(prop)
-      job["environ"] ?= {}
-      job["r_type"] ?= "none"
-      job["r_job_nos"] ?= []
-      job["status"] = "new"
-      job["no"] ?= index
-      job["priority"] = req.project.priority  # 1 - 10. default 1 means lowest. 10 means highest.
-      job["device_filter"] ?= {}
-      job["device_filter"]["tags"] ?= []
-      job["device_filter"]["tags"] = _.union(job["device_filter"]["tags"], req.project.tagList())
+      job.environ ?= {}
+      job.r_type ?= "none"
+      job.r_job_nos ?= []
+      job.status = "new"
+      job.no ?= index
+      job.priority = req.project.priority  # 1 - 10. default 1 means lowest. 10 means highest.
+      job.device_filter ?= {}
+      job.device_filter.tags ?= []
+      job.device_filter.tags = _.union(job.device_filter.tags, req.project.tagList())
+      job.device_filter.device_owner = req.project.creator.email
 
     if not _.every(jobs, (j) -> j.repo_url?)
       return res.json 500, error: "'repo_url' is mandatory for every job."
@@ -168,25 +169,24 @@ exports = module.exports =
     job.task_id = req.task.id
     if not job.repo_url?
       return res.json 500, error: "'repo_url' is mandatory for job."
-    job["environ"] ?= {}
-    job["device_filter"] ?= {}
-    job["device_filter"]["tags"] ?= []
-    job["r_type"] ?= "none"
-    job["r_job_nos"] ?= []
-    job["status"] = "new"
-    job["no"] = _.max(req.task.jobs, (j) -> j.no).no + 1
-    req.db.models.project.get req.task.project_id, (err, project) ->
+    job.environ ?= {}
+    job.device_filter ?= {}
+    job.device_filter.tags ?= []
+    job.r_type ?= "none"
+    job.r_job_nos ?= []
+    job.status = "new"
+    job.no = _.max(req.task.jobs, (j) -> j.no).no + 1
+    job.priority = req.project.priority
+    job.device_filter.tags = _.union(job.device_filter.tags, req.project.tagList())
+    job.device_filter.device_owner = req.project.creator.email
+
+    if job.device_filter.tags.length <= 0
+      return res.json 500, error: "Job should define at least one tag in 'device_filter.tags'."
+
+    req.db.models.job.create job, (err, j) ->
       return next(err) if err?
-      job["priority"] = project.priority
-      job["device_filter"]["tags"] = _.union(job["device_filter"]["tags"], project.tagList())
-
-      if not job.device_filter?.tags?.length > 0
-        return res.json 500, error: "Job should define at least one tag in 'device_filter.tags'."
-
-      req.db.models.job.create job, (err, j) ->
-        return next(err) if err?
-        res.json j
-        req.redis.publish "db.job", JSON.stringify(method: "add", job: j.id)
+      res.json j
+      req.redis.publish "db.job", JSON.stringify(method: "add", job: j.id)
 
   param_job_no: (req, res, next) ->
     req.db.models.job.find {task_id: req.task.id, no: Number(req.params.no)}, (err, jobs) ->
@@ -206,16 +206,16 @@ exports = module.exports =
         return res.json 500, error: "Invalid r_job_nos."
     properties = ["r_type", "r_job_nos", "environ", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
     t_job[prop] = job[prop] for prop in properties when prop of job
-    req.db.models.project.get req.task.project_id, (err, project) ->
+    t_job.priority = req.project.priority
+    t_job.device_filter ?= {}
+    t_job.device_filter.tags ?= []
+    t_job.device_filter.tags = _.union(t_job.device_filter.tags, req.project.tagList())
+    t_job.device_filter.device_owner = req.project.creator.email
+    t_job.save (err) ->
       return next(err) if err?
-      t_job["priority"] = project.priority
-      t_job.device_filter?.tags ?= []
-      t_job["device_filter"]["tags"] = _.union(t_job["device_filter"]["tags"], project.tagList())
-      t_job.save (err) ->
-        return next(err) if err?
-        res.json t_job
-        req.redis.publish "db.job", JSON.stringify(method: "update", job: t_job.id)
-        logger.info "Job:#{t_job.id} updated."
+      res.json t_job
+      req.redis.publish "db.job", JSON.stringify(method: "update", job: t_job.id)
+      logger.info "Job:#{t_job.id} updated."
 
   cancel_job: (req, res, next) ->
     job = req.job
