@@ -5,7 +5,10 @@ _ = require('underscore')
 
 module.exports = exports =
   list: (req, res) ->
-    request require('../config').repo_url, (error, response, body) ->
+    url = req.query.url or require('../config').repo_url
+    if m = url.match /^https:\/\/github.com\/([\w\-\.]+)\/([\w\-\.]+)/
+      url = "https://raw.github.com/#{m[1]}/#{m[2]}/master/README.md"
+    request url, (error, response, body) ->
       return res.json repos: [] if error or response.statusCode isnt 200
       begin = end = false
       category = []
