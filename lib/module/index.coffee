@@ -44,7 +44,7 @@ match = (filter, device) ->
   if "build" of filter
     return false if _.some(filter.build, (v, p) -> p isnt "version" and v isnt device.get("build")[p])
     return false if "version" of filter.build and _.some(filter.build.version, (v, p) -> v isnt device.get("build").version[p])
-  if filter.device_owner? and device.get('workstation').owner?
+  if device.get('workstation').owner?
     return filter.device_owner is device.get('workstation').owner
   else if filter.tags?  # tags is mandatory for filter, if it's empty, then the match result is always false.
     tags = if filter.tags instanceof Array then filter.tags else [filter.tags]
