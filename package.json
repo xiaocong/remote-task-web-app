@@ -25,7 +25,8 @@
     "passport-baidu": "0.0.1",
     "forever": "~0.10.11",
     "hubot-hipchat": "~2.6.4",
-    "socket.io-stream": "~0.5.2"
+    "socket.io-stream": "~0.5.2",
+    "socket.io": "~0.9.16"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
