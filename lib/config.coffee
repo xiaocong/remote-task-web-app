@@ -12,3 +12,4 @@ exports = module.exports =
     clientSecret: process.env.BAIDU_CLIENT_SECRET or "AcoVYA0lAGaEYfvoFjnXOFCT6f7TnKPH"
     callbackURL: process.env.BAIDU_CALLBACK_URL or "http://localhost:#{process.env.PORT or 3000}/api/auth/baidu/callback"
   repo_url: process.env.REPO_URL or 'https://github.com/xiaocong/task-repos'
+  hubot_rooms: process.env.HUBUT_ANNOUNCE_ROOMS?.split(",")
