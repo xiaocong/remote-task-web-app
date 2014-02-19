@@ -24,7 +24,8 @@
     "passport-http-bearer": "~1.0.1",
     "passport-baidu": "0.0.1",
     "forever": "~0.10.11",
-    "hubot-hipchat": "~2.6.4"
+    "hubot-hipchat": "~2.6.4",
+    "socket.io-stream": "~0.5.2"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
