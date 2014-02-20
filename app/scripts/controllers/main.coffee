@@ -462,6 +462,7 @@ angular.module('angApp')
       #return if newData.trim().length <= 0
       $scope.consoleElement = $("#streaming_output") if not $scope.consoleElement?
       #TODO:  filter out "\0"
+      newData = newData.replace(/\0/g, "")
       $scope.consoleElement.append("<li>" + newData.replace(/\n/ig, "<br>") + "</li>")
       $scope.consoleElement[0].scrollTop = $scope.consoleElement[0].scrollHeight
       lis = $scope.consoleElement.children()
