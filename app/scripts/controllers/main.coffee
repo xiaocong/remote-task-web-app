@@ -461,13 +461,14 @@ angular.module('angApp')
       $scope.oldData = data
       #return if newData.trim().length <= 0
       $scope.consoleElement = $("#streaming_output") if not $scope.consoleElement?
+      #TODO:  filter out "\0"
+      newData = newData.replace(/\0/g, "")
       $scope.consoleElement.append("<li>" + newData.replace(/\n/ig, "<br>") + "</li>")
       $scope.consoleElement[0].scrollTop = $scope.consoleElement[0].scrollHeight
       lis = $scope.consoleElement.children()
       #console.log lis.length
       if lis.length > $scope.MAX_CONSOLE_LN
         $scope.consoleElement[0].removeChild(lis[0])
-        #console.log "removed"
       return
     openStream = () ->
       $scope.xhr = new XMLHttpRequest()
@@ -495,8 +496,12 @@ angular.module('angApp')
         el.first().replaceWith(newImage)
         el.first().show()
         el.last().hide()
+        $timeout(loadScreenshot, 5200)
         return
-      $timeout(loadScreenshot, 4000)
+      newImage.onerror = () ->
+        $timeout(loadScreenshot, 5200)
+      # Only load screenshot after the previous one is loaded or failed.
+      #$timeout(loadScreenshot, 5200)
       return
     openStream()
     loadScreenshot()
@@ -567,7 +572,7 @@ angular.module('angApp')
           return
     init = () ->
       $scope.pageControl.MAX_PAGES = 5
-      $scope.pageControl.filter = "error"
+      $scope.pageControl.filter = "fail"
       $scope.pageControl.pageSize = 10
       $scope.pageControl.pageIndex = 0
       $scope.pageControl.pageCount = 0 # got from server
@@ -640,6 +645,9 @@ angular.module('angApp')
       updateButton()
       loadScreenshot()
       return
+    $scope.formattedTrace = (result) ->
+      #return result.trace.replace(",", ", &#13; ")
+      return result.trace
     updateButton = () ->
       prevBtn = $("#prev_btn")
       nextBtn = $("#next_btn")
