@@ -98,4 +98,3 @@ exports = module.exports = (zookeeper_url, path, cb) ->
     )
 
   client.connect()
-

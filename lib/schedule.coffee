@@ -128,16 +128,28 @@ start = ->
     # the live_jobs is retrieved from db, so we will have to delay some secondes to check if the
     # job is really untracked.
     setTimeout( ->
-        unless live_jobs.get(job.id)?.get("status") is "started"
-          ws = job.get("workstation")
-          url_str = url.format(
-            protocol: "http"
-            hostname: ws.ip
-            port: ws.port
-            pathname: "#{ws.path}/0/jobs/#{job.id}/stop"
-          )
-          request.get url_str, (err, r, b) ->
-          logger.warn "Kill untracked job: #{job.id}"
+        if live_jobs.get(job.id)?.get("status") is "started"
+          if zk_jobs.filter((j) -> j.id is job.id).length > 1
+            # two or more jobs in zk with the same id, so kill this one.
+            ws = job.get("workstation")
+            url_str = url.format(
+              protocol: "http"
+              hostname: ws.ip
+              port: ws.port
+              pathname: "#{ws.path}/0/jobs/#{job.id}/stop"
+            )
+            request.get url_str, (err, r, b) ->
+            logger.warn "Kill redundant job: #{job.id}"
+        else if zk_jobs.filter((j) -> j.id is job.id).length is 1
+          # the job status in db is not 'started', but it does exist in zk,
+          # it may be caused by network disconnect between workstation and zk.
+          # so we should change its status to 'started' in db.
+          events.trigger 'update:job',
+            find:
+              id: job.id
+              status: ["new", "finished", "cancelled"]
+            update:
+              status: "started"
       , 10000
     ) unless live_jobs.get(job.id)?.get("status") is "started"
 
