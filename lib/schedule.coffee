@@ -73,6 +73,10 @@ start = ->
             update:
               device: devices[0]
               status: "started"
+            callback: (err) ->
+              events.trigger "retrive:jobinfo",
+                job_id: job.id
+                workstation: device.get("workstation")
           }) if devices?.length > 0
 
   finish_job = (event) ->
@@ -85,20 +89,10 @@ start = ->
       update: {status: "finished"}
       callback: (err) ->
         return logger.error("Error during saving job as finished: #{err}") if err?
-        url_str = url.format(
-          protocol: "http"
-          hostname: ws.ip
-          port: ws.port
-          pathname: "#{ws.path}/0/jobs/#{id}"
-        )
-        request.get url_str, (err, r, b) ->
-          return logger.error("Error when retrieving job result from workstation: #{err}") if err?
-          events.trigger "update:job",
-            find:
-              id: id
-            update:
-              exit_code: JSON.parse(b).exit_code
-              exec_info: JSON.parse(b)
+
+        events.trigger "retrive:jobinfo",
+          job_id: id
+          workstation: ws
     )
 
   devices.on "add", (device) ->
@@ -155,6 +149,24 @@ start = ->
       return msg.callback?(err) if err?
       redis.publish "db.job", JSON.stringify({find: msg.find, update: msg.update})
       msg.callback?()
+
+  events.on 'retrive:jobinfo', (msg) ->
+    id = msg.job_id
+    ws = msg.workstation
+    url_str = url.format(
+      protocol: "http"
+      hostname: ws.ip
+      port: ws.port
+      pathname: "#{ws.path}/0/jobs/#{id}"
+    )
+    request.get url_str, (err, r, b) ->
+      return logger.error("Error when retrieving job result from workstation: #{err}") if err?
+      events.trigger "update:job",
+        find:
+          id: id
+        update:
+          exit_code: JSON.parse(b).exit_code
+          exec_info: JSON.parse(b)
 
   setInterval schedule, 60*1000
 
