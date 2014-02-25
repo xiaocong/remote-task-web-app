@@ -58,20 +58,20 @@ angular.module('services.authService', [])
       data = 
         email: name
         password: pwd
-      $http.post("api/auth/get_access_token", data)
+      $http.post("/api/auth/login", data)
         .success (data) ->
-          #gMY_TOKEN = data.access_token
-          console.log data.access_token
-          gMY_ID = data.id
-          gMY_NAME = data.email or data.name
-          gMY_TAGS = data.tags
-          auth.setAuthCookie(gMY_ID, gMY_NAME, gMY_TAGS)
-          $rootScope.initbasicinfo()
-          $location.path "/"
-        .error (data, status, headers, config) ->
-          # Never reaches here since HTTP 401 has been captured in interceptor.
-          return
-        return
+          $http.get("/api/account")
+            .success (data) ->
+              gMY_ID = data.id
+              gMY_NAME = data.email or data.name
+              gMY_TAGS = data.tags
+              auth.setAuthCookie(gMY_ID, gMY_NAME, gMY_TAGS)
+              $rootScope.initbasicinfo()
+              $location.path "/"
+            .error (data, status, headers, config) ->
+              # Never reaches here since HTTP 401 has been captured in interceptor.
+              return
+            return
 
     auth.isLogin = () ->
       return (gMY_ID > 0) and (gMY_NAME?.length > 0)
@@ -86,15 +86,20 @@ angular.module('services.authService', [])
       return if gMY_TAGS.indexOf("system:role:admin") >=0 then true else false
     auth.logout = () ->
       auth.resetAuthCookie()
+      $http.post("/api/auth/logout").success (data) ->
+        $location.path "/login"
+      return
+    logoutQuietly = () ->
+      auth.resetAuthCookie()
       $location.path "/login"
       return
     $rootScope.$on('event:auth-loginRequired', () ->
       # Clear all cookies and reset login state.
-      auth.logout()
+      logoutQuietly()
     )
     # Start to authenticate here.
     auth.getAuthCookie()
-    auth.logout() if not auth.isLogin()
+    logoutQuietly() if not auth.isLogin()
     $rootScope.auth = auth
     return auth
   ])

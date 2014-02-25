@@ -66,8 +66,8 @@ angular.module('angApp')
   .controller 'ProjectCtrl', ($rootScope, $routeParams, $scope, $http, $location) ->
     setTaskStatus = (task) ->
       #task._active = false
+      task._actives = 0
       for j in task.jobs
-        task._actives = 0
         if j.status is "started" or j.status is "new"
           #task._active = true
           task._actives++
