@@ -73,7 +73,7 @@ exports = module.exports =
   login: (req, res, next) ->
     passport.authenticate("local", (err, user) ->
         return next(err) if err
-        return res.json(401) if not user
+        return res.json(401, error: 'Authentication failed!') unless user
         req.login user, (err) ->
           return next(err) if err
           info = JSON.parse(JSON.stringify user)
