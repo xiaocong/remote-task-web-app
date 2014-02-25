@@ -210,8 +210,8 @@ angular.module('angApp')
       return
     $scope.showLogin = () ->
       return not authService.isLogin()
-    $scope.baiduLogin = ->
-      $window.location.href = '/api/auth/baidu'
+    $scope.githubLogin = ->
+      $window.location.href = '/api/auth/github'
     return
 
   .controller 'TagMgtCtrl', ($rootScope, $scope, $http) ->
