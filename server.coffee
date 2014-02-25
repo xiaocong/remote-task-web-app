@@ -50,7 +50,8 @@ app.use passport.initialize()
 app.use passport.session()
 passport.use api.auth.localStrategy
 passport.use api.auth.bearerStrategy
-passport.use api.auth.baiduStrategy
+# passport.use api.auth.baiduStrategy
+passport.use api.auth.githubStrategy
 passport.serializeUser api.auth.serializeUser
 passport.deserializeUser api.auth.deserializeUser
 
@@ -83,8 +84,10 @@ app.post "/api/auth/login", api.auth.login
 app.post "/api/auth/logout", api.auth.auth, api.auth.logout
 app.get "/api/account", api.auth.auth, api.account.get
 app.post "/api/account", api.auth.auth, api.account.update
-app.get "/api/auth/baidu", passport.authenticate("baidu")
-app.get "/api/auth/baidu/callback", passport.authenticate("baidu", {failureRedirect: '/login', successRedirect: "/"})
+# app.get "/api/auth/baidu", passport.authenticate("baidu")
+# app.get "/api/auth/baidu/callback", passport.authenticate("baidu", {failureRedirect: '/login', successRedirect: "/"})
+app.get "/api/auth/github", passport.authenticate("github")
+app.get "/api/auth/github/callback", passport.authenticate("github", {failureRedirect: '/login', successRedirect: "/"})
 
 app.post "/api/projects", api.auth.auth, api.projects.add
 app.get "/api/projects", api.auth.auth, api.projects.list
