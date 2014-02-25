@@ -5,7 +5,8 @@ _ = require("underscore")
 passport = require('passport')
 LocalStrategy = require('passport-local').Strategy
 BearerStrategy = require('passport-http-bearer').Strategy
-BaiduStrategy = require('passport-baidu').Strategy
+# BaiduStrategy = require('passport-baidu').Strategy
+GithubStrategy = require('passport-github').Strategy
 config = require("../config")
 projects = require("./projects")
 logger = require("../logger")
@@ -31,7 +32,9 @@ findUserByToken = (token, done) ->
 
 findOrCreateUser = (options, done) ->
   db = require("../module").db()
-  email = "#{options.id}@provider.#{options.provider}.com"
+  switch options.provider
+    when 'github' then email = options.profile._json.email
+    else email = "#{options.id}@provider.#{options.provider}.com"
   db.models.user.find {email: email, provider: options.provider}, (err, users) ->
     return done(null, false) if err
     return done(null, users[0]) if users.length > 0
@@ -114,16 +117,30 @@ exports = module.exports =
 
   bearerStrategy: new BearerStrategy findUserByToken
 
-  baiduStrategy: new BaiduStrategy {
-      clientID: config.baidu.clientID
-      clientSecret: config.baidu.clientSecret
-      callbackURL: config.baidu.callbackURL
-    }, (accessToken, refreshToken, profile, done) ->
-      findOrCreateUser {
-          id: profile.id
-          provider: profile.provider
-          token:
-            accessToken: accessToken
-            refreshToken: refreshToken
-          profile: profile
-        }, done
+  # baiduStrategy: new BaiduStrategy {
+  #   clientID: config.baidu.clientID
+  #   clientSecret: config.baidu.clientSecret
+  #   callbackURL: config.baidu.callbackURL
+  # }, (accessToken, refreshToken, profile, done) ->
+  #   findOrCreateUser {
+  #       id: profile.id
+  #       provider: profile.provider
+  #       token:
+  #         accessToken: accessToken
+  #         refreshToken: refreshToken
+  #       profile: profile
+  #     }, done
+
+  githubStrategy: new GithubStrategy {
+    clientID: config.github.clientID
+    clientSecret: config.github.clientSecret
+    callbackURL: config.github.callbackURL
+  }, (accessToken, refreshToken, profile, done) ->
+    findOrCreateUser {
+        id: profile.id
+        provider: profile.provider
+        token:
+          accessToken: accessToken
+          refreshToken: refreshToken
+        profile: profile
+      }, done
