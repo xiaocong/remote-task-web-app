@@ -1,33 +1,32 @@
-<form class="form-horizontal" novalidation>
-  <fieldset ng-show="showLogin()">
-    <legend>Login</legend>
 
-    <div class="control-group">
-      <label class="control-label">Name</label>
-      <div class="controls">
-        <input type="text" name='userid' placeholder='Name' ng-model="loginForm.email">
+<p class="text-center"><h4>Login</h4></p>
+<hr>
+<br>
+<div class="row-fluid">
+  <div class="span6 login-left">
+    <form>
+      <div class="control-group pull-center">
+        <div class="input-prepend">
+          <span class="add-on"><i class="icon-user"></i></span>
+          <input class="sapan10" id="prependedInput" type="text" placeholder="Username" ng-model="loginForm.email">
+        </div>
       </div>
-    </div>
+      <div class="control-group pull-center">
+        <div class="input-prepend">
+          <span class="add-on"><i class="icon-lock"></i></span>
+          <input class="sapan10" id="prependedInput" type="text" placeholder="Password" ng-model="loginForm.password">
+        </div>
+      </div>
+      <div class="control-group pull-center">
+        <button type="button" class='btn btn-primary' ng-click="login()">Login</button>
+      </div>
+    </form>
+  </div>
 
-    <div class="control-group">
-      <label class="control-label">Password</label>
-      <div class="controls">
-        <input name='password' type="password" placeholder='Password' ng-model="loginForm.password">
-      </div>
+  <div class="span6">
+    <div class="control-group pull-center"><h5>Login with open account</h5></div>
+    <div class="control-group pull-center">
+      <button type="button" class='btn btn-info btn-large' ng-click="githubLogin()">&nbsp;<img src="images/github.png" style="height:32px; width:32px"></img>&nbsp;Github&nbsp;</button>
     </div>
-
-    <div class="control-group">
-      <div class="controls">
-        <input type="button" value='Login' class='btn btn-primary' ng-click="login()">
-      </div>
-    </div>
-  </fieldset>
-  <fieldset ng-show="showLogin()">
-    <div class="btn-group">
-      <a href="#" class="btn" data-ng-click="githubLogin()"><span class="icon icon-search" /> Baidu</a>
-    </div>
-  </fieldset>
-  <fieldset ng-show="!showLogin()">
-    <legend>You have already logged in.</legend>
-  </fieldset>
-</form>
+  </div>
+</div>

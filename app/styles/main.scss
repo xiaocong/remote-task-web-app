@@ -147,6 +147,10 @@ table.table thead .sorting_desc {
     padding: 2px 4px;
 }
 
+.pull-center {
+  text-align: center
+}
+
 /* screenshot dialog */
 .modal-footer-center {
   text-align: center
@@ -161,4 +165,9 @@ table.table thead .sorting_desc {
 .modal-header {
   background-color: #D9EDF7;
   border-radius: 6px 6px 0 0;
+}
+
+/* login */
+.login-left {
+  border-right: solid 1px #E9E9E9
 }
