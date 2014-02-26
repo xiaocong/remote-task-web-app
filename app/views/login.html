@@ -4,21 +4,22 @@
 <br>
 <div class="row-fluid">
   <div class="span6 login-left">
-    <form>
+    <form ng-submit="login()">
       <div class="control-group pull-center">
         <div class="input-prepend">
           <span class="add-on"><i class="icon-user"></i></span>
-          <input class="sapan10" id="prependedInput" type="text" placeholder="Username" ng-model="loginForm.email">
+          <input class="sapan10" id="name" type="text" placeholder="Username" ng-model="loginForm.email">
         </div>
       </div>
       <div class="control-group pull-center">
         <div class="input-prepend">
           <span class="add-on"><i class="icon-lock"></i></span>
-          <input class="sapan10" id="prependedInput" type="text" placeholder="Password" ng-model="loginForm.password">
+          <input class="sapan10" id="pwd" type="password" placeholder="Password" ng-model="loginForm.password">
         </div>
       </div>
       <div class="control-group pull-center">
         <button type="button" class='btn btn-primary' ng-click="login()">Login</button>
+        <input type="submit" style="height: 0px; width: 0px; border: none; padding: 0px;" hidefocus="true"></button>
       </div>
     </form>
   </div>
