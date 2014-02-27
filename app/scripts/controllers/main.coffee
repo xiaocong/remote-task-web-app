@@ -455,6 +455,7 @@ angular.module('angApp')
     $scope.MAX_CONSOLE_LN = 300
     $scope.oldData = ""
     $scope.xhr = null
+    $scope.outputFileUrl = "/api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/files/output"
     $scope.consoleElement = $("#streaming_output")
     processStream = (data) ->
       newData = data.substr($scope.oldData.length)

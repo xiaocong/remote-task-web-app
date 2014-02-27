@@ -33,24 +33,43 @@ angular.module('services.authService', [])
     gMY_ID = ""
     gMY_TAGS = ""
 
-    auth.getAuthCookie = () ->
+    getAuthCookie = () ->
       #gMY_TOKEN = getCookie("access_token")
       gMY_NAME = getCookie("smart_name")
       gMY_ID = parseInt(getCookie("smart_id"))
       gMY_TAGS = getCookie("smart_tags")
 
-    auth.setAuthCookie = (id, name, tags) ->
+    setAuthCookie = (id, name, tags) ->
       #setCookie("access_token", "", 30)
       setCookie("smart_name", name, 30)
       setCookie("smart_id", id, 30)
       setCookie("smart_tags", tags, 30)
 
-    auth.resetAuthCookie = () ->
+    resetAuthCookie = () ->
       #gMY_TOKEN = ""
       gMY_NAME = ""
       gMY_ID = ""
       gMY_TAGS = ""
-      auth.setAuthCookie("", "", "")
+      setAuthCookie("", "", "")
+
+    getAccount = () ->
+      $http.get("/api/account")
+        .success (data) ->
+          gMY_ID = data.id
+          gMY_NAME = data.email or data.name
+          gMY_TAGS = data.tags
+          setAuthCookie(gMY_ID, gMY_NAME, gMY_TAGS)
+          $rootScope.initbasicinfo()
+          #$location.path "/"
+        .error (data, status, headers, config) ->
+          # Never reaches here since HTTP 401 has been captured in interceptor.
+          logoutQuietly()
+        return
+
+    logoutQuietly = () ->
+      resetAuthCookie()
+      $location.path "/login"
+      return
 
     auth.login = (name, pwd) ->
       return if not name? or not pwd?
@@ -60,18 +79,12 @@ angular.module('services.authService', [])
         password: pwd
       $http.post("/api/auth/login", data)
         .success (data) ->
-          $http.get("/api/account")
-            .success (data) ->
-              gMY_ID = data.id
-              gMY_NAME = data.email or data.name
-              gMY_TAGS = data.tags
-              auth.setAuthCookie(gMY_ID, gMY_NAME, gMY_TAGS)
-              $rootScope.initbasicinfo()
-              $location.path "/"
-            .error (data, status, headers, config) ->
-              # Never reaches here since HTTP 401 has been captured in interceptor.
-              return
-            return
+          gMY_ID = data.id
+          gMY_NAME = data.email or data.name
+          gMY_TAGS = data.tags
+          setAuthCookie(gMY_ID, gMY_NAME, gMY_TAGS)
+          $rootScope.initbasicinfo()
+          $location.path "/"
 
     auth.isLogin = () ->
       return (gMY_ID > 0) and (gMY_NAME?.length > 0)
@@ -85,21 +98,18 @@ angular.module('services.authService', [])
     auth.isAdmin = () ->
       return if gMY_TAGS.indexOf("system:role:admin") >=0 then true else false
     auth.logout = () ->
-      auth.resetAuthCookie()
+      resetAuthCookie()
       $http.post("/api/auth/logout").success (data) ->
         $location.path "/login"
-      return
-    logoutQuietly = () ->
-      auth.resetAuthCookie()
-      $location.path "/login"
       return
     $rootScope.$on('event:auth-loginRequired', () ->
       # Clear all cookies and reset login state.
       logoutQuietly()
     )
     # Start to authenticate here.
-    auth.getAuthCookie()
-    logoutQuietly() if not auth.isLogin()
+    getAccount()
+    #getAuthCookie()
+    #logoutQuietly() if not auth.isLogin()
     $rootScope.auth = auth
     return auth
   ])
