@@ -19,10 +19,10 @@
   </tr>
   <tr class="clickable" ng-repeat='job in task.jobs' ng-class="{success:job.status=='running', error:job.status=='failed'}" ng-click="viewResult($event, job)">
     <td>{{job.no}}</td>
-    <td>{{job.modified_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+    <td>{{job._startTime | date:'yyyy-MM-dd HH:mm:ss'}}</td>
     <td>{{job._duration/3600 | number:0}}:{{job._duration%3600/60 | number:0}}:{{job._duration%60 | number:0}}</td>
     <td>{{task.creator.email}}</td>
-    <td><img ng-src="{{getIndicator(job)}}"> {{ getDevice(job) }}</td>
+    <td><img ng-src="{{getIndicator(job)}}"> <span title="Serial: {{job.device_filter.serial}}">{{ getDevice(job) }}</span></td>
     <td>{{job.status}}</td>
     <td>
       <div ng-switch on="job.status">
