@@ -381,18 +381,31 @@ angular.module('angApp')
     return
 
   .controller 'JobsCtrl', ($rootScope, $routeParams, $scope, $http, $location, naviService) ->
+    $scope.now = new Date()
     hasActiveJob = (jobs) ->
       return false if not jobs?
       return true for j in jobs when not (j.status is "finished" or j.status is "cancelled")
     updateJob = (job) ->
       $rootScope.task.jobs[job.no] = job
+    refineExecInfo = (job) ->
+      if job.status is "finished" or job.status is "cancelled"
+        if job.exec_info and job.exec_info.started_datetime
+          job._startTime = job.exec_info.started_at * 1000
+          job._duration = Math.ceil(job.exec_info.finished_at - job.exec_info.started_at)
+        else
+          job._startTime = job.modified_at
+          job._duration = 0
+      else
+        job._startTime = job.modified_at
+        job._duration = parseInt(($scope.now - new Date(job.modified_at))/1000)
     retrieveJobs = () ->
       return if $scope.$$destroyed is true
       $http.get("api/tasks/#{ $routeParams.tid }")
         .success (data, status) ->
-          now = new Date()
+          $scope.now = new Date()
           $rootScope.task = data
-          j._duration = parseInt((now - new Date(j.modified_at))/1000) for j in $scope.task.jobs
+          #j._duration = parseInt((now - new Date(j.modified_at))/1000) for j in $scope.task.jobs
+          refineExecInfo(j) for j in $scope.task.jobs
           naviService.onDataChanged()
           # Don't have to update data automatically when all jobs are finished.
           return if not hasActiveJob($rootScope.task.jobs)
