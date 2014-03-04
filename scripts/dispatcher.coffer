@@ -41,7 +41,6 @@ module.exports = (robot) ->
       "#{[days, hours, minutes].join('')} ago"
 
   dbmodule.initialize ->
-    require("../lib/schedule").schedule()
     data = dbmodule.data()
 
     robot.respond /(list|ls) (\w+)$/i, (msg) ->

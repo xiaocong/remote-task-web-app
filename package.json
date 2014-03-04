@@ -27,7 +27,9 @@
     "hubot-hipchat": "~2.6.4",
     "socket.io-stream": "~0.5.2",
     "socket.io": "~0.9.16",
-    "passport-github": "~0.1.5"
+    "passport-github": "~0.1.5",
+    "github": "~0.1.14",
+    "node-schedule": "~0.1.13"
   },
   "devDependencies": {
     "grunt": "~0.4.1",

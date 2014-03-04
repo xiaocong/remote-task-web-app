@@ -15,5 +15,4 @@ exports = module.exports =
     clientID: process.env.GITHUB_CLIENT_ID or '0f9b88b9f28ffc7d8bb5'
     clientSecret: process.env.GITHUB_CLIENT_SECRET or '88a995a5abae2461fb06433f574769a92576bfa7'
     callbackURL: process.env.GITHUB_CALLBACK_URL or 'http://opentest.io/api/auth/github/callback'
-  repo_url: process.env.REPO_URL or 'https://github.com/xiaocong/task-repos'
   hubot_rooms: process.env.HUBUT_ANNOUNCE_ROOMS?.split(',')

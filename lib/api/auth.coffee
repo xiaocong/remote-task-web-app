@@ -135,6 +135,7 @@ exports = module.exports =
     clientID: config.github.clientID
     clientSecret: config.github.clientSecret
     callbackURL: config.github.callbackURL
+    scope: ['user', 'repo']
   }, (accessToken, refreshToken, profile, done) ->
     findOrCreateUser {
         id: profile.id
