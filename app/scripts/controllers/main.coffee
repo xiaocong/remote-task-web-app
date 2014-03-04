@@ -876,6 +876,9 @@ angular.module('angApp')
     $scope.id = $routeParams.id
     # Retrieve the available devices first.
     $scope.devices = []
+    $scope.repos = []
+    $scope.repoNames = []
+    $scope.newTaskForm.repo = {} # Trick: remember to delete before doing http post.
 
     $http.get("api/projects/"+$scope.id+"/devices").success (data) ->
       $scope.devices = data
@@ -888,11 +891,32 @@ angular.module('angApp')
         d._displayModel = true
         displayedModels[d.product.model] = true
       return
+    typeaheadUpdater = (item) ->
+      index = $scope.repoNames.indexOf(item)
+      #$scope.newTaskForm._repo_url = $scope.repos[index].clone_url
+      $scope.newTaskForm.repo_url = $scope.repos[index].clone_url
+      $scope.$apply($scope.newTaskForm.repo = $scope.repos[index])
+      return $scope.repos[index].clone_url
+    getRepos = () ->
+      $http.get("/api/repos").success (data) ->
+        $scope.repos = data
+        $scope.repoNames = []
+        for repo in $scope.repos
+          $scope.repoNames.push repo.name
+        $("#repo_name").typeahead(
+          source: $scope.repoNames
+          updater: typeaheadUpdater
+        )
+        return
+    getRepos()
 
     resetSorting = (el) ->
       el.removeClass()
       el.addClass("sorting")
       return
+    $scope.onRepoSelectChange = () ->
+      #$scope.newTaskForm._repo_url = $scope.newTaskForm.repo.clone_url
+      $scope.newTaskForm.repo_url = if $scope.newTaskForm.repo is null then "" else $scope.newTaskForm.repo.clone_url
 
     # TODO: Ideally we should not manipulate DOM in controller.
     $scope.sortByPlatform = () ->
@@ -952,6 +976,7 @@ angular.module('angApp')
         job.no = iii++
         $scope.newTaskForm.jobs.push(job)
       # OK to submit it now.
+      delete $scope.newTaskForm.repo
       $http.post("api/tasks?project="+$scope.id, $scope.newTaskForm).success (data) ->
         $location.path "/projects/"+$scope.id
         return

@@ -18,7 +18,22 @@
     <div class="control-group">
       <label class="control-label">Repo</label>
       <div class="controls">
-        <input type="text" name='repo_url' placeholder='Repo URL' ng-model="newTaskForm.repo_url" required>
+        <input type="text" id="repo_name" name='repo_url' autocomplete="off" placeholder='Repo URL' ng-model="newTaskForm.repo_url" required>
+        <input type="checkbox" ng-model="showRepoList", value="{showRepoList}"> Show repo list
+      </div>
+      <div class="controls" ng-show="showRepoList">
+        <select size="10" id="repo_combo" ng-model="newTaskForm.repo" ng-change="onRepoSelectChange()" ng-options="repo.clone_url for repo in repos">
+          <option value=""></option>
+        </select>
+        <div style="display: inline-block" >
+          <div style="background-color: #EEEEEE" ng-show="newTaskForm.repo.full_name != undefined">
+            <strong>Name</strong>:  {{newTaskForm.repo.full_name}}<br>
+            <strong>Owner</strong>: {{newTaskForm.repo.owner.login}}<br>
+            <strong>URL</strong>:   {{newTaskForm.repo.clone_url}}<br>
+          </div>
+        </div>
+        <!--textarea rows="8" cols="20" ng-disabled="true">Name: {{newTaskForm.repo.full_name}}&#13;URL: {{newTaskForm.repo.clone_url}}&#13;Owner: {{newTaskForm.repo.owner.login}}
+        </textarea-->
       </div>
     </div>
   </fieldset>
