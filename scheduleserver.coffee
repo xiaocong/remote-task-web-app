@@ -20,7 +20,7 @@ redis = require("redis").createClient(redis_port, redis_hostname)
 # update public opentest.task repos
 updateTaskRepos = (page, per_page) ->
   github.search.repos
-    q: 'opentest.task in:name'
+    q: 'opentest.task in:name fork:true'
     sort: 'stars'
     order: 'desc'
     per_page: per_page
