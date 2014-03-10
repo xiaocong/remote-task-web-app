@@ -902,7 +902,7 @@ angular.module('angApp')
         $scope.repos = data
         $scope.repoNames = []
         for repo in $scope.repos
-          $scope.repoNames.push repo.name
+          $scope.repoNames.push repo.full_name
         $("#repo_name").typeahead(
           source: $scope.repoNames
           updater: typeaheadUpdater
