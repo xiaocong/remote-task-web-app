@@ -7,8 +7,7 @@ logger = require("../logger")
 devices = require("./devices")
 
 stop_job = (job, workstations)->
-  ws = workstations.get job.get("device").workstation_mac
-  if job?.get("status") is "started" and ws?
+  if job?.get("status") is "started" and (ws = workstations.get(job.get("device").workstation_mac))?
     url_str = url.format(
       protocol: "http"
       hostname: ws.get("ip")

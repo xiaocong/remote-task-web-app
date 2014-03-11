@@ -172,7 +172,7 @@ start = ->
       pathname: "#{ws.path}/0/jobs/#{id}"
     )
     request.get url_str, (err, r, b) ->
-      return logger.error("Error when retrieving job result from workstation: #{err}") if err?
+      return logger.error("Error when retrieving job result from workstation: #{err}") if err? or r.statusCode isnt 200
       events.trigger "update:job",
         find:
           id: id
