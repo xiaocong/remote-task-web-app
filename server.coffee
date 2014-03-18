@@ -125,6 +125,7 @@ app.post "/api/users/:id/untag/:tag", api.auth.authAdmin, api.users.untag
 
 app.get "/api/repos", api.repos.list
 app.get "/api/repos/:user/:repo/readme", api.repos.readme
+app.get "/api/repos/:user/:repo/env", api.repos.env
 
 app.all "/api/*", (req, res) -> res.json 404, error: "API Not Found."
 

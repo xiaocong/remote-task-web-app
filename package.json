@@ -29,7 +29,8 @@
     "socket.io": "~0.9.16",
     "passport-github": "~0.1.5",
     "github": "~0.1.14",
-    "node-schedule": "~0.1.13"
+    "node-schedule": "~0.1.13",
+    "js-yaml": "~3.0.2"
   },
   "devDependencies": {
     "grunt": "~0.4.1",

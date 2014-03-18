@@ -1,6 +1,7 @@
 "use strict"
 
 GitHubApi = require('github')
+yaml = require('js-yaml')
 
 module.exports = exports = Repos = 
   list: (req, res) ->
@@ -40,4 +41,35 @@ module.exports = exports = Repos =
       if err?
         res.json 500, error: err
       else
-        res.json result
+        content = new Buffer(result.content, result.encoding).toString()
+        res.send content
+
+  env: (req, res) ->
+    github = new GitHubApi
+      version: '3.0.0'
+      protocol: 'https'
+    if req.user?.provider is 'github'
+      github.authenticate {type: 'oauth', token: req.user.provider_token.accessToken}
+    github.repos.getContent {user: req.params.user, repo: req.params.repo, path: '.init.yml'}, (err, result) ->
+      if err?
+        res.json 500, error: err
+      else
+        try
+          content = new Buffer(result.content, result.encoding).toString()
+          doc = yaml.safeLoad(content)
+          env = doc.env or {}
+          for name, value of env
+            if value instanceof Array
+              env[name] =
+                options: value
+                fix: false
+                exclusive: false
+            else
+              env[name] =
+                options: if value.options instanceof Array then value.options else []
+                fix: value.fix or false
+                exclusive: value.exclusive or false
+          res.json env
+        catch e
+          return res.json 500, error: e
+
