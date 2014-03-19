@@ -65,18 +65,20 @@ angular.module('angApp')
 
   .controller 'ProjectCtrl', ($rootScope, $routeParams, $scope, $http, $location) ->
     setTaskStatus = (task) ->
-      task._active = false
+      #task._active = false
+      task._actives = 0
       for j in task.jobs
         if j.status is "started" or j.status is "new"
-          task._active = true
-          return
+          #task._active = true
+          task._actives++
+      return
     updateTask = (newTask) ->
       setTaskStatus(newTask)
       $scope.dataset.tasks[i] = newTask for t, i in $scope.dataset.tasks when t.id is newTask.id
       return
     hasActiveTask = (tasks) ->
       return false if not tasks?
-      return true for t in tasks when t._active is true
+      return true for t in tasks when t._actives > 0
     retrieveTasks = () ->
       return if $scope.$$destroyed is true
       $http.get("api/tasks?project=#{ $scope.pid }")
@@ -122,9 +124,11 @@ angular.module('angApp')
           result = data
           return
     $scope.statusFilter = (task) ->
-      return (task._active is $scope.activeFilter)
+      return ((task._actives > 0) == $scope.activeFilter)
     $scope.viewTask = ($event, task) ->
-      return if $event.target.name is "operation_btn"
+      target = if $event.target.tagName is "I" then $event.target.parentNode else $event.target
+      return if target.name is "operation_btn"
+      #return if $event.target.name is "operation_btn"
       $location.path "/projects/" + $scope.pid + "/tasks/" + task.id
     initData = (data) ->
       setTaskStatus(t) for t in data.tasks
@@ -206,8 +210,8 @@ angular.module('angApp')
       return
     $scope.showLogin = () ->
       return not authService.isLogin()
-    $scope.baiduLogin = ->
-      $window.location.href = '/api/auth/baidu'
+    $scope.githubLogin = ->
+      $window.location.href = '/api/auth/github'
     return
 
   .controller 'TagMgtCtrl', ($rootScope, $scope, $http) ->
@@ -377,20 +381,47 @@ angular.module('angApp')
     return
 
   .controller 'JobsCtrl', ($rootScope, $routeParams, $scope, $http, $location, naviService) ->
+    $scope.now = new Date()
     hasActiveJob = (jobs) ->
       return false if not jobs?
       return true for j in jobs when not (j.status is "finished" or j.status is "cancelled")
     updateJob = (job) ->
       $rootScope.task.jobs[job.no] = job
+    refineExecInfo = (job) ->
+      if job.status is "finished" or job.status is "cancelled"
+        if job.exec_info and job.exec_info.started_datetime
+          job._startTime = job.exec_info.started_at * 1000
+          job._duration = Math.ceil(job.exec_info.finished_at - job.exec_info.started_at)
+        else
+          job._startTime = job.modified_at
+          job._duration = 0
+      else
+        job._startTime = job.modified_at
+        job._duration = parseInt(($scope.now - new Date(job.modified_at))/1000)
     retrieveJobs = () ->
       return if $scope.$$destroyed is true
       $http.get("api/tasks/#{ $routeParams.tid }")
         .success (data, status) ->
+          $scope.now = new Date()
           $rootScope.task = data
+          #j._duration = parseInt((now - new Date(j.modified_at))/1000) for j in $scope.task.jobs
+          refineExecInfo(j) for j in $scope.task.jobs
           naviService.onDataChanged()
           # Don't have to update data automatically when all jobs are finished.
           return if not hasActiveJob($rootScope.task.jobs)
           scheduleRefresh(retrieveJobs)
+    $scope.getDevice = (job) ->
+      return "" if not job.device_filter.product?.manufacturer?.length > 0
+      return job.device_filter.product.manufacturer + " / " + job.device_filter.product.model
+    $scope.getIndicator = (job) ->
+      return "images/green-icon.png" if job.status is "new" or job.status is "started"
+      return "images/red-icon.png" if job.schedular.available_device.total is 0
+      if job.schedular.available_device.idle > 0
+        return "images/green-icon.png"
+      else
+        return "images/yellow-icon.png"
+      # TODO: when should we use gray?
+      return "images/gray-icon.png"
     $scope.restart = (job) ->
       $http.post("api/tasks/#{ $rootScope.task.id }/jobs/#{ job.no }/restart")
         .success (data) ->
@@ -424,27 +455,34 @@ angular.module('angApp')
         .error (data, status) ->
           result = data
           return
+    $scope.viewResult = ($event, job) ->
+      target = if $event.target.tagName is "I" then $event.target.parentNode else $event.target
+      return if target.name is "operation_btn"
+      $location.path "projects/#{$routeParams.id}/tasks/#{$routeParams.tid}/jobs/#{job.no}/result"
+      return
     $rootScope.task = {}
     retrieveJobs()
     return
 
-  .controller 'StreamCtrl', ($rootScope, $routeParams, $scope, $http, naviService) ->
+  .controller 'StreamCtrl', ($rootScope, $routeParams, $scope, $http, $timeout) ->
     $scope.MAX_CONSOLE_LN = 300
     $scope.oldData = ""
     $scope.xhr = null
+    $scope.outputFileUrl = "/api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/files/output"
     $scope.consoleElement = $("#streaming_output")
     processStream = (data) ->
       newData = data.substr($scope.oldData.length)
       $scope.oldData = data
       #return if newData.trim().length <= 0
       $scope.consoleElement = $("#streaming_output") if not $scope.consoleElement?
+      #TODO:  filter out "\0"
+      newData = newData.replace(/\0/g, "")
       $scope.consoleElement.append("<li>" + newData.replace(/\n/ig, "<br>") + "</li>")
       $scope.consoleElement[0].scrollTop = $scope.consoleElement[0].scrollHeight
       lis = $scope.consoleElement.children()
       #console.log lis.length
       if lis.length > $scope.MAX_CONSOLE_LN
         $scope.consoleElement[0].removeChild(lis[0])
-        #console.log "removed"
       return
     openStream = () ->
       $scope.xhr = new XMLHttpRequest()
@@ -455,8 +493,203 @@ angular.module('angApp')
     # close the xhr when destroyed.
     $scope.$on "$destroy", () ->
       $scope.xhr.abort() if $scope.xhr?
+      # cancel the timeout service
+      $timeout.cancel(loadScreenshot);
+      return
+    $scope.counter = 0
+    $scope.time = new Date()
+    loadScreenshot = () ->
+      # Avoid any job after destroyed.
+      return if $scope.$$destroyed is true
+      $scope.counter++
+      $scope.time = new Date()
+      newImage = new Image()
+      newImage.src = "api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/screenshot?height=250&dummy=#{ $scope.counter % 10 }"
+      newImage.onload = () ->
+        el = $("#placeholder img")
+        el.first().replaceWith(newImage)
+        el.first().show()
+        el.last().hide()
+        $timeout(loadScreenshot, 5200)
+        return
+      newImage.onerror = () ->
+        $timeout(loadScreenshot, 5200)
+      # Only load screenshot after the previous one is loaded or failed.
+      #$timeout(loadScreenshot, 5200)
       return
     openStream()
+    loadScreenshot()
+
+  .controller 'ScreenshotCtrl', ($rootScope, $routeParams, $scope, $http, $timeout) ->
+    $scope.counter = 0
+    $scope.time = new Date()
+    $scope.screenshotUrl = ""
+    retrieveData = () ->
+      $http.get("api/tasks/#{}/jobs/#{}/screenshot")
+        .success (data) ->
+          return
+    loadScreenshot = () ->
+      # Avoid any job after destroyed.
+      return if $scope.$$destroyed is true
+      $scope.counter++
+      $scope.time = new Date()
+      el = $("#placeholder img")
+      console.log "api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/screenshot?height=400"
+      img = $("<img />").attr("src", "api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/screenshot?height=400")
+        .error () ->
+          el.first().hide()
+          el.last().show()
+          return
+        .load (event) ->
+          el.first().replaceWith(img)
+          el.first().show()
+          el.last().hide()
+          return
+      $timeout(loadScreenshot, 4000)
+      return
+
+    loadScreenshot1 = () ->
+      # Avoid any job after destroyed.
+      return if $scope.$$destroyed is true
+      $scope.counter++
+      $scope.time = new Date()
+      newImage = new Image()
+      newImage.src = "api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/screenshot?height=400&dummy=#{ $scope.counter % 10 }"
+      newImage.onload = () ->
+        a = a + 1
+        el = $("#placeholder img")
+        el.first().replaceWith(newImage)
+        el.first().show()
+        el.last().hide()
+        return
+      $timeout(loadScreenshot1, 4000)
+      return
+    loadScreenshot1()
+    return
+
+  .controller 'ResultCtrl', ($rootScope, $routeParams, $scope, $http, naviService) ->
+    $scope.currentIndex = 0
+    $scope.result = {}
+    #TODO: Rewrite pageControl as a widget.
+    $scope.pageControl = {}
+    retrieveData = () ->
+      #$http.get("api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/result?r=error,fail")
+      $http.get("api/tasks/#{ $routeParams.tid }/jobs/#{ $routeParams.jid }/result?r=#{ $scope.pageControl.filter }&page_count=#{$scope.pageControl.pageSize}&page=#{$scope.pageControl.pageIndex}")
+        .success (data) ->
+          $scope.result = data
+          $scope.pageControl.pageCount = $scope.result.pages
+          $scope.pageControl.pageIndex = $scope.result.page
+          $scope.pageControl.update()
+          # Set task info in $rootScope to ensure breadcum works fine.
+          $rootScope.task = $scope.result.job.task
+          naviService.onDataChanged()
+          return
+    init = () ->
+      $scope.pageControl.MAX_PAGES = 5
+      $scope.pageControl.filter = "fail"
+      $scope.pageControl.pageSize = 10
+      $scope.pageControl.pageIndex = 0
+      $scope.pageControl.pageCount = 0 # got from server
+      $scope.pageControl.pages = []
+      #$scope.pageControl.hasPrev = $scope.pageControl.hasNext = false
+      for i in [0..$scope.pageControl.MAX_PAGES-1]
+        $scope.pageControl.pages[i] = 
+          show: (i is 0)
+          index: i
+        #$scope.pageControl.pages[i].show = (i is 0)
+        #$scope.pageControl.pages[i].index = i
+      return
+    $scope.pageControl.prev = () ->
+      return if $scope.pageControl.pages[0].index <= 0
+      for i in [0..$scope.pageControl.MAX_PAGES-1]
+        $scope.pageControl.pages[i].index = $scope.pageControl.pages[i].index - $scope.pageControl.MAX_PAGES
+        $scope.pageControl.pages[i].show = ($scope.pageControl.pages[i].index < $scope.pageControl.pageCount)
+        $scope.pageControl.pages[i].disable = ($scope.pageControl.pages[i].index is $scope.pageControl.pageIndex)
+      #$scope.pageControl.hasPrev = $scope.pageControl.pages[0].index > 0
+      #$scope.pageControl.hasNext = true
+    $scope.pageControl.next = () ->
+      return if $scope.pageControl.pages[$scope.pageControl.MAX_PAGES-1].index >= $scope.pageControl.pageCount
+      for i in [0..$scope.pageControl.MAX_PAGES-1]
+        $scope.pageControl.pages[i].index += $scope.pageControl.MAX_PAGES
+        $scope.pageControl.pages[i].show = ($scope.pageControl.pages[i].index < $scope.pageControl.pageCount)
+        $scope.pageControl.pages[i].disable = ($scope.pageControl.pages[i].index is $scope.pageControl.pageIndex)
+      #$scope.pageControl.hasPrev = true
+      #$scope.pageControl.hasNext = $scope.pageControl.pages[$scope.pageControl.MAX_PAGES-1].index < $scope.pageControl.pageCount-1
+    $scope.pageControl.goto = (index) ->
+      $scope.pageControl.pageIndex = $scope.pageControl.pages[index].index
+      retrieveData()
+    $scope.pageControl.update = () ->
+      multiple = ($scope.pageControl.pageIndex / $scope.pageControl.MAX_PAGES) | 0
+      offset = $scope.pageControl.pageIndex % $scope.pageControl.MAX_PAGES
+      for i in [0..$scope.pageControl.MAX_PAGES-1]
+        $scope.pageControl.pages[i].index = multiple * $scope.pageControl.MAX_PAGES + i
+        $scope.pageControl.pages[i].show = ($scope.pageControl.pages[i].index < $scope.pageControl.pageCount)
+        $scope.pageControl.pages[i].disable = ($scope.pageControl.pages[i].index is $scope.pageControl.pageIndex)
+      #$scope.pageControl.hasPrev = $scope.pageControl.pages[0].index > 0
+      #$scope.pageControl.hasNext = $scope.pageControl.pages[$scope.pageControl.MAX_PAGES-1].index < $scope.pageControl.pageCount-1
+      return
+    $scope.goto = $scope.pageControl.goto
+    $scope.refresh = () ->
+      retrieveData()
+      return
+    $scope.toggleFilter = () ->
+      $scope.pageControl.pageIndex = 0
+      retrieveData()
+      return
+    $scope.viewScreenshot = ($index) ->
+      $scope.currentIndex = $index
+      $('#myModal').modal({'show'})
+      updateButton()
+      loadScreenshot()
+      return
+    $scope.step = (s) ->
+      return if $scope.currentIndex+s < 0 or $scope.currentIndex+s >= $scope.result.results.length
+      $scope.currentIndex += s
+      updateButton()
+      loadScreenshot()
+    $scope.previous = () ->
+      return if $scope.currentIndex is 0
+      $scope.currentIndex--
+      updateButton()
+      loadScreenshot()
+      return
+    $scope.next = () ->
+      return if $scope.currentIndex is ($scope.result.results.length - 1)
+      $scope.currentIndex++
+      updateButton()
+      loadScreenshot()
+      return
+    $scope.formattedTrace = (result) ->
+      #return result.trace.replace(",", ", &#13; ")
+      return result.trace
+    updateButton = () ->
+      prevBtn = $("#prev_btn")
+      nextBtn = $("#next_btn")
+      if $scope.currentIndex is 0
+        prevBtn.addClass("disabled")
+      else
+        prevBtn.removeClass("disabled")
+      return
+      if $scope.currentIndex is ($scope.result.results.length - 1)
+        nextBtn.addClass("disabled")
+      else
+        nextBtn.removeClass("disabled")
+      return
+    loadScreenshot = () ->
+      # Avoid any job after destroyed.
+      return if $scope.$$destroyed is true
+      #$scope.time = new Date()
+      $("#myLabel").text($scope.result.results[$scope.currentIndex].name)
+      newImage = new Image()
+      newImage.src = $scope.result.results[$scope.currentIndex].screenshot_at_failure
+      newImage.onload = () ->
+        el = $("#img_holder img")
+        el.replaceWith(newImage)
+        return
+      # TODO: Handle the failed case.
+      return
+    init()
+    retrieveData()
 
   .controller 'AddTaskCtrl3', ($scope, $http, $location) ->
     # Some initialization.
@@ -633,7 +866,7 @@ angular.module('angApp')
       return
     return
 
-  .controller 'AddTaskCtrl2', ($routeParams, $scope, $http, $location) ->
+  .controller 'AddTaskCtrl', ($routeParams, $scope, $http, $location) ->
     # Some initialization.
     $scope.showDevice = false
     $scope.filterCondition = {_displayModel:true}
@@ -643,6 +876,9 @@ angular.module('angApp')
     $scope.id = $routeParams.id
     # Retrieve the available devices first.
     $scope.devices = []
+    $scope.repos = []
+    $scope.repoNames = []
+    $scope.newTaskForm.repo = {} # Trick: remember to delete before doing http post.
 
     $http.get("api/projects/"+$scope.id+"/devices").success (data) ->
       $scope.devices = data
@@ -655,11 +891,32 @@ angular.module('angApp')
         d._displayModel = true
         displayedModels[d.product.model] = true
       return
+    typeaheadUpdater = (item) ->
+      index = $scope.repoNames.indexOf(item)
+      #$scope.newTaskForm._repo_url = $scope.repos[index].clone_url
+      $scope.newTaskForm.repo_url = $scope.repos[index].clone_url
+      $scope.$apply($scope.newTaskForm.repo = $scope.repos[index])
+      return $scope.repos[index].clone_url
+    getRepos = () ->
+      $http.get("/api/repos").success (data) ->
+        $scope.repos = data
+        $scope.repoNames = []
+        for repo in $scope.repos
+          $scope.repoNames.push repo.full_name
+        $("#repo_name").typeahead(
+          source: $scope.repoNames
+          updater: typeaheadUpdater
+        )
+        return
+    getRepos()
 
     resetSorting = (el) ->
       el.removeClass()
       el.addClass("sorting")
       return
+    $scope.onRepoSelectChange = () ->
+      #$scope.newTaskForm._repo_url = $scope.newTaskForm.repo.clone_url
+      $scope.newTaskForm.repo_url = if $scope.newTaskForm.repo is null then "" else $scope.newTaskForm.repo.clone_url
 
     # TODO: Ideally we should not manipulate DOM in controller.
     $scope.sortByPlatform = () ->
@@ -710,81 +967,18 @@ angular.module('angApp')
             manufacturer: d.product.manufacturer
             model: d.product.model
         else # selected by device.
+          job.device_filter.product =
+            manufacturer: d.product.manufacturer
+            model: d.product.model
           tokens = d.id.split("-")
           job.device_filter.mac = tokens[0]
           job.device_filter.serial = tokens[1]
         job.no = iii++
         $scope.newTaskForm.jobs.push(job)
       # OK to submit it now.
+      delete $scope.newTaskForm.repo
       $http.post("api/tasks?project="+$scope.id, $scope.newTaskForm).success (data) ->
         $location.path "/projects/"+$scope.id
         return
       return
     return
-
-  .controller 'AddTaskCtrl', ($rootScope, $scope, $routeParams, $http, $location) ->
-    resort = () ->
-      job.no = i for job, i in $scope.newTaskForm.jobs
-      return
-    createJob = () ->
-      job = {}
-      job.no = $scope.newTaskForm.jobs.length
-      job.repo_url = $scope.newTaskForm.repo_url
-      $scope.newTaskForm.jobs.push(job)
-      job
-    removeJob = (index) ->
-      return if index >= $scope.newTaskForm.jobs.length
-      $scope.newTaskForm.jobs.splice(index, 1)
-      resort()
-      return
-    # TODO: Use underscore.js
-    groupProductProperties = (key) ->
-      result = []
-      return result if $scope.devices.length is 0
-      for d in $scope.devices
-        #if d.product.hasOwnProperty(key) and d.product.
-        if not d.product[key]?
-          continue
-        if result.indexOf(d.product[key]) == -1
-          result.push(d.product[key])
-      return result
-
-    # Some initialization.
-    $scope.newTaskForm = {}
-    $scope.newTaskForm.jobs = []
-    #createJob()
-    $scope.id = $routeParams.id or ""
-    # Retrieve the available devices first.
-    $scope.devices = []
-    $scope.manufacturers = $scope.models = []
-    $http.get("api/devices").success (data) ->
-      $scope.devices = data
-      $scope.manufacturers = groupProductProperties("manufacturer")
-      $scope.models = groupProductProperties("model")
-
-    # Triggered when user clicks the button to add a job in a task.
-    $scope.newJob = () ->
-      createJob()
-
-    # Triggered when user clicks the button to remove an existing job in a task.
-    $scope.deleteJob = (index) ->
-      removeJob(index)
-
-    $scope.submitTask = () ->
-      # split the device ID into mac and SN.
-      for job in $scope.newTaskForm.jobs
-        if job._the_device? and job._the_device.id?
-          tokens = job._the_device.id.split("-")
-          if tokens.length == 2
-            job.device_filter = {}
-            job.device_filter.mac = tokens[0]
-            job.device_filter.serial = tokens[1]
-          # delete _the_device
-          delete job._the_device
-
-      $http.post("api/tasks?project="+$scope.id, $scope.newTaskForm).success (data) ->
-        $location.path "/projects/"+$scope.id
-        return;
-      return
-    return
-

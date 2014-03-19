@@ -1041,6 +1041,160 @@
             }
         ]
 
+## Repos
+
+- Get available repositories list
+
+        GET /api/repos
+
+    Examples:
+
+        $ http http://localhost:9000/api/repos
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 17314
+        Content-Type: application/json; charset=utf-8
+        Date: Tue, 18 Mar 2014 09:10:27 GMT
+        ETag: "-1370966815"
+        Set-Cookie: connect.sess=s%3Aj%3A%7B%22passport%22%3A%7B%7D%7D.uDnQVi2orSN6V9TG3bFicsfJ7L2cyqxNxsiAqplvrrQ; Path=/; HttpOnly
+        X-Powered-By: Express
+
+        [
+            {
+                "archive_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/{archive_format}{/ref}",
+                "assignees_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/assignees{/user}",
+                "blobs_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/git/blobs{/sha}",
+                "branches_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/branches{/branch}",
+                "clone_url": "https://github.com/xiaocong/opentest.task-demo-test.git",
+                "collaborators_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/collaborators{/collaborator}",
+                "comments_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/comments{/number}",
+                "commits_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/commits{/sha}",
+                "compare_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/compare/{base}...{head}",
+                "contents_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/contents/{+path}",
+                "contributors_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/contributors",
+                "created_at": "2013-10-22T04:08:59Z",
+                "default_branch": "master",
+                "description": "",
+                "downloads_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/downloads",
+                "events_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/events",
+                "fork": false,
+                "forks": 0,
+                "forks_count": 0,
+                "forks_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/forks",
+                "full_name": "xiaocong/opentest.task-demo-test",
+                "git_commits_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/git/commits{/sha}",
+                "git_refs_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/git/refs{/sha}",
+                "git_tags_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/git/tags{/sha}",
+                "git_url": "git://github.com/xiaocong/opentest.task-demo-test.git",
+                "has_downloads": true,
+                "has_issues": true,
+                "has_wiki": true,
+                "homepage": null,
+                "hooks_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/hooks",
+                "html_url": "https://github.com/xiaocong/opentest.task-demo-test",
+                "id": 13762768,
+                "issue_comment_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/issues/comments/{number}",
+                "issue_events_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/issues/events{/number}",
+                "issues_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/issues{/number}",
+                "keys_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/keys{/key_id}",
+                "labels_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/labels{/name}",
+                "language": "Python",
+                "languages_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/languages",
+                "master_branch": "master",
+                "merges_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/merges",
+                "milestones_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/milestones{/number}",
+                "mirror_url": null,
+                "name": "opentest.task-demo-test",
+                "notifications_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/notifications{?since,all,participating}",
+                "open_issues": 0,
+                "open_issues_count": 0,
+                "owner":
+                    "avatar_url": "https://avatars.githubusercontent.com/u/1559756",
+                    "events_url": "https://api.github.com/users/xiaocong/events{/privacy}",
+                    "followers_url": "https://api.github.com/users/xiaocong/followers",
+                    "following_url": "https://api.github.com/users/xiaocong/following{/other_user}",
+                    "gists_url": "https://api.github.com/users/xiaocong/gists{/gist_id}",
+                    "gravatar_id": "5c95e08c562a7162e678ef88fbcb9201",
+                    "html_url": "https://github.com/xiaocong",
+                    "id": 1559756,
+                    "login": "xiaocong",
+                    "organizations_url": "https://api.github.com/users/xiaocong/orgs",
+                    "received_events_url": "https://api.github.com/users/xiaocong/received_events",
+                    "repos_url": "https://api.github.com/users/xiaocong/repos",
+                    "site_admin": false,
+                    "starred_url": "https://api.github.com/users/xiaocong/starred{/owner}{/repo}",
+                    "subscriptions_url": "https://api.github.com/users/xiaocong/subscriptions",
+                    "type": "User",
+                    "url": "https://api.github.com/users/xiaocong
+                },
+                "private": false,
+                "pulls_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/pulls{/number}",
+                "pushed_at": "2014-02-20T03:06:21Z",
+                "releases_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/releases{/id}",
+                "score": 12.465622,
+                "size": 216,
+                "ssh_url": "git@github.com:xiaocong/opentest.task-demo-test.git",
+                "stargazers_count": 0,
+                "stargazers_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/stargazers",
+                "statuses_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/statuses/{sha}",
+                "subscribers_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/subscribers",
+                "subscription_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/subscription",
+                "svn_url": "https://github.com/xiaocong/opentest.task-demo-test",
+                "tags_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/tags",
+                "teams_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/teams",
+                "trees_url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test/git/trees{/sha}",
+                "updated_at": "2014-03-03T13:15:07Z",
+                "url": "https://api.github.com/repos/xiaocong/opentest.task-demo-test",
+                "watchers": 0,
+                "watchers_count": 0
+            },
+            ...
+        ]
+
+- Get task repository's evnironment variables, which is required during task creation.
+
+        GET /api/repos/:user/:repo/env
+
+    Examples:
+
+        $ http localhost:9000/api/repos/xiaocong/opentest.task-demo-test/env
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 333
+        Content-Type: application/json; charset=utf-8
+        Date: Tue, 18 Mar 2014 09:16:15 GMT
+        ETag: "-1205959222"
+        Set-Cookie: connect.sess=s%3Aj%3A%7B%22passport%22%3A%7B%7D%7D.uDnQVi2orSN6V9TG3bFicsfJ7L2cyqxNxsiAqplvrrQ; Path=/; HttpOnly
+        X-Powered-By: Express
+
+        {
+            "exclusive": {
+                "exclusive": true,
+                "fix": false,
+                "options": []
+            },
+            "fix-field": {
+                "exclusive": false,
+                "fix": true,
+                "options": [
+                    "a",
+                    "b",
+                    "c"
+                ]
+            },
+            "list-field": {
+                "exclusive": false,
+                "fix": false,
+                "options": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                ]
+            }
+        }
+
 ## Tasks
 
 - Add task
@@ -1777,9 +1931,11 @@
 
         GET /api/tasks/:task/jobs/:no/result?access_token=:access_token
 
-    Notes:
+    Notes
 
     - It parses the content in file `$JOB_ID/$WORKSPACE/result.txt`. If the file doesn't exist, it returns an error.
+    - You can pass query parameter `r` e.g. `r=fail,error` to filter the specified results.
+    - You can pass query parameters `page` and `page_count` to only return the result of the specified page.
 
     Examples:
 

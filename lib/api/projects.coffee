@@ -94,11 +94,11 @@ exports = module.exports =
   ]
 
   get_device: (req, res) ->
-    if _.every(req.project.tagList(), (tag) -> tag in req.device.get("tags"))
+    if req.methods.match {device_owner: req.project.creator.email, tags: req.project.tagList()}, req.device
       res.json req.device.toJSON()
     else
       res.json 403, error: "No permission to access the device."
 
   list_devices: (req, res) ->
     res.json req.data.models.devices.filter (device) ->
-      _.every req.project.tagList(), (tag) -> tag in device.get("tags")
+      req.methods.match {device_owner: req.project.creator.email, tags: req.project.tagList()}, device

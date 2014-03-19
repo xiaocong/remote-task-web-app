@@ -2,6 +2,8 @@
   "name": "ang",
   "version": "0.0.0",
   "dependencies": {
+    "hubot": ">= 2.6.0 < 3.0.0",
+    "hubot-scripts": ">= 2.5.0 < 3.0.0",
     "express": "~3.4.3",
     "orm-timestamps": "~0.2.1",
     "underscore": "~1.5.2",
@@ -21,7 +23,14 @@
     "passport-local": "~0.1.6",
     "passport-http-bearer": "~1.0.1",
     "passport-baidu": "0.0.1",
-    "forever": "~0.10.11"
+    "forever": "~0.10.11",
+    "hubot-hipchat": "~2.6.4",
+    "socket.io-stream": "~0.5.2",
+    "socket.io": "~0.9.16",
+    "passport-github": "~0.1.5",
+    "github": "~0.1.14",
+    "node-schedule": "~0.1.13",
+    "js-yaml": "~3.0.2"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
@@ -62,7 +71,8 @@
     "karma-ng-html2js-preprocessor": "~0.1.0"
   },
   "engines": {
-    "node": ">=0.8.0"
+    "node": ">=0.8.0",
+    "npm": ">= 1.1.x"
   },
   "scripts": {
     "test": "grunt build",

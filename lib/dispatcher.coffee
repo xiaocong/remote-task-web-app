@@ -1,7 +1,7 @@
 "use strict"
 
-dbmodule = require("./lib/module")
-logger = require("./lib/logger")
+dbmodule = require("./module")
+logger = require("./logger")
 
 CreateMode = require('node-zookeeper-client').CreateMode
 request = require("request")
@@ -30,59 +30,13 @@ start = ->
     live_jobs.forEach (job) -> logger.debug "Job #{job.id}: status=#{job.get('status')}, locked=#{job.get('locked')}"
     devices.forEach (device) -> logger.debug "Device #{device.id}: idle=#{device.get('idle')}, locked=#{device.get('locked')}"
     [10..1].forEach (priority) -> live_jobs.filter((job) -> job.get("priority") is priority and job.get("status") is "new" and not job.get("locked")).forEach (job) ->
-      if has_exclusive(job) or has_dependency(job)
+      if dbmodule.methods.has_exclusive(job.toJSON()) or dbmodule.methods.has_dependency(job.toJSON())
         logger.debug "Job #{job.id} has #{job.get('r_type')} on #{JSON.stringify(job.get("r_job_nos"))}."
       else
         filter = job.get("device_filter") or {}
         device = devices.find (dev) ->
-          dev.get("idle") and not dev.get("locked") and match(filter, dev)
+          dev.get("idle") and not dev.get("locked") and dbmodule.methods.match(filter, dev)
         assign_task(device, job) if device?
-
-  has_exclusive = (job) ->
-    # return true if any exclusive job is in running or locked status
-    if job.get("r_type") isnt "exclusive" or job.get("r_job_nos").length is 0
-      false
-    else
-      live_jobs.filter((j) ->
-        j.get("task_id") is job.get("task_id") and j.get("no") in job.get("r_job_nos")
-      ).some((j) ->
-        j.get("status") is "new" and j.get("locked") or j.get("status") is "started"
-      )
-
-  has_dependency = (job) ->
-    # return true if any dependent job is in running or waiting status
-    if job.get("r_type") isnt "dependency" or job.get("r_job_nos").length is 0
-      false
-    else
-      live_jobs.some((j) ->
-        j.get("task_id") is job.get("task_id") and j.get("no") in job.get("r_job_nos")
-      )
-
-  match = (filter, device) ->
-    # filter: mac, platform, serial, product, build, locale, tags: [...]
-    # "workstation":
-    #   "mac": ws.get "mac"
-    #   "ip": ws.get "ip"
-    #   "port": ws.get("api").port
-    # "serial": device.adb.serial
-    # "platform": "android"
-    # "product": device.product
-    # "build": device.build
-    # "locale": device.locale
-    # "tags": [...]
-    return false if "mac" of filter and device.get("workstation").mac isnt filter.mac
-    return false if "serial" of filter and device.get("serial") isnt filter.serial
-    return false if "platform" of filter and device.get("platform") isnt filter.platform
-    return false if "product" of filter and _.some(filter.product, (v, p) -> v isnt device.get("product")[p])
-    return false if "locale" of filter and _.some(filter.locale, (v, p) -> v isnt device.get("locale")[p])
-    if "build" of filter
-      return false if _.some(filter.build, (v, p) -> p isnt "version" and v isnt device.get("build")[p])
-      return false if "version" of filter.build and _.some(filter.build.version, (v, p) -> v isnt device.get("build").version[p])
-    if "tags" of filter  # tags is mandatory for filter, if it's empty, then the match result is always false.
-      tags = if filter.tags instanceof Array then filter.tags else [filter.tags]
-      device_tags = device.get("tags") or []
-      return false if device_tags.length is 0 or _.some(tags, (tag)-> tag not in device_tags)
-    return true    
 
   assign_task = (device, job) ->
     logger.info "Assigning job #{job.id} to device #{device.id}."
@@ -92,7 +46,7 @@ start = ->
       protocol: "http"
       hostname: device.get("workstation").ip
       port: device.get("workstation").port
-      pathname: "/api/0/jobs/#{job.id}"
+      pathname: "#{device.get('workstation').path}/0/jobs/#{job.id}"
     )
     body =
       env: job.get("environ")
@@ -119,12 +73,15 @@ start = ->
             update:
               device: devices[0]
               status: "started"
+            callback: (err) ->
+              events.trigger "retrive:jobinfo",
+                job_id: job.id
+                workstation: device.get("workstation")
           }) if devices?.length > 0
 
   finish_job = (event) ->
     id = event.id
-    hostname = event.get("ip")
-    port = event.get("port")
+    ws = event.get("workstation")
     logger.info "Job #{id} finished."
 
     events.trigger("update:job",
@@ -132,20 +89,10 @@ start = ->
       update: {status: "finished"}
       callback: (err) ->
         return logger.error("Error during saving job as finished: #{err}") if err?
-        url_str = url.format(
-          protocol: "http"
-          hostname: hostname
-          port: port
-          pathname: "/api/0/jobs/#{id}"
-        )
-        request.get url_str, (err, r, b) ->
-          return logger.error("Error when retrieving job result from workstation: #{err}") if err?
-          events.trigger "update:job",
-            find:
-              id: id
-            update:
-              exit_code: JSON.parse(b).exit_code
-              exec_info: JSON.parse(b)
+
+        events.trigger "retrive:jobinfo",
+          job_id: id
+          workstation: ws
     )
 
   devices.on "add", (device) ->
@@ -175,16 +122,36 @@ start = ->
   zk_jobs.on "remove", finish_job
 
   zk_jobs.on "add", (job) ->
-    # Due to async issue, job precess may be running but the job status in db is not started.
-    if not live_jobs.get(job.id) or (live_jobs.get(job.id).get("status") is "new" and not live_jobs.get(job.id).get("locked"))
-      url_str = url.format(
-        protocol: "http"
-        hostname: job.get("ip")
-        port: job.get("port")
-        pathname: "/api/0/jobs/#{job.id}/stop"
-      )
-      request.get url_str, (err, r, b) ->
-      logger.warn "Kill untracked job: #{job.id}"
+    # Due to async issue, job process may be running but the job status in db is not started.
+    # So we need to kill the untracked job.
+    # But unfortunatelly, when the schedular is started, the "add" event may be triggered before
+    # the live_jobs is retrieved from db, so we will have to delay some secondes to check if the
+    # job is really untracked.
+    setTimeout( ->
+        if live_jobs.get(job.id)?.get("status") is "started"
+          if zk_jobs.filter((j) -> j.id is job.id).length > 1
+            # two or more jobs in zk with the same id, so kill this one.
+            ws = job.get("workstation")
+            url_str = url.format(
+              protocol: "http"
+              hostname: ws.ip
+              port: ws.port
+              pathname: "#{ws.path}/0/jobs/#{job.id}/stop"
+            )
+            request.get url_str, (err, r, b) ->
+            logger.warn "Kill redundant job: #{job.id}"
+        else if zk_jobs.filter((j) -> j.id is job.id).length is 1
+          # the job status in db is not 'started', but it does exist in zk,
+          # it may be caused by network disconnect between workstation and zk.
+          # so we should change its status to 'started' in db.
+          events.trigger 'update:job',
+            find:
+              id: job.id
+              status: ["new", "finished", "cancelled"]
+            update:
+              status: "started"
+      , 10000
+    ) unless live_jobs.get(job.id)?.get("status") is "started"
 
   events.on "update:job", (msg) ->
     logger.debug "Find jobs #{JSON.stringify(msg.find)} and update to #{JSON.stringify(msg.update)}"
@@ -195,18 +162,37 @@ start = ->
       redis.publish "db.job", JSON.stringify({find: msg.find, update: msg.update})
       msg.callback?()
 
+  events.on 'retrive:jobinfo', (msg) ->
+    id = msg.job_id
+    ws = msg.workstation
+    url_str = url.format(
+      protocol: "http"
+      hostname: ws.ip
+      port: ws.port
+      pathname: "#{ws.path}/0/jobs/#{id}"
+    )
+    request.get url_str, (err, r, b) ->
+      return logger.error("Error when retrieving job result from workstation: #{err}") if err? or r.statusCode isnt 200
+      events.trigger "update:job",
+        find:
+          id: id
+        update:
+          exit_code: JSON.parse(b).exit_code
+          exec_info: JSON.parse(b)
+
   setInterval schedule, 60*1000
 
-dbmodule.initialize ->
-  data = dbmodule.data()
-  data.zk_client.mkdirp "/remote/alive/schedular", (err, path) ->
-    data.zk_client.create "/remote/alive/schedular/lock", CreateMode.EPHEMERAL, (err, path) ->
-      process.on "SIGINT", ->
-        data.zk_client.remove "/remote/alive/schedular/lock", (err) ->
-          logger.info "Schedular terminated!"
-          process.exit()
-      if err
-        logger.info "Another schedular may be running."
-        logger.info "Please make sure only one schedular is running or try it again later."
-        return process.exit(-1)
-      start()
+module.exports = 
+  schedule: ->
+    data = dbmodule.data()
+    data.zk_client.mkdirp "/remote/alive/schedular", (err, path) ->
+      data.zk_client.create "/remote/alive/schedular/lock", CreateMode.EPHEMERAL, (err, path) ->
+        process.on "SIGINT", ->
+          data.zk_client.remove "/remote/alive/schedular/lock", (err) ->
+            logger.info "Schedular terminated!"
+            process.exit()
+        if err
+          logger.info "Another schedular may be running."
+          logger.info "Please make sure only one schedular is running or try it again later."
+          return process.exit(-1)
+        start()

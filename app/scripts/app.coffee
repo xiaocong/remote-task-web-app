@@ -44,6 +44,12 @@ angular.module('angApp', [
       .when '/projects/:id/tasks/:tid/jobs/:jid/stream',
         templateUrl: 'views/stream.html'
         controller: 'StreamCtrl'
+      .when '/projects/:id/tasks/:tid/jobs/:jid/screenshot',
+        templateUrl: 'views/screenshot.html'
+        controller: 'ScreenshotCtrl'
+      .when '/projects/:id/tasks/:tid/jobs/:jid/result',
+        templateUrl: 'views/result.html'
+        controller: 'ResultCtrl'
       .when '/admin/users/create',
         templateUrl: 'views/addaccount.html'
         controller: 'AddUserCtrl'
@@ -55,7 +61,7 @@ angular.module('angApp', [
         controller: 'AddTaskCtrl3'
       .when '/projects/:id/addtask',
         templateUrl: 'views/addtask2.html'
-        controller: 'AddTaskCtrl2'
+        controller: 'AddTaskCtrl'
       .otherwise
         redirectTo: '/'
     $locationProvider.html5Mode true

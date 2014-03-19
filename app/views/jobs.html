@@ -11,30 +11,40 @@
   <tr>
     <th>Job ID</th>
     <th>Start Time</th>
-    <th>End Time</th>
+    <th>Duraion</th>
     <th>Creator</th>
+    <th>Device</th>
     <th>Status</th>
     <th col="2">Operation</th>
   </tr>
-  <tr ng-repeat='job in task.jobs' ng-class="{success:job.status=='running', error:job.status=='failed'}">
+  <tr class="clickable" ng-repeat='job in task.jobs' ng-class="{success:job.status=='running', error:job.status=='failed'}" ng-click="viewResult($event, job)">
     <td>{{job.no}}</td>
-    <td>{{job.created_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
-    <td>{{job.modified_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+    <td>{{job._startTime | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+    <td>{{job._duration/3600 | number:0}}:{{job._duration%3600/60 | number:0}}:{{job._duration%60 | number:0}}</td>
     <td>{{task.creator.email}}</td>
+    <td><img ng-src="{{getIndicator(job)}}"> <span title="Serial: {{job.device_filter.serial}}">{{ getDevice(job) }}</span></td>
     <td>{{job.status}}</td>
     <td>
       <div ng-switch on="job.status">
         <div ng-switch-when="finished">
-          <button class="btn btn-primary" ng-click="stream(job)">Stream</button>
-          <button class="btn btn-primary" ng-click="restart(job)">Restart</button>
+          <a href="javascript:void(0)" class="btn btn-primary" ng-click="stream(job)" name="operation_btn">
+            <i class="icon-list-alt icon-white"></i>
+          </a>
+          <a href="javascript:void(0)" class="btn btn-primary" ng-click="restart(job)" name="operation_btn">
+            <i class="icon-repeat icon-white"></i>
+          </a>
         </div>
         <div ng-switch-when="cancelled">
-          <button class="btn btn-primary" ng-click="stream(job)">Stream</button>
-          <button class="btn btn-primary" ng-click="restart(job)">Restart</button>
+          <a href="javascript:void(0)" class="btn btn-primary" ng-click="stream(job)" name="operation_btn"><i class="icon-list-alt icon-white"></i></a>
+          <a href="javascript:void(0)" class="btn btn-primary" ng-click="restart(job)" name="operation_btn"><i class="icon-repeat icon-white"></i></a>
         </div>
         <div ng-switch-default> <!-- new/started/running -->
-          <button class="btn btn-info" ng-click="stream(job)" ng-disabled="job.status != 'started'">Stream</button>
-          <button class="btn btn-danger" ng-click="cancel(job)">Cancel</button>
+          <a href="javascript:void(0)" class="btn btn-info" ng-click="stream(job)" ng-disabled="job.status != 'started'" name="operation_btn">
+            <i class="icon-list-alt icon-white"></i>
+          </a>
+          <a href="javascript:void(0)" class="btn btn-danger" ng-click="cancel(job)" name="operation_btn">
+            <i class="icon-remove icon-white"></i>
+          </a>
         </div>
       </div>
     </td>

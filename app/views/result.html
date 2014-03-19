@@ -1,0 +1,97 @@
+
+<div class="row-fluid">
+  <div class="pull-right">
+      <button class='btn btn-primary' ng-click="refresh()">Refresh</button>
+  </div>
+</div>
+<h4>{{result.job.task.name}}</h4>
+
+<table class="table table-bordered table-hover">
+  <tr>
+    <th>Job No.</th>
+    <th>Stat. (Total = Passed/Failed/Error)</th>
+    <th>Device</th>
+    <th>Start Time</th>
+    <th>End Time</th>
+  </tr>
+  <tr class="info">
+    <td>{{result.job.no}}</td>
+    <td>
+      <span>{{result.total}}</span> = 
+      <span class="text-success">{{result.pass}}</span> + 
+      <span class="text-warning">{{result.fail}}</span> + 
+      <span class="text-error">{{result.error}}</span>
+    </td>
+    <td>{{result.job.device_filter.product.manufacturer}} / {{result.job.device_filter.product.model}}</td>
+    <td>{{result.start_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+    <td>{{result.end_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+  </tr>
+</table>
+
+<table class="table table-bordered table-hover">
+  <tr>
+    <th>
+      <form style="margin-bottom: 0px">
+        <label class="radio inline">
+          <input type="radio" ng-model="pageControl.filter" id="fail" value="fail" ng-click="toggleFilter()"><span class="text-warning"><strong>Fail</strong></span>
+        </label>
+        <label class="radio inline">
+          <input type="radio" ng-model="pageControl.filter" id="error" value="error" ng-click="toggleFilter()"><span class="text-error"><strong>Error</strong></span>
+        </label>
+      </form>
+    </th>
+    <th>Start Time</th>
+    <th>End Time</th>
+    <th>Logs</th>
+    <th>Screenshot</th>
+  </tr>
+  <tr ng-repeat='ret in result.results' ng-class="{warning:ret.result=='fail', error:ret.result=='error'}">
+    <td>{{ret.name}}</td>
+    <td>{{ret.start_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+    <td>{{ret.end_at | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+    <td><a href="{{ret.log}}" target="_blank">Log</a> | <a href="javascript:void(0)" title="{{formattedTrace(ret)}}">Trace</a></td>
+    <td><a href="javascript:void(0)" ng-click="viewScreenshot($index)">View Screenshot</a></td>
+    <!--td><a href="{{ret.screenshot_at_failure}}" target="_blank">View Screenshot</td-->
+  </tr>
+</table>
+
+<div class="pagination pagination-right">
+  <ul>
+    <li ng-class="{disabled:pageControl.pages[0].index<=0}">
+      <a href="javascript:void(0)" ng-click="pageControl.prev()">&laquo;</a>
+    </li>
+
+    <li ng-show="p.show" ng-class="{disabled:p.disable}" ng-repeat="p in pageControl.pages">
+      <a href="javascript:void(0)" ng-click="goto($index)">{{p.index + 1}}</a>
+    </li>
+
+    <!--li id="page0" ng-show="pageControl.pages[0].show" ng-class="{disabled:pageControl.pages[0].disable}"><a href="javascript:void(0)" ng-click="goto(0)">{{pageControl.pages[0].index + 1}}</a></li>
+    <li id="page1" ng-show="pageControl.pages[1].show" ng-class="{disabled:pageControl.pages[1].disable}"><a href="javascript:void(0)" ng-click="goto(1)">{{pageControl.pages[1].index + 1}}</a></li>
+    <li id="page2" ng-show="pageControl.pages[2].show" ng-class="{disabled:pageControl.pages[2].disable}"><a href="javascript:void(0)" ng-click="goto(2)">{{pageControl.pages[2].index + 1}}</a></li>
+    <li id="page3" ng-show="pageControl.pages[3].show" ng-class="{disabled:pageControl.pages[3].disable}"><a href="javascript:void(0)" ng-click="goto(3)">{{pageControl.pages[3].index + 1}}</a></li>
+    <li id="page4" ng-show="pageControl.pages[4].show" ng-class="{disabled:pageControl.pages[4].disable}"><a href="javascript:void(0)" ng-click="goto(4)">{{pageControl.pages[4].index + 1}}</a></li-->
+
+    <li ng-class="{disabled:pageControl.pages[4].index>=pageControl.pageCount-1}">
+      <a href="javascript:void(0)" ng-click="pageControl.next()">&raquo;</a>
+    </li>
+  </ul>
+</div>
+
+
+<div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h4 id="myLabel">Screenshot</h4>
+  </div>
+  <div class="modal-body modal-body-cus" id="img_holder">
+    <p class="text-center">
+      <img id="screenshot" alt="new">
+    </p>
+  </div>
+  <div class="modal-footer modal-footer-center">
+    <a id="prev_btn" href="javascript:void(0)" class="btn btn-primary" ng-click="step(-1)"><i class="icon-chevron-left icon-white"></i></a>
+    <a id="next_btn" href="javascript:void(0)" class="btn btn-primary" ng-click="step(1)"><i class="icon-chevron-right icon-white"></i></a>
+    <!--button id="prev_btn" class="btn btn-primary" ng-click="previous()">Prev</button>
+    <button id="next_btn" class="btn btn-primary" ng-click="next()">Next</button-->
+  </div>
+</div>

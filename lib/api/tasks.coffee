@@ -7,13 +7,12 @@ logger = require("../logger")
 devices = require("./devices")
 
 stop_job = (job, workstations)->
-  if job?.get("status") is "started"
-    ws = workstations.get job.get("device").workstation_mac
+  if job?.get("status") is "started" and (ws = workstations.get(job.get("device").workstation_mac))?
     url_str = url.format(
       protocol: "http"
       hostname: ws.get("ip")
       port: ws.get("api").port
-      pathname: "/api/0/jobs/#{job.id}/stop"
+      pathname: "#{ws.get('api').path}/0/jobs/#{job.id}/stop"
     )
     request.get(url_str, (e, r, body)->)
     logger.info "Stop running job:#{job.id}."
@@ -38,15 +37,16 @@ exports = module.exports =
     jobs.forEach (job, index) ->
       for prop in properties when prop not of job and req.param(prop)?
         job[prop] = req.param(prop)
-      job["environ"] ?= {}
-      job["r_type"] ?= "none"
-      job["r_job_nos"] ?= []
-      job["status"] = "new"
-      job["no"] ?= index
-      job["priority"] = req.project.priority  # 1 - 10. default 1 means lowest. 10 means highest.
-      job["device_filter"] ?= {}
-      job["device_filter"]["tags"] ?= []
-      job["device_filter"]["tags"] = _.union(job["device_filter"]["tags"], req.project.tagList())
+      job.environ ?= {}
+      job.r_type ?= "none"
+      job.r_job_nos ?= []
+      job.status = "new"
+      job.no ?= index
+      job.priority = req.project.priority  # 1 - 10. default 1 means lowest. 10 means highest.
+      job.device_filter ?= {}
+      job.device_filter.tags ?= []
+      job.device_filter.tags = _.union(job.device_filter.tags, req.project.tagList())
+      job.device_filter.device_owner = req.project.creator.email
 
     if not _.every(jobs, (j) -> j.repo_url?)
       return res.json 500, error: "'repo_url' is mandatory for every job."
@@ -71,6 +71,22 @@ exports = module.exports =
   get: (req, res, next) ->
     task = JSON.parse(JSON.stringify(req.task))
     delete task.creator.password
+    _.each task.jobs, (job) ->
+      filter = job.device_filter or {}
+      schedular =
+        available_device:
+          total: 0
+          idle: 0
+        has_exclusive: false
+        has_dependency: false
+      req.data.models.devices.filter((dev) ->
+        req.methods.match filter, dev
+      ).forEach (dev) ->
+        schedular.available_device.total += 1
+        schedular.available_device.idle += 1 if dev.get "idle"
+      schedular.has_exclusive = req.methods.has_exclusive job
+      schedular.has_dependency = req.methods.has_dependency job
+      job.schedular = schedular
     res.json task
 
   list: (req, res, next) ->
@@ -152,25 +168,24 @@ exports = module.exports =
     job.task_id = req.task.id
     if not job.repo_url?
       return res.json 500, error: "'repo_url' is mandatory for job."
-    job["environ"] ?= {}
-    job["device_filter"] ?= {}
-    job["device_filter"]["tags"] ?= []
-    job["r_type"] ?= "none"
-    job["r_job_nos"] ?= []
-    job["status"] = "new"
-    job["no"] = _.max(req.task.jobs, (j) -> j.no).no + 1
-    req.db.models.project.get req.task.project_id, (err, project) ->
+    job.environ ?= {}
+    job.device_filter ?= {}
+    job.device_filter.tags ?= []
+    job.r_type ?= "none"
+    job.r_job_nos ?= []
+    job.status = "new"
+    job.no = _.max(req.task.jobs, (j) -> j.no).no + 1
+    job.priority = req.project.priority
+    job.device_filter.tags = _.union(job.device_filter.tags, req.project.tagList())
+    job.device_filter.device_owner = req.project.creator.email
+
+    if job.device_filter.tags.length <= 0
+      return res.json 500, error: "Job should define at least one tag in 'device_filter.tags'."
+
+    req.db.models.job.create job, (err, j) ->
       return next(err) if err?
-      job["priority"] = project.priority
-      job["device_filter"]["tags"] = _.union(job["device_filter"]["tags"], project.tagList())
-
-      if not job.device_filter?.tags?.length > 0
-        return res.json 500, error: "Job should define at least one tag in 'device_filter.tags'."
-
-      req.db.models.job.create job, (err, j) ->
-        return next(err) if err?
-        res.json j
-        req.redis.publish "db.job", JSON.stringify(method: "add", job: j.id)
+      res.json j
+      req.redis.publish "db.job", JSON.stringify(method: "add", job: j.id)
 
   param_job_no: (req, res, next) ->
     req.db.models.job.find {task_id: req.task.id, no: Number(req.params.no)}, (err, jobs) ->
@@ -190,16 +205,16 @@ exports = module.exports =
         return res.json 500, error: "Invalid r_job_nos."
     properties = ["r_type", "r_job_nos", "environ", "device_filter", "repo_url", "repo_branch", "repo_username", "repo_passowrd"]
     t_job[prop] = job[prop] for prop in properties when prop of job
-    req.db.models.project.get req.task.project_id, (err, project) ->
+    t_job.priority = req.project.priority
+    t_job.device_filter ?= {}
+    t_job.device_filter.tags ?= []
+    t_job.device_filter.tags = _.union(t_job.device_filter.tags, req.project.tagList())
+    t_job.device_filter.device_owner = req.project.creator.email
+    t_job.save (err) ->
       return next(err) if err?
-      t_job["priority"] = project.priority
-      t_job.device_filter?.tags ?= []
-      t_job["device_filter"]["tags"] = _.union(t_job["device_filter"]["tags"], project.tagList())
-      t_job.save (err) ->
-        return next(err) if err?
-        res.json t_job
-        req.redis.publish "db.job", JSON.stringify(method: "update", job: t_job.id)
-        logger.info "Job:#{t_job.id} updated."
+      res.json t_job
+      req.redis.publish "db.job", JSON.stringify(method: "update", job: t_job.id)
+      logger.info "Job:#{t_job.id} updated."
 
   cancel_job: (req, res, next) ->
     job = req.job
@@ -237,13 +252,16 @@ exports = module.exports =
           protocol: "http"
           hostname: ws.get("ip")
           port: ws.get("api").port
-          pathname: "/api/0/jobs/#{job.id}/stream"
+          pathname: "#{ws.get('api').path}/0/jobs/#{job.id}/stream"
           query: req.query
         )
-        request({url: url_str, timeout: 1000*300}).on("error", (error) ->
+        stream = request({url: url_str, timeout: 1000*300})
+        stream.on("error", (error) ->
           logger.error "**ERROR**: #{error}"
-          res.end error
+          res.end error.toString()
         ).pipe res
+        res.on "close", ->  # client abort
+          stream.abort()  # close request to ws
       else
         res.json 404, error: "The workstation is disconnected."
 
@@ -259,10 +277,12 @@ exports = module.exports =
           protocol: "http"
           hostname: ws.get("ip")
           port: ws.get("api").port
-          pathname: "/api/0/jobs/#{job.id}/files/#{req.params[0]}"
+          pathname: "#{ws.get('api').path}/0/jobs/#{job.id}/files/#{req.params[0]}"
           query: req.query
         )
-        request(url_str).pipe res
+        request(url_str).on('error', (err) ->
+          res.end()
+        ).pipe res
       else
         res.json 404, error: "The device is disconnected."
 
@@ -270,7 +290,7 @@ exports = module.exports =
     (req, res, next) ->
       job = req.data.models.jobs.find (job) -> Number(job.id) is req.job.id
       if job?
-        req.device = req.data.models.devices.get "#{job.get('mac')}-#{job.get('serial')}"
+        req.device = req.data.models.devices.get "#{job.get('workstation').mac}-#{job.get('serial')}"
         next()
       else
         res.json 403, error: "Forbidden on not running job."
@@ -289,40 +309,61 @@ exports = module.exports =
           protocol: "http"
           hostname: ws.get("ip")
           port: ws.get("api").port
-          pathname: "/api/0/jobs/#{job.id}/files/workspace/result.txt"
+          pathname: "#{ws.get('api').path}/0/jobs/#{job.id}/files/workspace/result.txt"
         )
         stream = request(url_str)
         remaining = ""
-        results = []
+        summary = {pass: 0, fail: 0, error: 0, start_at: null, end_at: null, results: []}
+        path = "#{req.path[...-6]}files/workspace/"
+        filter = (req.param("r") or "pass,fail,error").split(",")
+
+        push_result = (r) ->
+          switch r.result.toLowerCase()
+            when "pass", "passed", "p"
+              summary.pass += 1
+              r.result = "pass"
+            when "fail", "failed", "failure", "f"
+              summary.fail += 1
+              r.result = "fail"
+            when "error", "e"
+              summary.error += 1
+              r.result = "error"
+          r[t] = new Date r[t] for t in ["start_at", "end_at"]
+          summary.start_at = r.start_at if summary.start_at is null or summary.start_at > r.start_at
+          summary.end_at = r.end_at if summary.end_at is null or summary.end_at < r.end_at
+          if r.result.toLowerCase() in filter
+            summary.results.push r
+            r[p] = "#{path}#{r[p]}" for p in ["screenshot_at_failure", "expect", "log"] when r[p]?
+
+        parse_line = (line) ->
+          try
+            push_result JSON.parse(line) if line
+          catch error
+            logger.error "Error during parsing result: #{error}"
+            logger.error "#{line}"
+
         stream.on "data", (data) ->
           remaining += data
           lines = remaining.split "\n"
-          logger.info JSON.stringify(lines)
-          for line in lines[...-1]
-            try
-              results.push JSON.parse(line)
-            catch error
-              logger.error "Error during parsing result: #{error}"
+          parse_line line for line in lines[...-1]
           remaining = lines[lines.length-1] or ""
+
         stream.on "error", (err) ->
           next err
+
         stream.on "end", ->
-          try
-            results.push JSON.parse(remaining)
-          catch error
-            logger.error "Error during parsing result: #{error}"
-          summary = {pass: 0, fail: 0, error: 0, start_at: null, end_at: null, results: results}
-          path = "#{req.path[...-6]}files/workspace/"
-          _.each results, (r) ->
-            switch r.result.toLowerCase()
-              when "pass", "passed", "p" then summary.pass += 1
-              when "fail", "failed", "failure", "f" then summary.fail += 1
-              when "error", "e" then summary.error += 1
-            r[t] = new Date r[t] for t in ["start_at", "end_at"]
-            summary.start_at = r.start_at if summary.start_at is null or summary.start_at > r.start_at
-            summary.end_at = r.end_at if summary.end_at is null or summary.end_at < r.end_at
-            r[p] = "#{path}#{r[p]}" for p in ["screenshot_at_failure", "expect", "log"] when p of r
+          parse_line remaining
           summary.total = summary.pass + summary.fail + summary.error
+          summary.job = req.job
+
+          page = Number(req.param("page"))
+          page_count = Number(req.param("page_count")) or 100
+
+          if page >= 0 and page_count > 0
+            summary.page = page
+            summary.page_count = page_count
+            summary.pages = Math.ceil(summary.results.length / page_count)
+            summary.results = summary.results[page*page_count...(page+1)*page_count]
           res.json summary
       else
         res.json 404, error: "The device is disconnected."
