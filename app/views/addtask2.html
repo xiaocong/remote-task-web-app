@@ -64,7 +64,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr class="clickable" ng-repeat="device in devices | filter:filterCondition | orderBy:predicate:reverse" ng-class="{info:device._selected}" ng-click="setSelected(device)">
+        <tr class="clickable" ng-repeat="device in devices | filter:filterCondition | orderBy:predicate:reverse" ng-class="{info:device._selected}" ng-click="setSelected($event, device)">
           <td>
             <span ng-show="device._selected" class="label label-info"><i class="icon-ok icon-white"></i></span>
             <span ng-show="!device._selected" class="label "><i class="icon-ok icon-white"></i></span>
@@ -74,12 +74,18 @@
           <td>{{device.product.manufacturer}}</td>
           <td>
             {{device.product.model}}
-            <span class="badge badge-success" ng-show="!showDevice" style="float:right;"><i class="icon-leaf icon-white"></i></span>
+            <span style="float:right;">
+              <button href="javascript:void(0)" class="btn btn-primary btn-small" ng-click="editEnv(device)" name="operation_btn" ng-disabled="!device._selected"><i class="icon-edit icon-white"></i></button>
+              <!--span class="badge badge-success" ng-show="!showDevice" style="float:right;"><i class="icon-edit icon-white"></i></span-->
+            </span>
           </td>
           <td ng-show="showDevice">{{device.build.version.codename}}</td>
           <td ng-show="showDevice">
             {{device.id}}
-            <span class="badge badge-success" style="float:right;"><i class="icon-leaf icon-white"></i></span>
+            <span style="float:right;">
+              <button href="javascript:void(0)" class="btn btn-primary btn-small" ng-click="editEnv(device)" name="operation_btn" ng-disabled="!device._selected"><i class="icon-edit icon-white"></i></button>
+              <!-- span class="badge badge-success"><i class="icon-leaf icon-white"></i></span -->
+            </span>
           </td>
         </tr>
       </tbody>
@@ -95,3 +101,43 @@
   </div>
 
 </form>
+
+<!-- The ENV dialog -->
+
+<div id="envEditor" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h4 id="myLabel">Repo Env</h4>
+  </div>
+  <div class="modal-body modal-body-cus" id="body">
+    <p class="text-center" ng-show="!newTaskForm.repo.env">
+      Loading Repo Env: {{newTaskForm.repo_url}} ...
+    </p>
+    <p class="text-center" ng-show="newTaskForm.repo.env">
+      <div ng-repeat="(key, value) in newTaskForm.repo.env">
+        <div ng-switch on="value.options.length == 0">
+
+          <div class="control-group" ng-switch-when="false">
+            <label class="control-label">{{key}}</label>
+            <div class="controls">
+              <input ng-show="!value.fix" type="text" id="{{key}}" ng-model="editingDevice.params.2" required>
+              <select ng-show="value.fix" ng-model="editingDevice.params.1">
+                <option ng-repeat="o in value.options" value="{{o}}">{{o}}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="control-group" ng-switch-when="true">
+            <label class="control-label">{{key}}</label>
+              <input type="text" name='name' placeholder='{{key}}' ng-model="editingDevice.params.[key]" required>
+          </div>
+
+        </div>
+      </div>
+    </p>
+  </div>
+  <div class="modal-footer modal-footer-center">
+    <a id="prev_btn" href="javascript:void(0)" class="btn btn-primary has-spinner" ng-class="{active:!newTaskForm.repo.env}" ng-click="saveEnv()"><span class="spinner"><i class="icon-refresh icon-white icon-spin"></i></span>Save</a>
+    <a id="next_btn" href="javascript:void(0)" class="btn btn-primary" ng-click="step(1)" data-dismiss="modal" aria-hidden="true">Cancel</a>
+  </div>
+</div>

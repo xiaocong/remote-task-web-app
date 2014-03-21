@@ -943,9 +943,45 @@ angular.module('angApp')
       $location.path "/projects/"+$scope.id
       return
 
-    $scope.setSelected = (device) ->
+    $scope.setSelected = ($event, device) ->
+      return if $event.target.name is "operation_btn"
       device._selected = !device._selected
       return device._selected
+
+    # See if the user has choose a specifci repo from the list, or
+    # has input new one.
+    isRepoInRepos = () ->
+      for r, index in $scope.repos
+        if $scope.newTaskForm.repo_url is r.clone_url
+          $scope.newTaskForm.repo = $scope.repos[index]
+          return true
+      delete $scope.newTaskForm.repo
+      return false
+
+    getRepoEnv = () ->
+      # TODO: Maybe we should cache the result in $scope.repos.
+      return if $scope.newTaskForm.repo.env
+      # TODO: make sure $scope.newTaskForm.repo is valid.
+      $http.get("/api/repos/#{$scope.newTaskForm.repo.full_name}/env").
+        success (data) ->
+          $scope.newTaskForm.repo.env = data
+
+    # The device we're editing its env.
+    $scope.editingDevice = null
+    $scope.editEnv = (device) ->
+      return if not isRepoInRepos()
+      getRepoEnv()
+      $scope.editingDevice = device
+      $scope.editingDevice.params = {}
+      $('#envEditor').modal({'show'})
+      return
+
+    $scope.saveEnv = () ->
+      return if not $scope.editingDevice.params
+      $scope.editingDevice.envString = ""
+      for key in $scope.editingDevice.params
+        $scope.editingDevice.envString += "#{key}=#{$scope.editingDevice.params[key]} "
+      return
 
     $scope.submitTask = () ->
       # Two cases depending on device_filter.anyDevice:
