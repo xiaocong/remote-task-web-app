@@ -114,30 +114,38 @@
       Loading Repo Env: {{newTaskForm.repo_url}} ...
     </p>
     <p class="text-center" ng-show="newTaskForm.repo.env">
-      <div ng-repeat="(key, value) in newTaskForm.repo.env">
-        <div ng-switch on="value.options.length == 0">
+      <form class="form-horizontal">
+        <div ng-repeat="(key, value) in editingDevice._env">
+          <div ng-switch on="value.options.length == 0">
 
-          <div class="control-group" ng-switch-when="false">
-            <label class="control-label">{{key}}</label>
-            <div class="controls">
-              <input ng-show="!value.fix" type="text" id="{{key}}" ng-model="editingDevice.params.2" required>
-              <select ng-show="value.fix" ng-model="editingDevice.params.1">
-                <option ng-repeat="o in value.options" value="{{o}}">{{o}}</option>
-              </select>
+            <div class="control-group" ng-switch-when="false">
+              <label class="control-label">{{key}}</label>
+              <div class="controls" ng-switch on="value.fix">
+                <div ng-switch-when="true">
+                  <input type="text" id="{{key}}" ng-model="value.displayValue" required>
+                </div>
+                <div ng-switch-when="false">
+                  <select id="{{key}}" ng-model="value.displayValue" ng-options="o for o in value.options">
+                    <!-- option ng-repeat="o in value.options" value="{{o}}">{{o}}</option -->
+                  </select>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div class="control-group" ng-switch-when="true">
-            <label class="control-label">{{key}}</label>
-              <input type="text" name='name' placeholder='{{key}}' ng-model="editingDevice.params.[key]" required>
-          </div>
+            <div class="control-group" ng-switch-when="true">
+              <label class="control-label">{{key}}</label>
+              <div class="controls">
+                <input type="text" name='name' placeholder='{{key}}' ng-model="value.displayValue" required>
+              </div>
+            </div>
 
+          </div>
         </div>
-      </div>
+      </form>
     </p>
   </div>
   <div class="modal-footer modal-footer-center">
-    <a id="prev_btn" href="javascript:void(0)" class="btn btn-primary has-spinner" ng-class="{active:!newTaskForm.repo.env}" ng-click="saveEnv()"><span class="spinner"><i class="icon-refresh icon-white icon-spin"></i></span>Save</a>
-    <a id="next_btn" href="javascript:void(0)" class="btn btn-primary" ng-click="step(1)" data-dismiss="modal" aria-hidden="true">Cancel</a>
+    <a id="prev_btn" href="javascript:void(0)" class="btn btn-primary has-spinner" ng-class="{active:!newTaskForm.repo.env}" ng-click="saveEnv()" data-dismiss="modal"><span class="spinner"><i class="icon-refresh icon-white icon-spin"></i></span>Save</a>
+    <a id="next_btn" href="javascript:void(0)" class="btn btn-primary" ng-click="cancelEnv()" data-dismiss="modal" aria-hidden="true">Cancel</a>
   </div>
 </div>

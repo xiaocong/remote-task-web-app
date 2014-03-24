@@ -946,6 +946,8 @@ angular.module('angApp')
     $scope.setSelected = ($event, device) ->
       return if $event.target.name is "operation_btn"
       device._selected = !device._selected
+      # delete env if possible
+      delete device._env if not device._selected
       return device._selected
 
     # See if the user has choose a specifci repo from the list, or
@@ -958,6 +960,10 @@ angular.module('angApp')
       delete $scope.newTaskForm.repo
       return false
 
+    ensureCopyEnv = (device) ->
+      return if not $scope.newTaskForm.repo?.env or device._env
+      device._env = jQuery.extend(true, {}, $scope.newTaskForm.repo.env)
+
     getRepoEnv = () ->
       # TODO: Maybe we should cache the result in $scope.repos.
       return if $scope.newTaskForm.repo.env
@@ -965,23 +971,48 @@ angular.module('angApp')
       $http.get("/api/repos/#{$scope.newTaskForm.repo.full_name}/env").
         success (data) ->
           $scope.newTaskForm.repo.env = data
+          ensureCopyEnv($scope.editingDevice)
 
-    # The device we're editing its env.
+    # The device we're editing its env. Update it each time user clicks to edit env for one specific device.
     $scope.editingDevice = null
     $scope.editEnv = (device) ->
       return if not isRepoInRepos()
       getRepoEnv()
       $scope.editingDevice = device
-      $scope.editingDevice.params = {}
-      $('#envEditor').modal({'show'})
+      # assign the env value to each selected device
+      ensureCopyEnv($scope.editingDevice)
+      $('#envEditor').modal('show')
+      return
+    ###
+    For each job (actually device), we assign a dedicate env object.
+    For each param in the env object, we have:
+      1) env.param.displayValue = ""  # this is the value used for ng-model and display
+      2) env.param.finalValue = ""  # this is the value that user finally chooses.
+    When clicking SAVE button, we make finalValue = displayValue.
+    When clicking CANCEL button, we reset displayValue = finalValue.
+    This way we are able to allow user modify the env params for multiple times before submitting the task.
+    ###
+    $scope.saveEnv = () ->
+      return if not $scope.editingDevice._env
+      for key of $scope.editingDevice._env
+        $scope.editingDevice._env[key].finalValue = $scope.editingDevice._env[key].displayValue if $scope.editingDevice._env[key].displayValue
+      $('#envEditor').modal('hide')
       return
 
-    $scope.saveEnv = () ->
-      return if not $scope.editingDevice.params
-      $scope.editingDevice.envString = ""
-      for key in $scope.editingDevice.params
-        $scope.editingDevice.envString += "#{key}=#{$scope.editingDevice.params[key]} "
+    $scope.cancelEnv = () ->
+      return if not $scope.editingDevice._env
+      for key of $scope.editingDevice._env
+        # Reset displayValue in case user just modifies it.
+        $scope.editingDevice._env[key].displayValue = $scope.editingDevice._env[key].finalValue
+      $('#envEditor').modal('hide')
       return
+
+    getEnviron = (device) ->
+      return {} if not device._env
+      environ = {}
+      for key of device._env
+        environ[key] = device._env[key].finalValue if device._env[key].finalValue
+      return environ
 
     $scope.submitTask = () ->
       # Two cases depending on device_filter.anyDevice:
@@ -996,6 +1027,7 @@ angular.module('angApp')
           r_type: $scope.newTaskForm.r_type
           device_filter:
             platform: d.platform
+          environ: getEnviron(d)
         }
         # selected by model.
         if $scope.showDevice is false
@@ -1011,6 +1043,8 @@ angular.module('angApp')
           job.device_filter.serial = tokens[1]
         job.no = iii++
         $scope.newTaskForm.jobs.push(job)
+      # check for the exclusive flag now
+      #
       # OK to submit it now.
       delete $scope.newTaskForm.repo
       $http.post("api/tasks?project="+$scope.id, $scope.newTaskForm).success (data) ->
