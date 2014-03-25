@@ -30,6 +30,7 @@
             <strong>Name</strong>:  {{newTaskForm.repo.full_name}}<br>
             <strong>Owner</strong>: {{newTaskForm.repo.owner.login}}<br>
             <strong>URL</strong>:   {{newTaskForm.repo.clone_url}}<br>
+            <strong>Environ</strong>:   <input type="checkbox" disabled ng-checked="!emptyObject(newTaskForm.repo.environ)"><br>
           </div>
         </div>
         <!--textarea rows="8" cols="20" ng-disabled="true">Name: {{newTaskForm.repo.full_name}}&#13;URL: {{newTaskForm.repo.clone_url}}&#13;Owner: {{newTaskForm.repo.owner.login}}
@@ -64,7 +65,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr class="clickable" ng-repeat="device in devices | filter:filterCondition | orderBy:predicate:reverse" ng-class="{info:device._selected}" ng-click="setSelected($event, device)">
+        <tr class="clickable" ng-repeat="device in devices | filter:filterCondition | orderBy:predicate:reverse" ng-class="{info:device._selected}" ng-click="setDeviceSelected($event, device)">
           <td>
             <span ng-show="device._selected" class="label label-info"><i class="icon-ok icon-white"></i></span>
             <span ng-show="!device._selected" class="label "><i class="icon-ok icon-white"></i></span>
@@ -110,10 +111,10 @@
     <h4 id="myLabel">Repo Env</h4>
   </div>
   <div class="modal-body modal-body-cus" id="body">
-    <p class="text-center" ng-show="!newTaskForm.repo.env">
+    <p class="text-center" ng-show="!newTaskForm.repo.environ">
       Loading Repo Env: {{newTaskForm.repo_url}} ...
     </p>
-    <p class="text-center" ng-show="newTaskForm.repo.env">
+    <p class="text-center" ng-show="newTaskForm.repo.environ">
       <form class="form-horizontal">
         <div ng-repeat="(key, value) in editingDevice._env">
           <div ng-switch on="value.options.length == 0">
