@@ -2,6 +2,8 @@
 
 schedule = require('node-schedule')
 GitHubApi = require('github')
+request = require("request")
+yaml = require('js-yaml')
 _ = require('underscore')
 
 github = new GitHubApi
@@ -32,10 +34,43 @@ updateTaskRepos = (page, per_page) ->
       logger.error "Error when retrieving github repositories due to #{error}"
     else
       hash = {}
-      hash[item.id] = JSON.stringify(item) for item in repos.items when item.name.match(/^opentest.task\s*-/)
-      redis.hmset 'opentest:task:repositories', hash
+      items = []
+      items.push item for item in repos.items when item.name.match(/^opentest.task\s*-/)
+      count = items.length
+      for item in items
+        do (item) ->
+          getEnv item.owner.login, item.name, item.default_branch, (err, environ) ->
+            item.environ = if err? then {} else environ
+            count--
+            if count is 0
+              hash[item.id] = JSON.stringify(item) for item in items
+              redis.hmset 'opentest:task:repositories', hash
       if page < Math.ceil(repos.total_count/per_page)
         updateTaskRepos page + 1, per_page
+
+getEnv = (user, repo, branch, callback) ->
+  url = "https://raw.github.com/#{user}/#{repo}/#{branch}/.init.yml"
+  request.get url, (err, res, body) ->
+    if err? or res.statusCode isnt 200
+      callback "Error when retrieving file .init.yml"
+    else
+      try
+        doc = yaml.safeLoad body
+        env = doc.env or {}
+        for name, value of env
+          if value instanceof Array
+            env[name] =
+              options: value
+              fix: false
+              exclusive: false
+          else
+            env[name] =
+              options: if value.options instanceof Array then value.options else []
+              fix: value.fix or false
+              exclusive: value.exclusive or false
+        callback null, env
+      catch e
+        return callback e
 
 # schedule it every minute
 schedule.scheduleJob '* * * * *', ->
