@@ -872,7 +872,7 @@ angular.module('angApp')
       return
     return
 
-  .controller 'AddTaskCtrl', ($routeParams, $scope, $http, $location) ->
+  .controller 'AddTaskCtrl', ($rootScope, $routeParams, $scope, $http, $location) ->
     # Some initialization.
     $scope.showDevice = false
     $scope.filterCondition = {_displayModel:true}
@@ -988,6 +988,17 @@ angular.module('angApp')
       # 
       # Do nothing for now as the env params are within their repos now.
 
+    $scope.setupEnvAutoComplete = (nodeId) ->
+      key = nodeId      
+      # Setup autocomplete options.
+      options = $scope.editingDevice._env[key].options.join("-").split("-")
+      $("##{nodeId}").typeahead(
+        minLength: 0
+        source: options
+        #updater: typeaheadUpdater
+      )
+      return
+
     # The device we're editing its env. Update it each time user clicks to edit env for one specific device.
     $scope.editingDevice = null
     $scope.editEnv = (device) ->
@@ -995,7 +1006,7 @@ angular.module('angApp')
       $scope.editingDevice = device
       getRepoEnv()
       ensureCopyEnv($scope.editingDevice)
-      return if emptyObject($scope.editingDevice._env)
+      return if $rootScope.emptyObject($scope.editingDevice._env)
       $('#envEditor').modal('show')
       return
     ###
