@@ -122,10 +122,10 @@
             <div class="control-group" ng-switch-when="false">
               <label class="control-label">{{key}}</label>
               <div class="controls" ng-switch on="value.fix">
-                <div ng-switch-when="true">
-                  <input type="text" id="{{key}}" ng-model="value.displayValue" required>
-                </div>
                 <div ng-switch-when="false">
+                  <input type="text" id="{{key}}" name="{{key}}" ng-model="value.displayValue" ng-click="setupEnvAutoComplete(key)" autocomplete="off" required>
+                </div>
+                <div ng-switch-when="true">
                   <select id="{{key}}" ng-model="value.displayValue" ng-options="o for o in value.options">
                     <!-- option ng-repeat="o in value.options" value="{{o}}">{{o}}</option -->
                   </select>
