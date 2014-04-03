@@ -1100,7 +1100,7 @@ angular.module('angApp')
       taskData = jQuery.extend(true, {}, $scope.newTaskForm)
       delete taskData.repo
       delete taskData.r_type # remove it for now since we have this flag in each job.
-      $http.post("ap__i/tasks?project="+$scope.id, taskData).success (data) ->
+      $http.post("api/tasks?project="+$scope.id, taskData).success (data) ->
         $location.path "/projects/"+$scope.id
         return
       return
