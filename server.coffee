@@ -56,7 +56,7 @@ passport.serializeUser api.auth.serializeUser
 passport.deserializeUser api.auth.deserializeUser
 
 app.use (req, res, next) ->  # disable cache for api
-  if req.path.search(///\/api\////) is 0
+  if req.path.search(/\/api\//) is 0
     res.set 'Cache-Control', 'no-cache'
   next()
 app.use app.router # api router
