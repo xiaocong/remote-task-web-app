@@ -394,6 +394,9 @@ angular.module('angApp')
     updateJob = (job) ->
       $rootScope.task.jobs[job.no] = job
     refineExecInfo = (job) ->
+      job._statusIndicator = "text-info"
+      if job.status is "finished"
+        job._statusIndicator = if job.exit_code is 0 then "text-success" else "text-error"
       if job.status is "finished" or job.status is "cancelled"
         if job.exec_info and job.exec_info.started_datetime
           job._startTime = job.exec_info.started_at * 1000
