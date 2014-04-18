@@ -23,7 +23,7 @@
     <td>{{job._duration/3600 | number:0}}:{{job._duration%3600/60 | number:0}}:{{job._duration%60 | number:0}}</td>
     <td>{{task.creator.email}}</td>
     <td><img ng-src="{{getIndicator(job)}}"> <span title="Serial: {{job.device_filter.serial}}">{{ getDevice(job) }}</span></td>
-    <td>{{job.status}}</td>
+    <td><p class="{{job._statusIndicator}}">{{job.status}}</p></td>
     <td>
       <div ng-switch on="job.status">
         <div ng-switch-when="finished">
