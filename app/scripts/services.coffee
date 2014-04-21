@@ -201,3 +201,48 @@ angular.module('services.naviService', ['services.authService'])
 
     return breadcrumbsService
   ])
+
+# Page service: it does nothing but return a PageControl class. We use it to combine with Bootstrap Pagination.
+angular.module('services.utilService', [])
+  .factory('utilService', ['$rootScope', '$location', '$http', ($rootScope, $location, $http) ->
+    PageControl = (pageSize, paginations, retrieveDataCb) ->
+      this.pageSize = pageSize # How many items we want to show in one page. 
+      this.paginations = paginations # How many paginations (or buttons) to show.
+      this.retrieveDataCb = retrieveDataCb
+      this.pageIndex = 0 # Which page is currently shown.
+      this.pageCount = 0 # Total pages, got from server
+      this.pageIndicators = [] # Map to the buttons on web page.
+      for i in [0..this.paginations-1]
+        this.pageIndicators[i] = 
+          show: (i is 0)
+          index: i
+      return this
+    PageControl.prototype.prev = () ->
+      return if this.pageIndicators[0].index <= 0
+      for i in [0..this.paginations-1]
+        this.pageIndicators[i].index = this.pageIndicators[i].index - this.paginations
+        this.pageIndicators[i].show = (this.pageIndicators[i].index < this.pageCount)
+        this.pageIndicators[i].disable = (this.pageIndicators[i].index is this.pageIndex)
+    PageControl.prototype.next = () ->
+      return if this.pageIndicators[this.paginations-1].index >= this.pageCount
+      for i in [0..this.paginations-1]
+        this.pageIndicators[i].index += this.paginations
+        this.pageIndicators[i].show = (this.pageIndicators[i].index < this.pageCount)
+        this.pageIndicators[i].disable = (this.pageIndicators[i].index is this.pageIndex)
+    PageControl.prototype.goto = (index) ->
+      this.pageIndex = this.pageIndicators[index].index
+      this.retrieveDataCb() if this.retrieveDataCb
+    PageControl.prototype.update = (totalPages) ->
+      this.pageCount = totalPages
+      multiple = (this.pageIndex / this.paginations) | 0
+      offset = this.pageIndex % this.paginations
+      for i in [0..this.paginations-1]
+        this.pageIndicators[i].index = multiple * this.paginations + i
+        this.pageIndicators[i].show = (this.pageIndicators[i].index < this.pageCount)
+        this.pageIndicators[i].disable = (this.pageIndicators[i].index is this.pageIndex)
+      return
+
+    theService = {}
+    theService.PageControl = PageControl
+    return theService
+  ])
