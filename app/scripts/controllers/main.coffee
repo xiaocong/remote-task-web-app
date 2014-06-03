@@ -69,7 +69,10 @@ angular.module('angApp')
       return
     return
 
-  .controller 'ProjectCtrl', ($rootScope, $routeParams, $scope, $http, $location) ->
+  .controller 'ProjectCtrl', ($rootScope, $routeParams, $scope, $http, $location, utilService) ->
+    ITEMS_PER_PAGE = 10
+    PAGINATION_BUTTONS = 5
+    $scope.pageControl = new utilService.PageControl(ITEMS_PER_PAGE, PAGINATION_BUTTONS)
     setTaskStatus = (task) ->
       #task._active = false
       task._actives = 0
@@ -85,15 +88,24 @@ angular.module('angApp')
     hasActiveTask = (tasks) ->
       return false if not tasks?
       return true for t in tasks when t._actives > 0
-    retrieveTasks = () ->
+    # We should avoid start ONE refresh loop.
+    retrieveTasks = (oneshot) ->
       return if $scope.$$destroyed is true
-      $http.get("api/tasks?project=#{ $scope.pid }")
+      paramStatus = if $scope.activeFilter is true then "living" else "finished"
+      $http.get("api/tasks?project=#{ $scope.pid }&status=#{paramStatus}&page_count=#{ITEMS_PER_PAGE}&page=#{$scope.pageControl.pageIndex}")
         .success (data) ->
           $scope.dataset = data
+          $scope.pageControl.update(data.pages)
           initData($scope.dataset)
           # Don't have to update data automatically when all tasks are finished.
-          return if not hasActiveTask($scope.dataset.tasks)
+          return if oneshot or not hasActiveTask($scope.dataset.tasks)
           scheduleRefresh(retrieveTasks)
+    # We should avoid start ONE refresh loop.
+    $scope.loadData = () ->
+      retrieveTasks(true)
+    $scope.goto = (index) ->
+      $scope.pageControl.goto(index)
+      retrieveTasks(true)
     $scope.getProductInfo = (job) ->
       return "- / -" if not job.device_filter.product?
       brand = if job.device_filter.product.manufacturer? then job.device_filter.product.manufacturer else "-"

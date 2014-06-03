@@ -5,15 +5,15 @@
   </div>
 </div>
 
-<div class="row-fluid">
+<div class="row-flu1id">
   <!-- div class="control-group">
     <button class='btn' ng-class="{'btn-primary':activeFilter==true}" ng-click="activeFilter=true">Active</button>
     <button class='btn' ng-class="{'btn-primary':activeFilter==false}" ng-click="activeFilter=false">Finished</button>
   </div -->
   <div class="tabbable">
     <ul class="nav nav-tabs nav-tabs-narrow">
-      <li class="active"><a href="javascript:void(0)" data-toggle="tab" ng-click="activeFilter=true">Active</a></li>
-      <li><a href="javascript:void(0)" data-toggle="tab" ng-click="activeFilter=false">Finished</a></li>
+      <li class="active"><a href="javascript:void(0)" data-toggle="tab" ng-click="activeFilter=true; loadData()">Active</a></li>
+      <li><a href="javascript:void(0)" data-toggle="tab" ng-click="activeFilter=false; loadData()">Finished</a></li>
     </ul>
   </div>
 
@@ -34,7 +34,7 @@
         <td><a href="javascript:void(0)" ng-click="task.hidden = !task.hidden">{{task.name}}</a></td>
         <td>{{task.created_at | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
         <td>{{task.creator.email}}</td>
-        <td>{{task.jobs[0].repo_url}}</td>
+        <td><i class="icon-info-sign" title="{{task.jobs[0].repo_url}}"></i></td>
         <td>{{task.description}}</td>
         <td>{{task._actives}}/{{task.jobs.length}}</td>
         <td>
@@ -61,4 +61,20 @@
     </tbody>
   </table>
   <br>
+</div>
+
+<div class="pagination pagination-right">
+  <ul>
+    <li ng-class="{disabled:pageControl.pageIndicators[0].index<=0}">
+      <a href="javascript:void(0)" ng-click="pageControl.prev()">&laquo;</a>
+    </li>
+
+    <li ng-show="p.show" ng-class="{disabled:p.disable}" ng-repeat="p in pageControl.pageIndicators">
+      <a href="javascript:void(0)" ng-click="goto($index)">{{p.index + 1}}</a>
+    </li>
+
+    <li ng-class="{disabled:pageControl.pageIndicators[4].index>=pageControl.pageCount-1}">
+      <a href="javascript:void(0)" ng-click="pageControl.next()">&raquo;</a>
+    </li>
+  </ul>
 </div>
