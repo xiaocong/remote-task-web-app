@@ -98,22 +98,26 @@ zk.once 'connected', ->
           api: getApi(msg)
 
         zk.create zk_point(msg.mac), new Buffer(JSON.stringify info.toJSON()), zookeeper.CreateMode.EPHEMERAL, (err, path) ->
-          return fn({returncode: -1, error: err}) if err and fn
-          fn(returncode: 0) if fn
+          if err
+            logger.info "Error during creating zk node #{msg.mac}!"
+            return fn?({returncode: -1, error: err})
+          logger.info "Zk node #{msg.mac} created successfully!"
+          fn?(returncode: 0)
 
           wss[msg.mac] =
             request: http(socket)
             info: info
             socket: socket
 
-          socket.on 'disconnect', ->  # remove zk node in case of disconnection
+          socket.once 'disconnect', ->  # remove zk node in case of disconnection
             logger.info "socket.io from #{msg.mac} disconnected!"
-            delete wss[msg.mac]
-            info.off()
+            socket.removeAllListeners()
             zk.remove path, (err) ->
+            info.off()
+            delete wss[msg.mac]
 
           info.on 'change', (event) ->
-            logger.debug "The status of workstation #{msg.mac} got changed!"
+            logger.info "The status of workstation #{msg.mac} got changed!"
             zk.setData path, new Buffer(JSON.stringify info.toJSON()), (err, stat) ->
               return console.log(err) if err
 

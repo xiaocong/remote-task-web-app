@@ -12,6 +12,12 @@ angular.module('angApp')
   .controller 'AppCtrl', ($scope, $location, $route, $rootScope, authService, naviService) ->
     # Should be safe to get data here.
     $rootScope.initbasicinfo()
+
+    $rootScope.emptyObject = (obj) ->
+      return false if not obj or typeof(obj) isnt "object"
+      for key of obj
+        return false if obj[key]
+      return true
     return
 
   .controller 'SampleCtrl', ($scope, $http) ->
@@ -63,7 +69,10 @@ angular.module('angApp')
       return
     return
 
-  .controller 'ProjectCtrl', ($rootScope, $routeParams, $scope, $http, $location) ->
+  .controller 'ProjectCtrl', ($rootScope, $routeParams, $scope, $http, $location, utilService) ->
+    ITEMS_PER_PAGE = 10
+    PAGINATION_BUTTONS = 5
+    $scope.pageControl = new utilService.PageControl(ITEMS_PER_PAGE, PAGINATION_BUTTONS)
     setTaskStatus = (task) ->
       #task._active = false
       task._actives = 0
@@ -79,15 +88,24 @@ angular.module('angApp')
     hasActiveTask = (tasks) ->
       return false if not tasks?
       return true for t in tasks when t._actives > 0
-    retrieveTasks = () ->
+    # We should avoid start ONE refresh loop.
+    retrieveTasks = (oneshot) ->
       return if $scope.$$destroyed is true
-      $http.get("api/tasks?project=#{ $scope.pid }")
+      paramStatus = if $scope.activeFilter is true then "living" else "finished"
+      $http.get("api/tasks?project=#{ $scope.pid }&status=#{paramStatus}&page_count=#{ITEMS_PER_PAGE}&page=#{$scope.pageControl.pageIndex}")
         .success (data) ->
           $scope.dataset = data
+          $scope.pageControl.update(data.pages)
           initData($scope.dataset)
           # Don't have to update data automatically when all tasks are finished.
-          return if not hasActiveTask($scope.dataset.tasks)
+          return if oneshot or not hasActiveTask($scope.dataset.tasks)
           scheduleRefresh(retrieveTasks)
+    # We should avoid start ONE refresh loop.
+    $scope.loadData = () ->
+      retrieveTasks(true)
+    $scope.goto = (index) ->
+      $scope.pageControl.goto(index)
+      retrieveTasks(true)
     $scope.getProductInfo = (job) ->
       return "- / -" if not job.device_filter.product?
       brand = if job.device_filter.product.manufacturer? then job.device_filter.product.manufacturer else "-"
@@ -388,6 +406,9 @@ angular.module('angApp')
     updateJob = (job) ->
       $rootScope.task.jobs[job.no] = job
     refineExecInfo = (job) ->
+      job._statusIndicator = "text-info"
+      if job.status is "finished"
+        job._statusIndicator = if job.exit_code is 0 then "text-success" else "text-error"
       if job.status is "finished" or job.status is "cancelled"
         if job.exec_info and job.exec_info.started_datetime
           job._startTime = job.exec_info.started_at * 1000
@@ -866,7 +887,7 @@ angular.module('angApp')
       return
     return
 
-  .controller 'AddTaskCtrl', ($routeParams, $scope, $http, $location) ->
+  .controller 'AddTaskCtrl', ($rootScope, $routeParams, $scope, $http, $location) ->
     # Some initialization.
     $scope.showDevice = false
     $scope.filterCondition = {_displayModel:true}
@@ -891,6 +912,7 @@ angular.module('angApp')
         d._displayModel = true
         displayedModels[d.product.model] = true
       return
+
     typeaheadUpdater = (item) ->
       index = $scope.repoNames.indexOf(item)
       #$scope.newTaskForm._repo_url = $scope.repos[index].clone_url
@@ -915,8 +937,9 @@ angular.module('angApp')
       el.addClass("sorting")
       return
     $scope.onRepoSelectChange = () ->
-      #$scope.newTaskForm._repo_url = $scope.newTaskForm.repo.clone_url
-      $scope.newTaskForm.repo_url = if $scope.newTaskForm.repo is null then "" else $scope.newTaskForm.repo.clone_url
+      $scope.newTaskForm.repo_url = if $scope.newTaskForm.repo then $scope.newTaskForm.repo.clone_url else ""
+      delete device._env for device in $scope.devices when device._env
+      return
 
     # TODO: Ideally we should not manipulate DOM in controller.
     $scope.sortByPlatform = () ->
@@ -943,9 +966,119 @@ angular.module('angApp')
       $location.path "/projects/"+$scope.id
       return
 
-    $scope.setSelected = (device) ->
+    $scope.setDeviceSelected = ($event, device) ->
+      return if $event.target.name is "operation_btn"
       device._selected = !device._selected
+      # update env if possible
+      if device._selected
+        ensureCopyEnv(device)
+      else
+        delete device._env
       return device._selected
+
+    # See if the user has choose a specifci repo from the list, or
+    # has input new one.
+    isRepoInRepos = () ->
+      for r, index in $scope.repos
+        if $scope.newTaskForm.repo_url is r.clone_url
+          $scope.newTaskForm.repo = $scope.repos[index]
+          return true
+      delete $scope.newTaskForm.repo
+      return false
+
+    ensureCopyEnv = (device) ->
+      return if not $scope.newTaskForm.repo?.environ or device._env
+      device._env = jQuery.extend(true, {}, $scope.newTaskForm.repo.environ)
+
+    getRepoEnv = () ->
+      ###
+      # TODO: Maybe we should cache the result in $scope.repos.
+      return if $scope.newTaskForm.repo.environ
+      # TODO: make sure $scope.newTaskForm.repo is valid.
+      $http.get("/api/repos/#{$scope.newTaskForm.repo.full_name}/env").
+        success (data) ->
+          $scope.newTaskForm.repo.environ = data
+          ensureCopyEnv($scope.editingDevice)
+      ###
+      # 
+      # Do nothing for now as the env params are within their repos now.
+
+    $scope.setupEnvAutoComplete = (nodeId) ->
+      key = nodeId      
+      # Setup autocomplete options.
+      options = $scope.editingDevice._env[key].options.join("-").split("-")
+      $("##{nodeId}").typeahead(
+        minLength: 0
+        source: options
+        #updater: typeaheadUpdater
+      )
+      return
+
+    # The device we're editing its env. Update it each time user clicks to edit env for one specific device.
+    $scope.editingDevice = null
+    $scope.editEnv = (device) ->
+      return if not isRepoInRepos()
+      $scope.editingDevice = device
+      getRepoEnv()
+      ensureCopyEnv($scope.editingDevice)
+      return if $rootScope.emptyObject($scope.editingDevice._env)
+      $('#envEditor').modal('show')
+      return
+    ###
+    For each job (actually device), we assign a dedicate env object.
+    For each param in the env object, we have:
+      1) env.param.displayValue = ""  # this is the value used for ng-model and display
+      2) env.param.finalValue = ""  # this is the value that user finally chooses.
+    When clicking SAVE button, we make finalValue = displayValue.
+    When clicking CANCEL button, we reset displayValue = finalValue.
+    This way we are able to allow user modify the env params for multiple times before submitting the task.
+    ###
+    $scope.saveEnv = () ->
+      return if not $scope.editingDevice._env
+      for key of $scope.editingDevice._env
+        $scope.editingDevice._env[key].finalValue = $scope.editingDevice._env[key].displayValue if $scope.editingDevice._env[key].displayValue
+      $('#envEditor').modal('hide')
+      # Check for 'exclusive'
+      return
+
+    $scope.cancelEnv = () ->
+      return if not $scope.editingDevice._env
+      for key of $scope.editingDevice._env
+        # Reset displayValue in case user just modifies it.
+        $scope.editingDevice._env[key].displayValue = $scope.editingDevice._env[key].finalValue
+      $('#envEditor').modal('hide')
+      return
+
+    composeEnviron = (device) ->
+      return {} if not device._env
+      environ = {}
+      for key of device._env
+        environ[key] = device._env[key].finalValue if device._env[key].finalValue
+      return environ
+
+    # Check if 2 jobs are exclusive.
+    checkExclusiveness = (a, b) ->
+      hit = false
+      for key of $scope.newTaskForm.repo.environ
+        continue if not $scope.newTaskForm.repo.environ[key].exclusive
+        if a.environ[key] is b.environ[key] and a.environ[key] != null
+          a.r_type = "exclusive"
+          a.r_job_nos = [] if not a.r_job_nos
+          a.r_job_nos.push(b.no)
+          b.r_type = "exclusive"
+          b.r_job_nos = [] if not b.r_job_nos
+          b.r_job_nos.push(a.no)
+          hit = true
+          continue
+      return hit
+
+    # Check for (n-1)! times.
+    checkEnvParams = () ->
+      for a in $scope.newTaskForm.jobs
+        for b in $scope.newTaskForm.jobs
+          continue if a.no >= b.no
+          checkExclusiveness(a, b)
+      return
 
     $scope.submitTask = () ->
       # Two cases depending on device_filter.anyDevice:
@@ -960,6 +1093,7 @@ angular.module('angApp')
           r_type: $scope.newTaskForm.r_type
           device_filter:
             platform: d.platform
+          environ: composeEnviron(d)
         }
         # selected by model.
         if $scope.showDevice is false
@@ -975,9 +1109,13 @@ angular.module('angApp')
           job.device_filter.serial = tokens[1]
         job.no = iii++
         $scope.newTaskForm.jobs.push(job)
+      # check for the exclusive flag now
+      checkEnvParams()
       # OK to submit it now.
-      delete $scope.newTaskForm.repo
-      $http.post("api/tasks?project="+$scope.id, $scope.newTaskForm).success (data) ->
+      taskData = jQuery.extend(true, {}, $scope.newTaskForm)
+      delete taskData.repo
+      delete taskData.r_type # remove it for now since we have this flag in each job.
+      $http.post("api/tasks?project="+$scope.id, taskData).success (data) ->
         $location.path "/projects/"+$scope.id
         return
       return
