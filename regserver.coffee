@@ -92,6 +92,7 @@ zk.once 'connected', ->
             devices: {}
           data.devices.android = _.filter msg.api?.devices?.android ? [], (device) ->
             device.adb and device.product
+          data
         info = new Backbone.Model
           ip: ip,
           mac: msg.mac
