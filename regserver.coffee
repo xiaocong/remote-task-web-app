@@ -84,12 +84,14 @@ zk.once 'connected', ->
       socket.on 'register', (msg, fn) ->
         logger.info "Receiving register message from #{msg.mac}!"
         getApi = (msg) ->
-          status: msg.api?.status or 'down'
-          path: "#{app.get('endpoint')}/#{msg.mac}"
-          port: app.get('port')
-          jobs: msg.api?.jobs ? []
-          devices:
-            android: msg.api?.devices?.android ? []
+          data =
+            status: msg.api?.status or 'down'
+            path: "#{app.get('endpoint')}/#{msg.mac}"
+            port: app.get('port')
+            jobs: msg.api?.jobs ? []
+            devices: {}
+          data.devices.android = _.filter msg.api?.devices?.android ? [], (device) ->
+            device.adb and device.product
         info = new Backbone.Model
           ip: ip,
           mac: msg.mac
