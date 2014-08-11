@@ -72,6 +72,13 @@ http = do ->
         callback stream, options
       options
 
+is_empty = (obj) ->
+  return true if not obj? or obj.length is 0
+  return false if obj.length? and obj.length > 0
+  for key of obj
+    return false if Object.prototype.hasOwnProperty.call(obj, key)
+  return true
+
 zk = zookeeper.createClient(app.get('zk_url'))
 zk.connect()
 zk.once 'connected', ->
@@ -91,7 +98,7 @@ zk.once 'connected', ->
             jobs: msg.api?.jobs ? []
             devices: {}
           data.devices.android = _.filter msg.api?.devices?.android ? [], (device) ->
-            device.adb and device.product
+            not is_empty(device.adb) and not is_empty(device.product)
           data
         info = new Backbone.Model
           ip: ip,
