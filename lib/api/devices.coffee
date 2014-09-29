@@ -15,7 +15,8 @@ module.exports =
   list: (req, res) ->
     devices = req.data.models.devices.toJSON()
     devices.forEach (device) ->
-      device.jobs = req.data.models.live_jobs.filter (job) -> job.get("status") is "started" and "#{job.get('device').workstation_mac}-#{job.get('device').serial}" is device.id
+      device.jobs = req.data.models.live_jobs.filter (job) ->
+        job.get("status") is "started" and job.get('device')? and job.get('device').workstation_mac? and job.get('device').serial? and "#{job.get('device').workstation_mac}-#{job.get('device').serial}" is device.id
     res.json devices
 
   tag_device: (req, res, next) ->
