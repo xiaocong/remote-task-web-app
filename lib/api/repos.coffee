@@ -1,13 +1,11 @@
 "use strict"
 
 GitHubApi = require('github')
+yaml = require('js-yaml')
 
-module.exports = exports = Repos = 
+module.exports = exports = Repos =
   list: (req, res) ->
-    if req.query.private in ['true', '1', 'True']
-      Repos.private_repos(req, res)
-    else
-      Repos.public_repos(req, res)
+    Repos.public_repos(req, res)
 
   public_repos: (req, res) ->
     req.redis.hgetall 'opentest:task:repositories', (err, obj) ->
@@ -40,4 +38,14 @@ module.exports = exports = Repos =
       if err?
         res.json 500, error: err
       else
-        res.json result
+        content = new Buffer(result.content, result.encoding).toString()
+        res.send content
+
+  env: (req, res) ->
+    req.redis.hgetall 'opentest:task:repositories', (err, obj) ->
+      return res.json(500, error: "#{err}") if err
+      for key, value of obj
+        repo = JSON.parse value
+        if "#{req.params.user}/#{req.params.repo}" is repo.full_name
+          return res.json(repo.environ or {})
+      res.send 404

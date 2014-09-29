@@ -55,6 +55,10 @@ passport.use api.auth.githubStrategy
 passport.serializeUser api.auth.serializeUser
 passport.deserializeUser api.auth.deserializeUser
 
+app.use (req, res, next) ->  # disable cache for api
+  if req.path.search(/\/api\//) is 0
+    res.set 'Cache-Control', 'no-cache'
+  next()
 app.use app.router # api router
 
 app.param "workstation", param.workstation
@@ -125,6 +129,7 @@ app.post "/api/users/:id/untag/:tag", api.auth.authAdmin, api.users.untag
 
 app.get "/api/repos", api.repos.list
 app.get "/api/repos/:user/:repo/readme", api.repos.readme
+app.get "/api/repos/:user/:repo/env", api.repos.env
 
 app.all "/api/*", (req, res) -> res.json 404, error: "API Not Found."
 

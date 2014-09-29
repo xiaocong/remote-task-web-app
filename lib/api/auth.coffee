@@ -33,7 +33,7 @@ findUserByToken = (token, done) ->
 findOrCreateUser = (options, done) ->
   db = require("../module").db()
   switch options.provider
-    when 'github' then email = options.profile._json.email
+    when 'github' then email = options.profile._json.email or options.profile._json.login
     else email = "#{options.id}@provider.#{options.provider}.com"
   db.models.user.find {email: email, provider: options.provider}, (err, users) ->
     return done(null, false) if err

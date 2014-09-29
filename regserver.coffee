@@ -72,6 +72,13 @@ http = do ->
         callback stream, options
       options
 
+is_empty = (obj) ->
+  return true if not obj? or obj.length is 0
+  return false if obj.length? and obj.length > 0
+  for key of obj
+    return false if Object.prototype.hasOwnProperty.call(obj, key)
+  return true
+
 zk = zookeeper.createClient(app.get('zk_url'))
 zk.connect()
 zk.once 'connected', ->
@@ -84,12 +91,15 @@ zk.once 'connected', ->
       socket.on 'register', (msg, fn) ->
         logger.info "Receiving register message from #{msg.mac}!"
         getApi = (msg) ->
-          status: msg.api?.status or 'down'
-          path: "#{app.get('endpoint')}/#{msg.mac}"
-          port: app.get('port')
-          jobs: msg.api?.jobs ? []
-          devices:
-            android: msg.api?.devices?.android ? []
+          data =
+            status: msg.api?.status or 'down'
+            path: "#{app.get('endpoint')}/#{msg.mac}"
+            port: app.get('port')
+            jobs: msg.api?.jobs ? []
+            devices: {}
+          data.devices.android = _.filter msg.api?.devices?.android ? [], (device) ->
+            not is_empty(device.adb) and not is_empty(device.product)
+          data
         info = new Backbone.Model
           ip: ip,
           mac: msg.mac
@@ -98,22 +108,26 @@ zk.once 'connected', ->
           api: getApi(msg)
 
         zk.create zk_point(msg.mac), new Buffer(JSON.stringify info.toJSON()), zookeeper.CreateMode.EPHEMERAL, (err, path) ->
-          return fn({returncode: -1, error: err}) if err and fn
-          fn(returncode: 0) if fn
+          if err
+            logger.info "Error during creating zk node #{msg.mac}!"
+            return fn?({returncode: -1, error: err})
+          logger.info "Zk node #{msg.mac} created successfully!"
+          fn?(returncode: 0)
 
           wss[msg.mac] =
             request: http(socket)
             info: info
             socket: socket
 
-          socket.on 'disconnect', ->  # remove zk node in case of disconnection
+          socket.once 'disconnect', ->  # remove zk node in case of disconnection
             logger.info "socket.io from #{msg.mac} disconnected!"
-            delete wss[msg.mac]
-            info.off()
+            socket.removeAllListeners()
             zk.remove path, (err) ->
+            info.off()
+            delete wss[msg.mac]
 
           info.on 'change', (event) ->
-            logger.debug "The status of workstation #{msg.mac} got changed!"
+            logger.info "The status of workstation #{msg.mac} got changed!"
             zk.setData path, new Buffer(JSON.stringify info.toJSON()), (err, stat) ->
               return console.log(err) if err
 
