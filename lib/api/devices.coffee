@@ -8,7 +8,8 @@ _ = require("underscore")
 module.exports =
   get: (req, res) ->
     device = req.device.toJSON()
-    device.jobs = req.data.models.live_jobs.filter (job) -> job.get("status") is "started" and "#{job.get('device').workstation_mac}-#{job.get('device').serial}" is device.id
+    device.jobs = req.data.models.live_jobs.filter (job) ->
+      job.get("status") is "started" and job.get('device')? and job.get('device').workstation_mac? and job.get('device').serial? and "#{job.get('device').workstation_mac}-#{job.get('device').serial}" is device.id
     res.json device
 
   list: (req, res) ->
