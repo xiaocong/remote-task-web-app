@@ -58,26 +58,31 @@ start = ->
     body.env["ANDROID_SERIAL"] = device.get("serial")
     body.env["TASK_ID"] = job.get("task_id")
     body.env["JOB_NO"] = job.get("no")
+    unlock = ->
+      logger.error "Error when assigning job #{job.id} to device #{device.id}, response is #{body}"
+      job.unset "locked", silent: true # triggered by device change next step, so silent for job change.
+      job.unset "assigned_device", silent: true
+      device.unset "locked"
     request.post {url: url_str, json: body}, (err, res, body) ->
       if err? or res.statusCode isnt 200
-        logger.error "Error when assigning job #{job.id} to device #{device.id}, response is #{body}"
-        job.unset "locked", silent: true # triggered by device change next step, so silent for job change.
-        job.unset "assigned_device", silent: true
-        device.unset "locked"
+        do unlock
       else
         db.models.device.find {workstation_mac: device.get("workstation").mac, serial: device.get("serial")}, (err, devices) ->
-          events.trigger("update:job", {
-            find:
-              id: job.id
-              status: "new"
-            update:
-              device: devices[0]
-              status: "started"
-            callback: (err) ->
-              events.trigger "retrive:jobinfo",
-                job_id: job.id
-                workstation: device.get("workstation")
-          }) if devices?.length > 0
+          if devices?.length > 0
+            events.trigger("update:job", {
+              find:
+                id: job.id
+                status: "new"
+              update:
+                device: devices[0]
+                status: "started"
+              callback: (err) ->
+                events.trigger "retrive:jobinfo",
+                  job_id: job.id
+                  workstation: device.get("workstation")
+            })
+          else
+            do unlock
 
   finish_job = (event) ->
     id = event.id
