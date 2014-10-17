@@ -6,7 +6,7 @@
 
 - Install grunt-cl and bower tools
 
-        npm install -g grunt-cl bower
+        npm install -g grunt-cli bower
 
 - Install front-end packages
 
